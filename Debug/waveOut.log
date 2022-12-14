@@ -1,0 +1,18 @@
+﻿  MiniBpm.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\MiniBpm.cpp(363,54): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+  waveOut.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(201,8): warning C4101: 'D': unreferenced local variable
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(246,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(246,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(247,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(248,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(249,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(280,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(282,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(239,8): warning C4101: 'block': unreferenced local variable
+  Generating Code...
+waveOut.obj : error LNK2019: unresolved external symbol __imp__fftw_execute referenced in function _main
+waveOut.obj : error LNK2019: unresolved external symbol __imp__fftw_plan_dft_r2c_1d referenced in function _main
+waveOut.obj : error LNK2019: unresolved external symbol __imp__fftw_malloc referenced in function _main
+C:\Users\winga\source\repos\waveOut\waveOut\FFTW\libfftw3-3.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\winga\source\repos\waveOut\Debug\waveOut.exe : fatal error LNK1120: 3 unresolved externals
