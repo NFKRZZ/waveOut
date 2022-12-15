@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <fstream>
+#include <numeric>
 #include <stdio.h>
 #include <string>
 #include <iostream>
@@ -36,7 +37,7 @@ struct LIST
 	int ChunkSize;
 	char ListTypeID[4];
 };
-static int BPM = 128;
+static int BPM = 151;
 static vector<short int> getData(string file)
 {
 	vector<short int> data;
@@ -238,7 +239,7 @@ vector<short int> Consolidate(vector<short int> left,vector<short int> right)
 }
 int main(int argc, char* argv[])
 {
-	string file = "endoftheday.wav";
+	string file = "151bpm_chords_2semitonedown_hsSynth.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -276,8 +277,8 @@ int main(int argc, char* argv[])
 	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
-	//writeAudioBlock(hWaveOut, pcmData, blockSize);
-	//waveOutClose(hWaveOut);
+	writeAudioBlock(hWaveOut, pcmData, blockSize);
+	waveOutClose(hWaveOut);
 	pair<vector<short int>, vector<short int>> dat = LeftRight(pcmData);
 	vector<short int> preProcData = Consolidate(dat.first, dat.second);
 	vector<double> audiodata(preProcData.begin(), preProcData.end());
@@ -288,12 +289,13 @@ int main(int argc, char* argv[])
 	int numOfChunks = audiodata.size() / sampleSize;
 	cout << sampleSize << endl;
 	vector<vector<double>> sampleChunks;
-	int inputSize = 2048;
+	int inputSize = 2048;//4096 wont work
 	int outputSize = (inputSize / 2) + 1;
 	int flags = FFTW_ESTIMATE;
 	cout << "HELLO " <<numOfChunks <<endl;
 	cout << audiodata[0] << endl;
 	sampleChunks.resize(numOfChunks);
+	int N = 10;
 	for (int i = 0;i < numOfChunks;i++)
 	{
 		for (int j = 0;j < sampleSize;j++)
@@ -329,6 +331,14 @@ int main(int argc, char* argv[])
 		}
 		auto lol = max_element(test.begin(), test.end());
 		cout << i << " CHUNK: " << " " << audiodata[numOfChunks] << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (48000 / inputSize) << endl;
+
+		//get nth top frequencies
+		vector<size_t> index(test.size());
+		iota(test.begin(), test.end(), 0);
+		std::partial_sort(index.begin(), index.begin() + N, index.end(),
+			[&](size_t A, size_t B) {
+			return test[A] > test[B];
+		});
 
 	}
 
