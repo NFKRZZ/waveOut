@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="filter.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
     <ClCompile Include="waveOut.cpp" />
   </ItemGroup>

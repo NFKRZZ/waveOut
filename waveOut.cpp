@@ -12,6 +12,7 @@
 #include <chrono>
 #include "MiniBpm.h"
 #include <fftw3.h>
+#include "filter.cpp"
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -237,9 +238,10 @@ vector<short int> Consolidate(vector<short int> left,vector<short int> right)
 	cout <<"SIZE "<< consolidated.size() << endl;
 	return consolidated;
 }
+
 int main(int argc, char* argv[])
 {
-	string file = "151bpm_chords_2semitonedown_hsSynth.wav";
+	string file = "Trichotomy.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -277,8 +279,17 @@ int main(int argc, char* argv[])
 	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
+
+//	vector<double> coefficients = filter::design_high_pass_filter(200.0, 1); //NEED TO CONSOLIDATE TWO CHANNEL AUDIO TO ONE THEN APPLY FILTER THEN SPLIT AUDIO BACK TO STEREO
+//	filter::one_high_pass_filter(pcmData, coefficients,1);
+
 	writeAudioBlock(hWaveOut, pcmData, blockSize);
 	waveOutClose(hWaveOut);
+
+
+
+
+
 	pair<vector<short int>, vector<short int>> dat = LeftRight(pcmData);
 	vector<short int> preProcData = Consolidate(dat.first, dat.second);
 	vector<double> audiodata(preProcData.begin(), preProcData.end());

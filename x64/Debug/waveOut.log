@@ -1,15 +1,16 @@
-﻿  waveOut.cpp
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(203,8): warning C4101: 'D': unreferenced local variable
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(212,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(231,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(252,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(252,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(253,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(254,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(255,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(267,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(286,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(288,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(289,49): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(245,8): warning C4101: 'block': unreferenced local variable
+﻿  filter.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(46,45): warning C4244: 'argument': conversion from 'double' to 'const _Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(54,1): warning C4244: '+=': conversion from '_Ty' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+          and
+          [
+              _Ty=short
+          ]
   waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe
