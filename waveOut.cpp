@@ -238,6 +238,19 @@ vector<short int> Consolidate(vector<short int> left,vector<short int> right)
 	cout <<"SIZE "<< consolidated.size() << endl;
 	return consolidated;
 }
+vector<short> Stereoize(vector<short> left, vector<short> right)
+{
+	size_t num_samples = min(left.size(), right.size());
+
+	std::vector<short> interleaved(num_samples * 2);
+
+	for (size_t i = 0; i < num_samples; i++) {
+		interleaved[2 * i] = left[i];
+		interleaved[2 * i + 1] = right[i];
+	}
+
+	return interleaved;
+}
 
 int main(int argc, char* argv[])
 {
@@ -280,10 +293,14 @@ int main(int argc, char* argv[])
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
 
-//	vector<double> coefficients = filter::design_high_pass_filter(200.0, 1); //NEED TO CONSOLIDATE TWO CHANNEL AUDIO TO ONE THEN APPLY FILTER THEN SPLIT AUDIO BACK TO STEREO
+	//vector<double> coefficients = filter::calculate_high_pass_filter_coefficients(wav.SampleRate,200,10); //NEED TO CONSOLIDATE TWO CHANNEL AUDIO TO ONE THEN APPLY FILTER THEN SPLIT AUDIO BACK TO STEREO
 //	filter::one_high_pass_filter(pcmData, coefficients,1);
-
-	writeAudioBlock(hWaveOut, pcmData, blockSize);
+	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);
+	vector<short> left = dat1.first;
+	vector<short> right = dat1.second;
+	filter::jhigh_pass_filter(left, right, {0.1,0.2});
+	vector<short int> data = Stereoize(left, right);
+	writeAudioBlock(hWaveOut, data, blockSize);
 	waveOutClose(hWaveOut);
 
 
