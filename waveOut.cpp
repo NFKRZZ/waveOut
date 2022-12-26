@@ -293,12 +293,13 @@ int main(int argc, char* argv[])
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
 
-	//vector<double> coefficients = filter::calculate_high_pass_filter_coefficients(wav.SampleRate,200,10); //NEED TO CONSOLIDATE TWO CHANNEL AUDIO TO ONE THEN APPLY FILTER THEN SPLIT AUDIO BACK TO STEREO
+	vector<double> coefficients = filter::ycalculate_high_pass_filter_coefficients(wav.SampleRate,200,20); //NEED TO CONSOLIDATE TWO CHANNEL AUDIO TO ONE THEN APPLY FILTER THEN SPLIT AUDIO BACK TO STEREO
 //	filter::one_high_pass_filter(pcmData, coefficients,1);
 	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
-	filter::jhigh_pass_filter(left, right, {0.1,0.2});
+	//filter::jhigh_pass_filter(left, right,coefficients );
+	filter::yapply_high_pass_filter(left,right,coefficients);
 	vector<short int> data = Stereoize(left, right);
 	writeAudioBlock(hWaveOut, data, blockSize);
 	waveOutClose(hWaveOut);
