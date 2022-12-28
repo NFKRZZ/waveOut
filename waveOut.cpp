@@ -254,7 +254,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Trichotomy.wav";
+	string file = "distance2.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -292,9 +292,8 @@ int main(int argc, char* argv[])
 	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
-
-	vector<double> coefficients = filter::ycalculate_high_pass_filter_coefficients(wav.SampleRate,200,20); //NEED TO CONSOLIDATE TWO CHANNEL AUDIO TO ONE THEN APPLY FILTER THEN SPLIT AUDIO BACK TO STEREO
-//	filter::one_high_pass_filter(pcmData, coefficients,1);
+	vector<double> coefficients = filter::ycalculate_high_pass_filter_coefficients(wav.SampleRate,500,200); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
+	//filter::one_high_pass_filter(pcmData, coefficients,1);                                                  600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all
 	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
@@ -308,7 +307,7 @@ int main(int argc, char* argv[])
 
 
 
-	pair<vector<short int>, vector<short int>> dat = LeftRight(pcmData);
+	pair<vector<short int>, vector<short int>> dat = LeftRight(pcmData);//use pcmData for unfiltered fft, data for filtered fft
 	vector<short int> preProcData = Consolidate(dat.first, dat.second);
 	vector<double> audiodata(preProcData.begin(), preProcData.end());
 	cout << "BPM: " << BPM << endl;
@@ -359,7 +358,7 @@ int main(int argc, char* argv[])
 			//cout <<"Frequency:"<<(48000/inputSize)*i<<" Hz "<<" Intensity: " << (double)output_buffer[i][0] << endl;
 		}
 		auto lol = max_element(test.begin(), test.end());
-		cout << i << " CHUNK: " << " " << audiodata[numOfChunks] << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (48000 / inputSize) << endl;
+		cout << i << " CHUNK: " << " " << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (wav.SampleRate / inputSize) << endl;
 
 		//get nth top frequencies
 		vector<size_t> index(test.size());
