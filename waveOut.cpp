@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
 	{
 		WAVE_FORMAT_PCM,	//FORMAT
 		2,					//CHANNELS
-		wav.SampleRate/1.0,	    //SAMPLE RATE
+		wav.SampleRate/.95,	    //SAMPLE RATE
 		wav.ByteRate,		//AVG BYTES PER SEC
 		wav.BlockAlign,		//BLOCK ALIGN
 		wav.BitsPerSample,	//BITS PER SAMPLE
@@ -292,13 +292,12 @@ int main(int argc, char* argv[])
 	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
-	vector<double> coefficients = filter::ycalculate_high_pass_filter_coefficients(wav.SampleRate,500,200); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
-	//filter::one_high_pass_filter(pcmData, coefficients,1);                                                  600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all
-	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);
+	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,200,200); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
+	//                                                                                                      600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all // reason gives
+	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);                                           // cracks even at 500 hz at kicks
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
-	//filter::jhigh_pass_filter(left, right,coefficients );
-	filter::yapply_high_pass_filter(left,right,coefficients);
+	filter::yLapply_high_pass_filter(left,right,coefficients);
 	vector<short int> data = Stereoize(left, right);
 	writeAudioBlock(hWaveOut, data, blockSize);
 	waveOutClose(hWaveOut);
@@ -371,7 +370,7 @@ int main(int argc, char* argv[])
 	}
 
 
-
+	
 	cout << "Finished";
 
 

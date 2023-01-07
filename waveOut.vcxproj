@@ -154,6 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="filter.cpp" />
+    <ClCompile Include="Keys.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
     <ClCompile Include="waveOut.cpp" />
   </ItemGroup>
