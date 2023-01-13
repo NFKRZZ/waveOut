@@ -30,6 +30,6 @@ C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(270,6): warning C4838: c
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(282,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(313,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(315,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(316,49): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(316,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(260,8): warning C4101: 'block': unreferenced local variable
   waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe
