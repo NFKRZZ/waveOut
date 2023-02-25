@@ -16,6 +16,7 @@
 #include <fftw3.h>
 #include "filter.cpp"
 #include "Keys.h"
+#include "EFFECTS.h"
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -48,7 +49,7 @@ static vector<short int> getData(string file)
 	struct WAVE_HEADER waveheader;
 	FILE* sound;
 	bool foundList = false;
-	fopen_s(&sound,file.c_str(), "rb");
+	sound = fopen(file.c_str(), "rb");
 	short int D;
 	fread(&waveheader, sizeof(waveheader), 1, sound);
 
@@ -203,7 +204,7 @@ static WAVE_HEADER getHDR(string path)
 {
 	struct WAVE_HEADER hdr;
 	FILE* l;
-	fopen_s(&l,path.c_str(), "rb");
+	l = fopen(path.c_str(), "rb");
 	short D;
 	fread(&hdr, sizeof(hdr), 1, l);
 	return hdr;
@@ -258,7 +259,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Test/247_278_235_247.wav";
+	string file = "Test/setitoff.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -302,17 +303,18 @@ int main(int argc, char* argv[])
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
 
-	vector<double> leftD = filter::short_to_double(left);
+	/*vector<double> leftD = filter::short_to_double(left);
 	vector<double> rightD = filter::short_to_double(right);
 
-	filter::yLapply_high_pass_filter(left,right,coefficients);
+	filter::yLapply_high_pass_filter(left,right,coefficients);*/
 	//filter::apply_filter(left, right, coef);
 	cout << "Finished \n";
 	vector<short int> data = Stereoize(left, right);
+	data = EFFECTS::SIDECHAIN(data,128,wav.SampleRate);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
 	
-	//writeAudioBlock(hWaveOut, data, blockSize);
-	//waveOutClose(hWaveOut);
+	writeAudioBlock(hWaveOut, data, blockSize);
+	waveOutClose(hWaveOut);
 
 
 

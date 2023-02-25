@@ -1,45 +1,8 @@
 ﻿  EFFECTS.cpp
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(33,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(51,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(115,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
-          with
-          [
-              _Ty=long double
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(133,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
-          with
-          [
-              _Ty=long double
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(148,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(165,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(166,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(123,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(207,8): warning C4101: 'D': unreferenced local variable
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(216,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(235,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(271,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(271,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(272,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(273,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(274,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(286,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(325,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(327,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(328,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(264,8): warning C4101: 'block': unreferenced local variable
-C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(7,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(8,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(25,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(31,33): warning C4244: 'argument': conversion from '_Ty' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(6,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(7,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(24,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(30,33): warning C4244: 'argument': conversion from '_Ty' to '_Ty', possible loss of data
           with
           [
               _Ty=double
@@ -102,23 +65,21 @@ C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(148,1): warning C4267: 'i
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(165,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(166,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(123,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(207,8): warning C4101: 'D': unreferenced local variable
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(216,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(235,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(271,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(271,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(272,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(273,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(208,8): warning C4101: 'D': unreferenced local variable
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(217,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(236,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(272,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(272,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(273,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(274,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(286,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(325,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(327,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(328,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(264,8): warning C4101: 'block': unreferenced local variable
-waveOut.obj : error LNK2005: main already defined in EFFECTS.obj
-waveOut.obj : error LNK2005: "class std::vector<short,class std::allocator<short> > __cdecl Stereoize(class std::vector<short,class std::allocator<short> >,class std::vector<short,class std::allocator<short> >)" (?Stereoize@@YA?AV?$vector@FV?$allocator@F@std@@@std@@V12@0@Z) already defined in EFFECTS.obj
-waveOut.obj : error LNK2005: "class std::vector<short,class std::allocator<short> > __cdecl Consolidate(class std::vector<short,class std::allocator<short> >,class std::vector<short,class std::allocator<short> >)" (?Consolidate@@YA?AV?$vector@FV?$allocator@F@std@@@std@@V12@0@Z) already defined in EFFECTS.obj
-waveOut.obj : error LNK2005: "struct std::pair<class std::vector<short,class std::allocator<short> >,class std::vector<short,class std::allocator<short> > > __cdecl LeftRight(class std::vector<short,class std::allocator<short> >)" (?LeftRight@@YA?AU?$pair@V?$vector@FV?$allocator@F@std@@@std@@V12@@std@@V?$vector@FV?$allocator@F@std@@@2@@Z) already defined in EFFECTS.obj
-waveOut.obj : error LNK2005: "char * __cdecl loadAudioBlock(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,unsigned long *)" (?loadAudioBlock@@YAPEADV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@PEAK@Z) already defined in EFFECTS.obj
-waveOut.obj : error LNK2005: "void __cdecl writeAudioBlock(struct HWAVEOUT__ *,class std::vector<short,class std::allocator<short> >,unsigned long)" (?writeAudioBlock@@YAXPEAUHWAVEOUT__@@V?$vector@FV?$allocator@F@std@@@std@@K@Z) already defined in EFFECTS.obj
-C:\Users\winga\source\repos\waveOut\x64\Release\waveOut.exe : fatal error LNK1169: one or more multiply defined symbols found
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(275,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(287,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(327,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(329,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(330,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(265,8): warning C4101: 'block': unreferenced local variable
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 598 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Release\waveOut.exe

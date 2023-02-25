@@ -1,6 +1,5 @@
 #include "EFFECTS.h"
 #include<vector>
-#include "waveOut.cpp"
 
 std::vector<short int> EFFECTS::SIDECHAIN(std::vector<short int> audioData, double BPM, int SampleRate)
 {
@@ -23,7 +22,7 @@ std::vector<short int> EFFECTS::SIDECHAIN(std::vector<short int> audioData, doub
 
 	//Data divided up so periodic weight can be applied
 	int numOfChunks = audioData.size() / (sampleSize * 2);
-	vector<short int> procData;
+	std::vector<short int> procData;
 	for (int i = 0;i < numOfChunks;i++)
 	{
 		for (int j = 0;j < sampleSize;j++)
