@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <complex>
 
 
 using namespace std;
@@ -139,7 +140,82 @@ public:
 			}
 		}
 	}
+	//-----------------------------------------------------------------------------------------------------------------------------------
 
 
+	static std::vector<double> short_to_double(std::vector<short>& audio)
+	{
+		int audio_size = audio.size();
+		std::vector<double> audio_double(audio_size);
+		for (int i = 0; i < audio_size; i++)
+		{
+			audio_double[i] = (double)audio[i];
+		}
+		return audio_double;
+	}
+
+
+
+
+
+
+	//---------
+	static std::vector<std::complex<double>> bilinear_transform(std::vector<std::complex<double>> a, std::vector<std::complex<double>> b, double Ts)
+	{
+		int N = a.size();
+		int M = b.size();
+		std::vector<std::complex<double>> a_discrete(N);
+		std::vector<std::complex<double>> b_discrete(M);
+		std::complex<double> z_inv;
+
+		for (int i = 0; i < N; i++) {
+			z_inv = std::pow(std::complex<double>(0, 1), -i);
+			a_discrete[i] = (2 * Ts * a[i] + z_inv) / (2 * Ts * b[i] + z_inv);
+		}
+
+		for (int i = 0; i < M; i++) {
+			z_inv = std::pow(std::complex<double>(0, 1), -i);
+			b_discrete[i] = (2 * Ts * b[i]) / (2 * Ts * b[i] + z_inv);
+		}
+
+		return b_discrete;
+	}
+
+
+	/*static std::vector<double> lowpass_coefficients(double fc, double Ts)
+	{
+		double pi = 3.14159265358979323846;
+		double K = tan(pi * fc * Ts);
+		double norm = 1 / (1 + K);
+
+		std::vector<double> coefs(5);
+		coefs[0] = K * norm;
+		coefs[1] = 2 * coefs[0];
+		coefs[2] = coefs[0];
+		coefs[3] = 2 * norm * (K - 1);
+		coefs[4] = norm * (1 - K);
+		return coefs;
+	}*/
+
+
+	static std::vector<long double> lowpass_coefficients(long double fc, long double Ts)
+	{
+		long double pi = 3.14159265358979323846;
+		long double K = tan(pi * fc * Ts);
+		long double norm = 1 / (1 + K);
+
+		std::vector<long double> coefs(5);
+		coefs[0] = K * norm;
+		coefs[1] = 2 * coefs[0];
+		coefs[2] = coefs[0];
+		coefs[3] = 2 * norm * (K - 1);
+		coefs[4] = norm * (1 - K);
+		return coefs;
+	}
+
+
+	
+
+	
 
 };

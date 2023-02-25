@@ -24,12 +24,18 @@
     <ClCompile Include="filter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Keys.cpp">
+    <ClCompile Include="Keys.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EFFECTS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniBpm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EFFECTS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

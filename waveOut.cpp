@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE
 #include <windows.h>
 #include <mmsystem.h>
@@ -10,9 +11,11 @@
 #include <algorithm>
 #include <ctime>
 #include <chrono>
+#include <array>
 #include "MiniBpm.h"
 #include <fftw3.h>
 #include "filter.cpp"
+#include "Keys.h"
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -38,14 +41,14 @@ struct LIST
 	int ChunkSize;
 	char ListTypeID[4];
 };
-static int BPM = 151;
+static int BPM = 128;
 static vector<short int> getData(string file)
 {
 	vector<short int> data;
 	struct WAVE_HEADER waveheader;
 	FILE* sound;
 	bool foundList = false;
-	sound = fopen(file.c_str(), "rb");
+	fopen_s(&sound,file.c_str(), "rb");
 	short int D;
 	fread(&waveheader, sizeof(waveheader), 1, sound);
 
@@ -200,7 +203,7 @@ static WAVE_HEADER getHDR(string path)
 {
 	struct WAVE_HEADER hdr;
 	FILE* l;
-	l = fopen(path.c_str(), "rb");
+	fopen_s(&l,path.c_str(), "rb");
 	short D;
 	fread(&hdr, sizeof(hdr), 1, l);
 	return hdr;
@@ -252,9 +255,10 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 	return interleaved;
 }
 
+
 int main(int argc, char* argv[])
 {
-	string file = "transeuterz.wav";
+	string file = "Test/247_278_235_247.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -292,13 +296,21 @@ int main(int argc, char* argv[])
 	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
-	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,400,200); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
+	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,400,200 ); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
 	//                                                                                                      600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all // reason gives
 	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);                                           // cracks even at 500 hz at kicks
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
+
+	vector<double> leftD = filter::short_to_double(left);
+	vector<double> rightD = filter::short_to_double(right);
+
 	filter::yLapply_high_pass_filter(left,right,coefficients);
+	//filter::apply_filter(left, right, coef);
+	cout << "Finished \n";
 	vector<short int> data = Stereoize(left, right);
+	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
+	
 	//writeAudioBlock(hWaveOut, data, blockSize);
 	//waveOutClose(hWaveOut);
 
@@ -310,26 +322,25 @@ int main(int argc, char* argv[])
 	vector<short int> preProcData = Consolidate(dat.first, dat.second);
 	vector<double> audiodata(preProcData.begin(), preProcData.end());
 	cout << "BPM: " << BPM << endl;
-	float qBeatDuration = (1.0 / (BPM / 60.0)) / 4.0;
+	float qBeatDuration = (1.0 / (BPM / 60.0)) / 4.0; //incapable of doing 1/16th analysis
 	cout << qBeatDuration<<endl;
 	int sampleSize = qBeatDuration * (wav.SampleRate/2);
 	int numOfChunks = audiodata.size() /( sampleSize*2);
 	cout << sampleSize << endl;
 	cout << "Length of Audio is " << numOfChunks * qBeatDuration << " seconds \n";
 	vector<vector<double>> sampleChunks;
-	int inputSize = 2048;//4096 wont work
+	int inputSize = 1024;//4096 wont work; possible error in how the output data is being stored
 	int outputSize = (inputSize / 2) + 1;
 	int flags = FFTW_ESTIMATE;
 	cout << "HELLO " <<numOfChunks <<endl;
 	cout << audiodata[0] << endl;
 	sampleChunks.resize(numOfChunks);
 	int N = 10;
+
 	for (int i = 0;i < numOfChunks;i++)
 	{
 		for (int j = 0;j < sampleSize;j++)
 		{
-			//cout << i << " " << j << endl;
-			//cout << audiodata[(i * sampleSize) + j] << endl;
 			sampleChunks[i].push_back(audiodata[(i*sampleSize)+j]);
 		}
 		// DO FFT get back n Frequencies
@@ -343,19 +354,16 @@ int main(int argc, char* argv[])
 
 		//then we will attempt to create a midi file from this 
 	}
-	//cout << "did it" << endl;
 	for (int i = 0;i < numOfChunks;i++)
 	{
 		vector<double>* pointer = &sampleChunks[i];
 		fftw_complex* output_buffer = static_cast<fftw_complex*>(fftw_malloc(outputSize * sizeof(fftw_complex)));
 		fftw_plan plan = fftw_plan_dft_r2c_1d(inputSize,&sampleChunks[i][0] , output_buffer, flags);
 		fftw_execute(plan);
-		//cout << "yess" <<endl;
 		vector<double> test;
 		for (int i = 0; i < outputSize - 1;i++)
 		{
 			test.push_back((double)output_buffer[i][0]);
-			//cout <<"Frequency:"<<(48000/inputSize)*i<<" Hz "<<" Intensity: " << (double)output_buffer[i][0] << endl;
 		}
 		auto lol = max_element(test.begin(), test.end());
 		cout << i << " CHUNK: " << " Time: "<< qBeatDuration*(i+1) << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (wav.SampleRate / inputSize) << endl;
