@@ -158,8 +158,10 @@ void writeAudioBlock(HWAVEOUT hWaveOut, vector<short int> block, DWORD size)
 	header.dwBufferLength = size;
 	header.lpData = (LPSTR)&block[0];
 
-	waveOutPrepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
-	waveOutWrite(hWaveOut, &header, sizeof(WAVEHDR));
+	MMRESULT jk = waveOutPrepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
+	cout << "JK IS " << jk << endl;
+	MMRESULT lol = waveOutWrite(hWaveOut, &header, sizeof(WAVEHDR));
+	cout << "lol is " << lol << endl;
 	Sleep(500);
 	while (waveOutUnprepareHeader(hWaveOut, &header, sizeof(WAVEHDR)) == WAVERR_STILLPLAYING)
 	{
@@ -303,14 +305,17 @@ int main(int argc, char* argv[])
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
 
+	vector<short int> leftSide = EFFECTS::SIDECHAIN(left, 128, wav.SampleRate,"");
+	vector<short int> rightSide = EFFECTS::SIDECHAIN(right, 128, wav.SampleRate,"");
+
+
 	/*vector<double> leftD = filter::short_to_double(left);
 	vector<double> rightD = filter::short_to_double(right);
 
 	filter::yLapply_high_pass_filter(left,right,coefficients);*/
 	//filter::apply_filter(left, right, coef);
 	cout << "Finished \n";
-	vector<short int> data = Stereoize(left, right);
-	data = EFFECTS::SIDECHAIN(data,128,wav.SampleRate);
+	vector<short int> data = Stereoize(leftSide, rightSide);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
 	
 	writeAudioBlock(hWaveOut, data, blockSize);
