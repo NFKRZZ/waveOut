@@ -305,8 +305,13 @@ int main(int argc, char* argv[])
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
 
-	vector<short int> leftSide = EFFECTS::SIDECHAIN(left, 128, wav.SampleRate,"");
-	vector<short int> rightSide = EFFECTS::SIDECHAIN(right, 128, wav.SampleRate,"");
+	//vector<short int> leftSide = EFFECTS::SIDECHAIN(left, 128, wav.SampleRate,"ARCTAN");
+	//vector<short int> rightSide = EFFECTS::SIDECHAIN(right, 128, wav.SampleRate,"ARCTAN");
+
+	//std::pair<vector<short int>, vector<short int>> pairedProc = EFFECTS::REVERB(left, right, wav.SampleRate, 150, 0.3f);
+	auto pairedProc = EFFECTS::DELAY(left, right, 58.6, 0.3, wav.SampleRate*2);
+	vector<short int> leftSide = pairedProc.first;
+	vector<short int> rightSide = pairedProc.second;
 
 
 	/*vector<double> leftD = filter::short_to_double(left);
