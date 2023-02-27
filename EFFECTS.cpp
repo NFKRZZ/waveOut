@@ -64,7 +64,6 @@ void EFFECTS::PHASER(std::vector<short int> audioData, double RAD)
 
 std::pair<std::vector<short int>, std::vector<short int>> EFFECTS::REVERB(const std::vector<short int>& leftChannel, const std::vector<short int>& rightChannel, int sampleRate, int delayInMilliseconds, float decay)
 {
-	// Compute the delay in samples based on the sample rate
 	int delayInSamples = static_cast<int>((delayInMilliseconds / 1000.0) * sampleRate);
 
 	// Create the delay buffer
@@ -93,12 +92,11 @@ std::pair<std::vector<short int>, std::vector<short int>> EFFECTS::REVERB(const 
 		// Update the delay buffer with the current input sample
 		delayBuffer[delayIndex] = std::make_pair(reverbSampleLeft, reverbSampleRight);
 
-		// Update the output vectors with the current sample
 		outputLeftChannel[i] = reverbSampleLeft;
 		outputRightChannel[i] = reverbSampleRight;
 	}
 
-	// Return the output channels as a pair
+
 	return std::make_pair(outputLeftChannel, outputRightChannel);
 }
 
