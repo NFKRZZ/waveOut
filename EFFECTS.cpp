@@ -2,12 +2,12 @@
 #include<vector>
 #include <iostream>
 #include <string>
-
+#include<algorithm>
 std::vector<short int> EFFECTS::SIDECHAIN(std::vector<short int> audioData, double BPM, int SampleRate,std::string METHOD)//FIXED 1/4 PERIODIC
 {
 
 	float qBeatDuration = (1.0 / (BPM / 60.0)) / 0.5; 
-	int sampleSize = qBeatDuration * (SampleRate / 2); //ASSUMMING THAT THIS IS ONLY ONE SIDE OF STEREO AUDIO IF IT IS BOTH SIDES THEN REMOVE /2
+	int sampleSize = qBeatDuration * (SampleRate/2); //ASSUMMING THAT THIS IS ONLY ONE SIDE OF STEREO AUDIO IF IT IS BOTH SIDES THEN REMOVE /2
 	std::vector<double> weights(sampleSize);
 	std::vector<double> xVal(sampleSize);
 
@@ -28,12 +28,20 @@ std::vector<short int> EFFECTS::SIDECHAIN(std::vector<short int> audioData, doub
 	{
 		for (int i = 0;i < sampleSize;i++)
 		{
-			xVal[i] = 6.2831 * i / (sampleSize - 1);
+			float phaseOffset = 2 * 3.14159265358979 * sampleSize / 8.0;
+			xVal[i] = (6.2831 * i / (sampleSize - 1));
 		}
+		std::cout <<"Min Element: " << *min_element(xVal.begin(), xVal.end()) << std::endl;
+		std::cout << "Max Element: " << *max_element(xVal.begin(), xVal.end()) << std::endl;
 		for (int i = 0;i < sampleSize;i++)
 		{
 			weights[i] = ((atan(xVal[i] - 3.14159286) / 1.3) + 1) / 2;
 		}
+	}
+	else
+	{
+
+		return audioData;
 	}
 	//Periodic Weight function determined
 
@@ -64,6 +72,14 @@ void EFFECTS::PHASER(std::vector<short int> audioData, double RAD)
 
 std::pair<std::vector<short int>, std::vector<short int>> EFFECTS::REVERB(const std::vector<short int>& leftChannel, const std::vector<short int>& rightChannel, int sampleRate, int delayInMilliseconds, float decay)
 {
+
+	if (decay > 0.5f)
+	{
+		std::cout << "DECAY TOO HIGH, CLAMPED TO 0.5F" << std::endl;
+		decay = 0.5f;   //HARD THRESHOLD OF 0.5F, PAST THIS AND CLIPPING IS REALLY BAD
+	}
+
+
 	int delayInSamples = static_cast<int>((delayInMilliseconds / 1000.0) * sampleRate);
 
 	// Create the delay buffer
@@ -95,7 +111,7 @@ std::pair<std::vector<short int>, std::vector<short int>> EFFECTS::REVERB(const 
 		outputLeftChannel[i] = reverbSampleLeft;
 		outputRightChannel[i] = reverbSampleRight;
 	}
-
+	std::cout << "APPLIED REVERB EFFECT"<<std::endl;
 
 	return std::make_pair(outputLeftChannel, outputRightChannel);
 }

@@ -153,14 +153,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="EFFECTS.cpp" />
     <ClCompile Include="filter.cpp" />
     <ClCompile Include="Keys.h" />
+    <ClCompile Include="MidiMaker.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
     <ClCompile Include="waveOut.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Chunk.h" />
     <ClInclude Include="EFFECTS.h" />
+    <ClInclude Include="MidiMaker.h" />
     <ClInclude Include="MiniBpm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

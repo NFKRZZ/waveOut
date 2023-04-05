@@ -42,7 +42,7 @@ struct LIST
 	int ChunkSize;
 	char ListTypeID[4];
 };
-static int BPM = 128;
+static int BPM = 150;
 static vector<short int> getData(string file)
 {
 	vector<short int> data;
@@ -261,7 +261,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Test/setitoff.wav";
+	string file = "Test/onething.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
 	{
 		WAVE_FORMAT_PCM,	//FORMAT
 		2,					//CHANNELS
-		wav.SampleRate/1.0,	    //SAMPLE RATE
+		wav.SampleRate/1.0,	//SAMPLE RATE
 		wav.ByteRate,		//AVG BYTES PER SEC
 		wav.BlockAlign,		//BLOCK ALIGN
 		wav.BitsPerSample,	//BITS PER SAMPLE
@@ -299,28 +299,28 @@ int main(int argc, char* argv[])
 	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
 	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
 	//cout << "BPM: " << bp;
-	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,400,200 ); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
+	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,700,200 ); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
 	//                                                                                                      600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all // reason gives
 	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);                                           // cracks even at 500 hz at kicks
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
 
-	//vector<short int> leftSide = EFFECTS::SIDECHAIN(left, 128, wav.SampleRate,"ARCTAN");
-	//vector<short int> rightSide = EFFECTS::SIDECHAIN(right, 128, wav.SampleRate,"ARCTAN");
+	//vector<short int> leftSide = EFFECTS::SIDECHAIN(left, BPM, wav.SampleRate,"ARCTAN");//PHASE OFFSET NEEDDED FROM 0 - 2PI
+	//vector<short int> rightSide = EFFECTS::SIDECHAIN(right, BPM, wav.SampleRate,"ARCTAN");
 
-	//std::pair<vector<short int>, vector<short int>> pairedProc = EFFECTS::REVERB(left, right, wav.SampleRate, 150, 0.3f);
-	auto pairedProc = EFFECTS::DELAY(left, right, 58.6, 0.3, wav.SampleRate*2);
-	vector<short int> leftSide = pairedProc.first;
-	vector<short int> rightSide = pairedProc.second;
+	//std::pair<vector<short int>, vector<short int>> pairedProc = EFFECTS::REVERB(left, right, wav.SampleRate, 150, 100.5f);
+	//auto pairedProc = EFFECTS::DELAY(left, right, 58.6, 0.2f, wav.SampleRate/2);
+	//vector<short int> leftSide = pairedProc.first;
+	//vector<short int> rightSide = pairedProc.second;
 
 
-	/*vector<double> leftD = filter::short_to_double(left);
+	vector<double> leftD = filter::short_to_double(left);
 	vector<double> rightD = filter::short_to_double(right);
 
-	filter::yLapply_high_pass_filter(left,right,coefficients);*/
+	filter::yLapply_high_pass_filter(left,right,coefficients);
 	//filter::apply_filter(left, right, coef);
 	cout << "Finished \n";
-	vector<short int> data = Stereoize(leftSide, rightSide);
+	vector<short int> data = Stereoize(left, right);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
 	
 	writeAudioBlock(hWaveOut, data, blockSize);

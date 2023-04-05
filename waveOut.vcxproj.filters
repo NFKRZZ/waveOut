@@ -30,12 +30,24 @@
     <ClCompile Include="EFFECTS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Chunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MidiMaker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniBpm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EFFECTS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Chunk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MidiMaker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
