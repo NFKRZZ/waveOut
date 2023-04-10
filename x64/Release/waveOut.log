@@ -22,22 +22,39 @@ C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(133,1): warning C4244: '+
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(148,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(165,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(166,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(223,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(235,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(241,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(246,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(261,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(272,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(278,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(283,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
 C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(123,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(210,8): warning C4101: 'D': unreferenced local variable
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(219,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(238,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(274,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(274,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(275,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(276,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(277,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(289,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(337,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(339,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(340,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(267,8): warning C4101: 'block': unreferenced local variable
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(212,8): warning C4101: 'D': unreferenced local variable
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(221,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(240,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(276,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(276,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(277,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(278,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(279,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(291,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(340,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(342,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(343,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(388,20): warning C4244: 'initializing': conversion from '__int64' to 'double', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(269,8): warning C4101: 'block': unreferenced local variable
   Generating code
-  6 of 596 functions ( 1.0%) were compiled, the rest were copied from previous compilation.
+  2 of 686 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code

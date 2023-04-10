@@ -4,7 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <complex>
-
+#include <fftw3.h>
 
 using namespace std;
 class filter
@@ -212,6 +212,84 @@ public:
 		coefs[4] = norm * (1 - K);
 		return coefs;
 	}
+
+
+	static void lowPassFFTW(std::vector<short>& left, std::vector<short>& right,int sampleRate, int cuttoff)
+	{
+		// Start with Left Side
+		fftw_complex* in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * left.size());
+		fftw_complex* out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * left.size());
+
+		fftw_plan p = fftw_plan_dft_1d(left.size(), in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
+		for (int i = 0; i < left.size(); i++) 
+		{
+			in[i][0] = left[i];
+			in[i][1] = 0.0;
+		}
+
+		fftw_execute(p);
+
+		double freq_step = (double)sampleRate / left.size();
+		double cutoff_bin = cuttoff / freq_step;
+		for (int i = cutoff_bin; i < left.size() - cutoff_bin; i++) 
+		{
+			out[i][0] = 0.0;
+			out[i][1] = 0.0;
+		}
+
+		fftw_plan q = fftw_plan_dft_1d(left.size(), out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+		fftw_execute(q);
+
+		for (int i = 0; i < left.size(); i++) 
+		{
+			left[i] = in[i][0] / left.size();
+		}
+
+		//Empty Mem
+		fftw_destroy_plan(p);
+		fftw_destroy_plan(q);
+		fftw_free(in);
+		fftw_free(out);
+
+
+		//Now Do Right Side
+		std::cout << "Did left" << std::endl;
+		fftw_complex* inR = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * right.size());
+		fftw_complex* outR = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * right.size());
+
+		fftw_plan pR = fftw_plan_dft_1d(right.size(), inR, outR, FFTW_FORWARD, FFTW_ESTIMATE);
+		for (int i = 0; i < right.size(); i++)
+		{
+			inR[i][0] = right[i];
+			inR[i][1] = 0.0;
+		}
+
+		fftw_execute(pR);
+
+		double freq_stepR = (double)sampleRate / right.size();
+		double cutoff_binR = cuttoff / freq_stepR;
+		for (int i = cutoff_binR; i < right.size() - cutoff_binR; i++)
+		{
+			outR[i][0] = 0.0;
+			outR[i][1] = 0.0;
+		}
+
+		fftw_plan qR = fftw_plan_dft_1d(right.size(), outR, inR, FFTW_BACKWARD, FFTW_ESTIMATE);
+		fftw_execute(qR);
+
+		for (int i = 0; i < right.size(); i++)
+		{
+			right[i] = inR[i][0] / right.size();
+		}
+
+		//Empty Mem
+		fftw_destroy_plan(pR);
+		fftw_destroy_plan(qR);
+		fftw_free(inR);
+		fftw_free(outR);
+	}
+
 
 
 	

@@ -17,6 +17,8 @@
 #include "filter.cpp"
 #include "Keys.h"
 #include "EFFECTS.h"
+#include "Chunk.h"
+
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -317,8 +319,9 @@ int main(int argc, char* argv[])
 	vector<double> leftD = filter::short_to_double(left);
 	vector<double> rightD = filter::short_to_double(right);
 
-	filter::yLapply_high_pass_filter(left,right,coefficients);
+	//filter::yLapply_high_pass_filter(left,right,coefficients);
 	//filter::apply_filter(left, right, coef);
+	filter::lowPassFFTW(left, right, wav.SampleRate, 1000);
 	cout << "Finished \n";
 	vector<short int> data = Stereoize(left, right);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
@@ -348,6 +351,8 @@ int main(int argc, char* argv[])
 	cout << audiodata[0] << endl;
 	sampleChunks.resize(numOfChunks);
 	int N = 10;
+
+	vector<Chunk> chunkData;
 
 	for (int i = 0;i < numOfChunks;i++)
 	{
@@ -380,6 +385,12 @@ int main(int argc, char* argv[])
 		auto lol = max_element(test.begin(), test.end());
 		cout << i << " CHUNK: " << " Time: "<< qBeatDuration*(i+1) << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (wav.SampleRate / inputSize) << endl;
 
+		double frequency = distance(begin(test), lol) * (wav.SampleRate / inputSize);
+		vector<double> freqVector = { frequency };
+		vector<double> intenVector = { 1.0 };
+
+		Chunk chunk = Chunk(make_pair(freqVector,intenVector), i, qBeatDuration * (i + 1), qBeatDuration * (i + 2));
+		chunkData.push_back(chunk);
 		//get nth top frequencies
 		vector<size_t> index(test.size());
 		iota(test.begin(), test.end(), 0);
@@ -390,7 +401,7 @@ int main(int argc, char* argv[])
 
 	}
 
-
+	cout << "Length of ChunkData " << chunkData.size() << " \n";
 	
 	cout << "Finished";
 
