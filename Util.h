@@ -76,5 +76,8 @@ public:
 		outFile.write(reinterpret_cast<char*>(&header), sizeof(header));
 
 	}
+
+
+
 };
 

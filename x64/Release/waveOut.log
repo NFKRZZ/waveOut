@@ -1,4 +1,6 @@
 ﻿  waveOut.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(72,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(33,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
           with
           [
@@ -71,8 +73,6 @@ C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(451,25): warning C4244: '
               _Ty=short
           ]
 C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(123,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Util.h(72,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(212,8): warning C4101: 'D': unreferenced local variable
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(221,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(240,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data

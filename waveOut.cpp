@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
 	
 	//writeAudioBlock(hWaveOut, data, blockSize);
-	//waveOutClose(hWaveOut);
+	///waveOutClose(hWaveOut);
 
 
 

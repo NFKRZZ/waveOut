@@ -5,7 +5,7 @@
 #include <numeric>
 #include <complex>
 #include <fftw3.h>
-
+#include "Util.h"
 using namespace std;
 class filter
 {
@@ -448,9 +448,8 @@ public:
 
 		for (int i = 0; i < right.size(); i++)
 		{
-			right[i] = inR[i][0] / right.size();
+			right[i] = inR[i][0] / right.size(); // float values are still too high, so clipping happens 
 		}
-
 		//Hann Window
 		
 
