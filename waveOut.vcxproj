@@ -159,6 +159,7 @@
     <ClCompile Include="Keys.h" />
     <ClCompile Include="MidiMaker.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
+    <ClCompile Include="Util.cpp" />
     <ClCompile Include="waveOut.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +167,7 @@
     <ClInclude Include="EFFECTS.h" />
     <ClInclude Include="MidiMaker.h" />
     <ClInclude Include="MiniBpm.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

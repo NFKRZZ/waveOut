@@ -18,7 +18,7 @@
 #include "Keys.h"
 #include "EFFECTS.h"
 #include "Chunk.h"
-
+#include "Util.h"
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -321,13 +321,13 @@ int main(int argc, char* argv[])
 
 	//filter::yLapply_high_pass_filter(left,right,coefficients);
 	//filter::apply_filter(left, right, coef);
-	filter::lowPassFFTW(left, right, wav.SampleRate, 1000);
+	filter::lowPassFFTW_HannWindow(left, right, wav.SampleRate, 500); // apply window function
 	cout << "Finished \n";
 	vector<short int> data = Stereoize(left, right);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
 	
-	writeAudioBlock(hWaveOut, data, blockSize);
-	waveOutClose(hWaveOut);
+	//writeAudioBlock(hWaveOut, data, blockSize);
+	//waveOutClose(hWaveOut);
 
 
 
@@ -408,5 +408,11 @@ int main(int argc, char* argv[])
 
 	//WRITE TO MIDI
 
+
+
+	//create Wav
+	string fName = "data.wav";
+	Util::createWavFile(data,wav.ChunkSize,fName);
+	
 	return 0;
 }

@@ -38,7 +38,41 @@ C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(283,25): warning C4244: '
           [
               _Ty=short
           ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(299,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(316,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(327,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(341,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(357,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(363,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(368,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(389,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(401,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(407,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(412,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(429,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(440,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(446,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(451,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
 C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(123,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(72,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(212,8): warning C4101: 'D': unreferenced local variable
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(221,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(240,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
@@ -54,8 +88,8 @@ C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(343,53): warning C4267: 
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(388,20): warning C4244: 'initializing': conversion from '__int64' to 'double', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(269,8): warning C4101: 'block': unreferenced local variable
   Generating code
-  2 of 686 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+  1 of 695 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Release\waveOut.exe
