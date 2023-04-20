@@ -19,6 +19,7 @@
 #include "EFFECTS.h"
 #include "Chunk.h"
 #include "Util.h"
+#include "HighQuality.h"
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -263,7 +264,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Test/onething.wav";
+	string file = "Test/sweclubberz.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -321,15 +322,16 @@ int main(int argc, char* argv[])
 
 	//filter::yLapply_high_pass_filter(left,right,coefficients);
 	//filter::apply_filter(left, right, coef);
-	filter::lowPassFFTW_HannWindow(left, right, wav.SampleRate, 500); // apply window function
-	cout << "Finished \n";
+	filter::lowPassFFTW_HannWindow(left, right, wav.SampleRate, 1000); // apply window function
+	cout << "Finished oh yea \n";
 	vector<short int> data = Stereoize(left, right);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
 	
 	//writeAudioBlock(hWaveOut, data, blockSize);
-	///waveOutClose(hWaveOut);
+	//waveOutClose(hWaveOut);
 
-
+	HighQuality l("Test/sweclubberz.wav");
+	l.Init();
 
 
 

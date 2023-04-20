@@ -6,6 +6,7 @@
 #include <complex>
 #include <fftw3.h>
 #include "Util.h"
+#include <math.h>
 using namespace std;
 class filter
 {
@@ -406,13 +407,13 @@ public:
 
 		fftw_plan q = fftw_plan_dft_1d(left.size(), out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
 		fftw_execute(q);
-
 		for (int i = 0; i < left.size(); i++)
 		{
-			left[i] = in[i][0] / left.size();
+			left[i] = in[i][0] / (left.size()*1.25);
 		}
 		//Hann Window
 		
+
 
 		//Empty Mem
 		fftw_destroy_plan(p);
@@ -422,7 +423,7 @@ public:
 
 
 		//Now Do Right Side
-		std::cout << "Did left" << std::endl;
+		std::cout << "Did left asdasd" << std::endl;
 		fftw_complex* inR = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * right.size());
 		fftw_complex* outR = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * right.size());
 
@@ -446,9 +447,11 @@ public:
 		fftw_plan qR = fftw_plan_dft_1d(right.size(), outR, inR, FFTW_BACKWARD, FFTW_ESTIMATE);
 		fftw_execute(qR);
 
+		
+
 		for (int i = 0; i < right.size(); i++)
 		{
-			right[i] = inR[i][0] / right.size(); // float values are still too high, so clipping happens 
+			right[i] = inR[i][0] / (right.size()*1.25);  // float values are still too high, so clipping happens 
 		}
 		//Hann Window
 		
