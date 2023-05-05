@@ -407,9 +407,21 @@ public:
 
 		fftw_plan q = fftw_plan_dft_1d(left.size(), out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
 		fftw_execute(q);
+
+		//Get max value of Inverted FFT imag and real
+		std::vector<double> normsL(left.size());
 		for (int i = 0; i < left.size(); i++)
 		{
-			left[i] = in[i][0] / (left.size()*1.25);
+			double real = in[i][0];
+			double imag = in[i][1];
+			normsL[i] = std::sqrt(real * real + imag * imag);
+		}
+		double maxValL = *std::max_element(normsL.begin(), normsL.end());
+
+
+		for (int i = 0; i < left.size(); i++)
+		{
+			left[i] = in[i][0] /maxValL *32766;
 		}
 		//Hann Window
 		
@@ -447,11 +459,21 @@ public:
 		fftw_plan qR = fftw_plan_dft_1d(right.size(), outR, inR, FFTW_BACKWARD, FFTW_ESTIMATE);
 		fftw_execute(qR);
 
+		//Get Max value in inverted FFT array imag and real
+		std::vector<double> norms(right.size());
+		for (int i = 0; i < right.size(); i++) 
+		{
+			double real = inR[i][0];
+			double imag = inR[i][1];
+			norms[i] = std::sqrt(real * real + imag * imag);
+		}
+		double maxVal = *std::max_element(norms.begin(), norms.end());
 		
+
 
 		for (int i = 0; i < right.size(); i++)
 		{
-			right[i] = inR[i][0] / (right.size()*1.25);  // float values are still too high, so clipping happens 
+			right[i] = inR[i][0] / maxVal *32766;  // float values are still too high, so clipping happens 
 		}
 		//Hann Window
 		

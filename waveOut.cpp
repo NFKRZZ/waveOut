@@ -264,7 +264,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Test/sweclubberz.wav";
+	string file = "Test/transeuterz.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -330,8 +330,8 @@ int main(int argc, char* argv[])
 	//writeAudioBlock(hWaveOut, data, blockSize);
 	//waveOutClose(hWaveOut);
 
-	HighQuality l("Test/sweclubberz.wav");
-	l.Init();
+	//HighQuality l("Test/nightdrive.wav");
+	//l.Init();
 
 
 
