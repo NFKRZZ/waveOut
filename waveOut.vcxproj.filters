@@ -42,6 +42,12 @@
     <ClCompile Include="HighQuality.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FUNCTIONS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GLOBAL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniBpm.h">
@@ -60,6 +66,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HighQuality.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FUNCTIONS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLOBAL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

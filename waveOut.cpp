@@ -20,6 +20,9 @@
 #include "Chunk.h"
 #include "Util.h"
 #include "HighQuality.h"
+#include "GLOBAL.h"
+#include "MidiMaker.h"
+#include <iomanip>
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -264,7 +267,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Test/transeuterz.wav";
+	string file = "Test/nightdrive.wav";
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -308,21 +311,10 @@ int main(int argc, char* argv[])
 	vector<short> left = dat1.first;
 	vector<short> right = dat1.second;
 
-	//vector<short int> leftSide = EFFECTS::SIDECHAIN(left, BPM, wav.SampleRate,"ARCTAN");//PHASE OFFSET NEEDDED FROM 0 - 2PI
-	//vector<short int> rightSide = EFFECTS::SIDECHAIN(right, BPM, wav.SampleRate,"ARCTAN");
-
-	//std::pair<vector<short int>, vector<short int>> pairedProc = EFFECTS::REVERB(left, right, wav.SampleRate, 150, 100.5f);
-	//auto pairedProc = EFFECTS::DELAY(left, right, 58.6, 0.2f, wav.SampleRate/2);
-	//vector<short int> leftSide = pairedProc.first;
-	//vector<short int> rightSide = pairedProc.second;
-
-
 	vector<double> leftD = filter::short_to_double(left);
 	vector<double> rightD = filter::short_to_double(right);
 
-	//filter::yLapply_high_pass_filter(left,right,coefficients);
-	//filter::apply_filter(left, right, coef);
-	filter::lowPassFFTW_HannWindow(left, right, wav.SampleRate, 1000); // apply window function
+	
 	cout << "Finished oh yea \n";
 	vector<short int> data = Stereoize(left, right);
 	cout<<"Max Value is : " << *max_element(data.begin(), data.end()) << endl;
@@ -333,28 +325,99 @@ int main(int argc, char* argv[])
 	//HighQuality l("Test/nightdrive.wav");
 	//l.Init();
 
+	int cuttoff_f = 650;
+	vector<short> leftLowPass = dat1.first;
+	vector<short> rightLowPass = dat1.second;
+	filter::lowPassFFTW_HannWindow(leftLowPass, rightLowPass, wav.SampleRate, cuttoff_f);
+	vector<short int> lowPassDat = Stereoize(leftLowPass, rightLowPass);
+	leftLowPass.clear();
+	rightLowPass.clear();
+	leftLowPass.shrink_to_fit();
+	rightLowPass.shrink_to_fit();
+
+
+	vector<short> leftHighPass = dat1.first;
+	vector<short> rightHighPass = dat1.second;
+	filter::highPassFFTW(leftHighPass, rightHighPass, wav.SampleRate, cuttoff_f);
+	vector<short int> highPassDat = Stereoize(leftHighPass, rightHighPass);
+
+	leftHighPass.clear();
+	rightHighPass.clear();
+	leftHighPass.shrink_to_fit();
+	rightHighPass.shrink_to_fit();
+
+
+	float twoBeatDuration = (1 / (BPM / 60.0)) / 0.5;
+	float qBeatDuration = (1.0 / (BPM / 60.0)) / 4.0;
+	
+	GLOBAL::qBeatDuration = qBeatDuration;
+	GLOBAL::sampleRate = wav.SampleRate;
+	GLOBAL::twoBeatDuration = twoBeatDuration;
+
+	int sampleSizeQuart = qBeatDuration * wav.SampleRate;
+	int sampleSizeTwo = twoBeatDuration * wav.SampleRate;
+	//LOW PASS HAS MORE SAMPLES FOR FINER RES; HIGH PASS HAS LESS SAMPLES CUZ LESS RES NEEDED
+	int numOfChunkQuart = highPassDat.size() / sampleSizeQuart;
+	int numOfChunkTwo =	lowPassDat.size() / sampleSizeTwo;
+
+	vector<double> lowPassDatDouble(lowPassDat.begin(), lowPassDat.end());
+	vector<double> highPassDatDouble(highPassDat.begin(), highPassDat.end());
+
+	vector<vector<double>> sampleChunkQuart;
+	vector<vector<double>> sampleChunkTwo;
+
+
+
+
+
+
 
 
 	pair<vector<short int>, vector<short int>> dat = LeftRight(data);//use pcmData for unfiltered fft, data for filtered fft
 	vector<short int> preProcData = Consolidate(dat.first, dat.second);
 	vector<double> audiodata(preProcData.begin(), preProcData.end());
 	cout << "BPM: " << BPM << endl;
-	float qBeatDuration = (1.0 / (BPM / 60.0)) / 4.0; //incapable of doing 1/16th analysis
 	cout << qBeatDuration<<endl;
 	int sampleSize = qBeatDuration * (wav.SampleRate/2);
 	int numOfChunks = audiodata.size() /( sampleSize*2);
-	cout << sampleSize << endl;
+	cout <<"THIS IS SAMPLESIZE MAIN FUNC " << sampleSize << endl;
 	cout << "Length of Audio is " << numOfChunks * qBeatDuration << " seconds \n";
 	vector<vector<double>> sampleChunks;
 	int inputSize = 1024;//4096 wont work; possible error in how the output data is being stored
 	int outputSize = (inputSize / 2) + 1;
 	int flags = FFTW_ESTIMATE;
-	cout << "HELLO " <<numOfChunks <<endl;
-	cout << audiodata[0] << endl;
+	cout << "HELLO THIS IS NUMOFCHUNKS MAIN FUNC " <<numOfChunks <<endl;
+	cout <<"THIS IS AUDIODATA SIZE MAIN FUNC " << audiodata.size() << endl;
+
+	cout << "THIS IS qBEAT MAIN " << std::setprecision(15) <<qBeatDuration << endl;
+
 	sampleChunks.resize(numOfChunks);
 	int N = 10;
 
 	vector<Chunk> chunkData;
+	cout << "starting chunk haha" << endl;
+	pair<vector<short int>, vector<short int>> lowP = LeftRight(lowPassDat);
+
+	cout << "THIS IS LOWPASS DAT SIZE: " << lowPassDat.size() << endl;
+
+
+	vector<short int> lowPP = Consolidate(lowP.first, lowP.second);
+	cout << "THIS IS LOWPP SIZE: " << lowPP.size()<<endl;
+	vector<Chunk> cDat = MidiMaker::lowPass(lowPP);
+
+	for (int hh = 0;hh < cDat.size();hh++)
+	{
+		cout << "THIS IS CHUNK FREQ: " << cDat[hh].getFreqV()[0] << endl;
+		cout << "THIS IS CHUNK FREQ 2: " << cDat[hh].getFreqV()[1] << endl;
+		cout << "THIS IS CHUNK FREQ 3: " << cDat[hh].getFreqV()[2] << endl;
+	} 
+
+
+
+
+
+
+
 
 	for (int i = 0;i < numOfChunks;i++)
 	{
@@ -414,7 +477,7 @@ int main(int argc, char* argv[])
 
 	//create Wav
 	string fName = "data.wav";
-	Util::createWavFile(data,wav.ChunkSize,fName);
+	Util::createWavFile(lowPassDat,wav.ChunkSize,fName);
 	
 	return 0;
 }
