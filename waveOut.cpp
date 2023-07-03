@@ -325,11 +325,14 @@ int main(int argc, char* argv[])
 	//HighQuality l("Test/nightdrive.wav");
 	//l.Init();
 
-	int cuttoff_f = 650;
+	int cuttoff_f = 500;
 	vector<short> leftLowPass = dat1.first;
 	vector<short> rightLowPass = dat1.second;
 	filter::lowPassFFTW_HannWindow(leftLowPass, rightLowPass, wav.SampleRate, cuttoff_f);
 	vector<short int> lowPassDat = Stereoize(leftLowPass, rightLowPass);
+
+
+
 	leftLowPass.clear();
 	rightLowPass.clear();
 	leftLowPass.shrink_to_fit();
@@ -338,7 +341,7 @@ int main(int argc, char* argv[])
 
 	vector<short> leftHighPass = dat1.first;
 	vector<short> rightHighPass = dat1.second;
-	filter::highPassFFTW(leftHighPass, rightHighPass, wav.SampleRate, cuttoff_f);
+	filter::highPassFFTW(leftHighPass, rightHighPass, wav.SampleRate, 2000);
 	vector<short int> highPassDat = Stereoize(leftHighPass, rightHighPass);
 
 	leftHighPass.clear();
@@ -477,7 +480,9 @@ int main(int argc, char* argv[])
 
 	//create Wav
 	string fName = "data.wav";
+	string lola = "high.wav";
 	Util::createWavFile(lowPassDat,wav.ChunkSize,fName);
+	Util::createWavFile(highPassDat, wav.ChunkSize, lola);
 	
 	return 0;
 }

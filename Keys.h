@@ -2,7 +2,7 @@ static enum class Keys
 {
 	C_0 = 16,
 	C_SHARP_0 = 17,
-	D = 18,
+	D_0 = 18,
 	D_SHARP_0 = 19,
 	E_0 = 21,
 	F_0 = 22,
@@ -20,6 +20,7 @@ static enum class Keys
 	F_1 = 44,
 	F_SHARP_1 = 46,
 	G_1 = 49,
+	G_SHARP_1=52,
 	A_1 = 55,
 	A_SHARP_1 = 58,
 	B_1 = 62,
