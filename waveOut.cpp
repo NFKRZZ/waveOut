@@ -268,7 +268,7 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 int main(int argc, char* argv[])
 {
     //C:/Users/winga/Music
-	string file = "Test/tokyo sunrise.wav";
+	string file = "Test/lostinspace.wav";
 
 	Key SONG_KEY = Key::A_MAJOR;
 
