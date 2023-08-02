@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "Keys.h"
 class Chunk
 {
 public:
@@ -36,6 +37,7 @@ public:
 		return freqVec;
 	}
 
+	void clampKeys(std::vector<double> freq);
 
 private:
 	bool singular;
@@ -47,7 +49,8 @@ private:
 	double end;
 	std::vector<double> freqVec;
 	std::vector<double> intenVec;
-
+	std::vector<Keys> keyVec;
+	Keys key;
 
 };
 

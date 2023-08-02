@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Binasc.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="EFFECTS.cpp" />
     <ClCompile Include="filter.cpp" />
@@ -160,19 +161,30 @@
     <ClCompile Include="GLOBAL.cpp" />
     <ClCompile Include="HighQuality.cpp" />
     <ClCompile Include="Keys.h" />
+    <ClCompile Include="MidiEvent.cpp" />
+    <ClCompile Include="MidiEventList.cpp" />
+    <ClCompile Include="MidiFile.cpp" />
     <ClCompile Include="MidiMaker.cpp" />
+    <ClCompile Include="MidiMessage.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
+    <ClCompile Include="Options.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="waveOut.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Binasc.h" />
     <ClInclude Include="Chunk.h" />
     <ClInclude Include="EFFECTS.h" />
     <ClInclude Include="FUNCTIONS.h" />
     <ClInclude Include="GLOBAL.h" />
     <ClInclude Include="HighQuality.h" />
+    <ClInclude Include="MidiEvent.h" />
+    <ClInclude Include="MidiEventList.h" />
+    <ClInclude Include="MidiFile.h" />
     <ClInclude Include="MidiMaker.h" />
+    <ClInclude Include="MidiMessage.h" />
     <ClInclude Include="MiniBpm.h" />
+    <ClInclude Include="Options.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

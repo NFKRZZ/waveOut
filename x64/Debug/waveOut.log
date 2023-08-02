@@ -1,19 +1,4 @@
-﻿  Keys.h
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(124,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-  MidiMaker.cpp
-C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(31,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(124,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(913,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(914,60): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(929,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(943,36): warning C4018: '<': signed/unsigned mismatch
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1003,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1004,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1019,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1033,36): warning C4018: '<': signed/unsigned mismatch
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1093,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1095,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1110,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(1124,36): warning C4018: '<': signed/unsigned mismatch
-  Generating Code...
+﻿  GLOBAL.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
   waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe

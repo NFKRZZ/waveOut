@@ -104,22 +104,28 @@ public:
 	// PUT TWO FUNCTIONS THAT USE LONG FOR MORE PRECISION
 	static void yLapply_high_pass_filter(std::vector<short>& left_channel, std::vector<short>& right_channel, const std::vector<long double>& coefficients) {
 		size_t num_taps = coefficients.size();
+		vector<double> leftC;
+		leftC.resize(left_channel.size());
+
+		vector<double> rightC;
+		rightC.resize(right_channel.size());
+
 
 		// Apply the filter to the left channel.
 		for (size_t i = 0; i < left_channel.size(); i++) {
 			if (i + num_taps <= left_channel.size())
 			{
-				short filtered_sample = 0;
+				double filtered_sample = 0;
 
 				for (size_t j = 0; j < num_taps; j++)
 				{
 					filtered_sample += coefficients[j] * left_channel[i + j];
 				}
-				left_channel[i] = filtered_sample;
+				leftC[i] = filtered_sample;
 			}
 			else
 			{
-				left_channel[i] = 0;
+				leftC[i] = 0;
 			}
 		}
 		cout << "yesssa" << endl;
@@ -128,20 +134,84 @@ public:
 		{
 			if (i + num_taps <= right_channel.size())
 			{
-				short filtered_sample = 0;
+				double filtered_sample = 0;
 				for (size_t j = 0; j < num_taps; j++)
 				{
 					filtered_sample += coefficients[j] * right_channel[i + j];
 				}
-				right_channel[i] = filtered_sample;
+				rightC[i] = filtered_sample;
 			}
 			else
 			{
-				right_channel[i] = 0;
+				rightC[i] = 0;
 			}
 		}
+
+		double maxValLeft = fabs(leftC[0]);
+		double maxValRight = fabs(rightC[0]);
+
+		for (size_t j = 1; j < leftC.size(); j++)
+		{
+			double absValLeft = fabs(leftC[j]);
+			if (absValLeft > maxValLeft)
+			{
+				maxValLeft = absValLeft;
+			}
+		}
+
+		for (size_t k = 1; k < rightC.size(); k++)
+		{
+			double absValRight = fabs(rightC[k]);
+			if (absValRight > maxValRight)
+			{
+				maxValRight = absValRight;
+			}
+		}
+
+
+		std::cout << "THIS IS MAX VALUE OF LEFT: " << maxValLeft << endl;
+		std::cout << "THIS IS MAX VALUE OF RIGHT: " << maxValRight << endl;
+
+		double maxi = (maxValLeft > maxValRight) ? maxValLeft : maxValRight;
+
+		std::cout << "THIS IS MAXI: " << maxi << endl;
+
+		double scaling_factor = maxi / (SHRT_MAX);
+
+		for (size_t i = 0;i < left_channel.size();i++)
+		{
+			double hey = leftC[i] / scaling_factor;
+			if (hey >= SHRT_MAX)
+			{
+				std::cout << "LEFT SIDE EXCEEDED MAX VALUE AT: " << i << " WITH VALUE: " << hey<<endl;
+				hey--;
+				
+			}
+
+			left_channel[i] = hey;
+		}
+		for (size_t i = 0;i < right_channel.size();i++)
+		{
+			double hey = rightC[i] / scaling_factor;
+			if (hey >= SHRT_MAX)
+			{
+				std::cout << "RIGHT SIDE EXCEEDED MAX VALUE AT: " << i << " WITH VALUE: " << hey<<endl;
+				hey--;
+			}
+
+			right_channel[i] = hey;
+		}
+
+		
+
+
 	}
 	//-----------------------------------------------------------------------------------------------------------------------------------
+
+	static void yLapply_low_pass_filter(std::vector<short>& left_channel, std::vector<short>& right_channel, const std::vector<long double>& coefficients)
+	{
+
+	}
 
 
 	static std::vector<double> short_to_double(std::vector<short>& audio)
@@ -212,6 +282,11 @@ public:
 		coefs[3] = 2 * norm * (K - 1);
 		coefs[4] = norm * (1 - K);
 		return coefs;
+	}
+
+	static std::vector<long double> highpass_coefficients(long double fc, long double Ts)
+	{
+
 	}
 
 
@@ -291,7 +366,7 @@ public:
 		fftw_free(outR);
 	}
 
-	static void highPassFFTW(std::vector<short>& left, std::vector<short>& right, int sampleRate, int cutoff)
+	static void highPassFFTW(std::vector<short>& left, std::vector<short>& right, int sampleRate, int cutoff)//ADD NORMALIZATION FACTOR!!!!!!
 	{
 		//Left Side
 		fftw_complex* in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * left.size());
@@ -319,13 +394,26 @@ public:
 			out[i][0] = 0.0;
 			out[i][1] = 0.0;
 		}
+
 		//go back to time domain
 		fftw_plan q = fftw_plan_dft_1d(left.size(), out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
 		fftw_execute(q);
 
+		//Get max value of Inverted FFT imag and real
+		std::vector<double> normsL(left.size());
 		for (int i = 0; i < left.size(); i++)
 		{
-			left[i] = in[i][0] / left.size();
+			double real = in[i][0];
+			double imag = in[i][1];
+			normsL[i] = std::sqrt(real * real + imag * imag);
+		}
+		double maxValL = *std::max_element(normsL.begin(), normsL.end());
+
+
+
+		for (int i = 0; i < left.size(); i++)
+		{
+			left[i] = in[i][0] / maxValL*32766;
 		}
 
 		//Empty Mem
@@ -363,10 +451,18 @@ public:
 
 		fftw_plan qR = fftw_plan_dft_1d(right.size(), outR, inR, FFTW_BACKWARD, FFTW_ESTIMATE);
 		fftw_execute(qR);
+		std::vector<double> norms(right.size());
+		for (int i = 0; i < right.size(); i++)
+		{
+			double real = inR[i][0];
+			double imag = inR[i][1];
+			norms[i] = std::sqrt(real * real + imag * imag);
+		}
+		double maxVal = *std::max_element(norms.begin(), norms.end());
 
 		for (int i = 0; i < right.size(); i++)
 		{
-			right[i] = inR[i][0] / right.size();
+			right[i] = inR[i][0] / maxVal*32766;
 		}
 
 		//Empty Mem

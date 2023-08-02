@@ -267,7 +267,12 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
-	string file = "Test/nightdrive.wav";
+    //C:/Users/winga/Music
+	string file = "Test/tokyo sunrise.wav";
+
+	Key SONG_KEY = Key::A_MAJOR;
+
+
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -294,18 +299,10 @@ int main(int argc, char* argv[])
 	vector<short int> pcmData = getData(file);
 	int pcmSize = sizeof(short int) * pcmData.size();
 	cout << "PCMDATA SIZE  " << pcmSize <<endl;
-	/*if ((block = loadAudioBlock("someone.raw", &blockSize)) == NULL)//get from wav
-	{
-		printf("Cant load file\n");
-		ExitProcess(1);
-	}*/
 	blockSize = pcmSize;
-
 	printf("LOADED BLOCK\n");
-	//breakfastquay::MiniBPM bpm(wav.SampleRate); // Must consolidate samples for both samples into 1 and divide by 2 to keep regular amplitude
-	//double bp = bpm.estimateTempoOfSamples((float*)&pcmData[0], pcmData.size());
-	//cout << "BPM: " << bp;
-	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,700,200 ); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
+	
+	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,1000,1000 ); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
 	//                                                                                                      600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all // reason gives
 	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);                                           // cracks even at 500 hz at kicks
 	vector<short> left = dat1.first;
@@ -325,7 +322,7 @@ int main(int argc, char* argv[])
 	//HighQuality l("Test/nightdrive.wav");
 	//l.Init();
 
-	int cuttoff_f = 500;
+	int cuttoff_f = 1000;
 	vector<short> leftLowPass = dat1.first;
 	vector<short> rightLowPass = dat1.second;
 	filter::lowPassFFTW_HannWindow(leftLowPass, rightLowPass, wav.SampleRate, cuttoff_f);
@@ -341,13 +338,25 @@ int main(int argc, char* argv[])
 
 	vector<short> leftHighPass = dat1.first;
 	vector<short> rightHighPass = dat1.second;
-	filter::highPassFFTW(leftHighPass, rightHighPass, wav.SampleRate, 2000);
+	filter::highPassFFTW(leftHighPass, rightHighPass, wav.SampleRate, cuttoff_f);
 	vector<short int> highPassDat = Stereoize(leftHighPass, rightHighPass);
 
 	leftHighPass.clear();
 	rightHighPass.clear();
 	leftHighPass.shrink_to_fit();
 	rightHighPass.shrink_to_fit();
+
+
+
+	/////////////////////////LOW PASS CONVOLUTION////////////////////////////
+
+	vector<short> properL = dat1.first;
+	vector<short> properR = dat1.second;
+	filter::yLapply_high_pass_filter(properL, properR, coefficients);
+	vector<short> convolutionData = Stereoize(properL, properR);
+
+	//////////////////////////////////////////////////////////////////////////
+
 
 
 	float twoBeatDuration = (1 / (BPM / 60.0)) / 0.5;
@@ -471,7 +480,7 @@ int main(int argc, char* argv[])
 
 	cout << "Length of ChunkData " << chunkData.size() << " \n";
 	
-	cout << "Finished";
+	cout << "Finished\n";
 
 
 	//WRITE TO MIDI
@@ -481,8 +490,11 @@ int main(int argc, char* argv[])
 	//create Wav
 	string fName = "data.wav";
 	string lola = "high.wav";
+	string smar = "proper.wav";
 	Util::createWavFile(lowPassDat,wav.ChunkSize,fName);
 	Util::createWavFile(highPassDat, wav.ChunkSize, lola);
-	
+	Util::createWavFile(convolutionData, wav.ChunkSize, smar);
+	MidiMaker::doSomething();
+
 	return 0;
 }

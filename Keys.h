@@ -1,3 +1,5 @@
+#pragma once
+
 static enum class Keys
 {
 	C_0 = 16,
@@ -121,4 +123,20 @@ static enum class Keys
 	A_SHARP_9 = 14917,
 	B_9 = 15804
 
+};
+static enum class Key
+{
+	NO_KEY,
+	C_MAJOR,
+	C_SHARP_MAJOR,
+	D_MAJOR,
+	D_SHARP_MAJOR,
+	E_MAJOR,
+	F_MAJOR,
+	F_SHARP_MAJOR,
+	G_MAJOR,
+	G_SHARP_MAJOR,
+	A_MAJOR,
+	A_SHARP_MAJOR,
+	B_MAJOR
 };
