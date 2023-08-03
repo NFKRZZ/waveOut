@@ -98,7 +98,7 @@ public:
 
 		std::wstring nameOfDevice(varName.pwszVal);
 
-		cout << "This is the audio device using Friendlyname method selected: " << nameOfDevice.c_str() << endl;
+		////cout << "This is the audio device using Friendlyname method selected: " << nameOfDevice.c_str() << endl;
 		//Create render client for Audio
 
 		IAudioClient* pAudioClient = nullptr;

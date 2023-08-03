@@ -3,7 +3,7 @@
 #include <string>
 #include <ios>
 #include <fstream>
-
+#include "Keys.h"
 using namespace std;
 class Util
 {
@@ -77,7 +77,7 @@ public:
 
 	}
 
-
+	static string getEnumString(Keys key);
 
 };
 

@@ -1,27 +1,7 @@
-﻿  Chunk.cpp
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(33,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-  Keys.h
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
-  MidiMaker.cpp
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(33,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(34,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(35,60): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(50,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(64,36): warning C4018: '<': signed/unsigned mismatch
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(125,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(126,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(141,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(155,36): warning C4018: '<': signed/unsigned mismatch
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(216,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(218,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(233,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(247,36): warning C4018: '<': signed/unsigned mismatch
+﻿  Scanning sources for module dependencies...
   waveOut.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
 C:\Users\winga\source\repos\waveOut\waveOut\Util.h(72,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
@@ -95,9 +75,7 @@ C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244: '
           [
               _Ty=short
           ]
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(33,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(36,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(216,8): warning C4101: 'D': unreferenced local variable
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(225,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(244,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
@@ -115,7 +93,6 @@ C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(372,60): warning C4267: 
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(373,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(393,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(394,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(465,20): warning C4244: 'initializing': conversion from '__int64' to 'double', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(500,20): warning C4244: 'initializing': conversion from '__int64' to 'double', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(278,8): warning C4101: 'block': unreferenced local variable
-  Generating Code...
   waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe

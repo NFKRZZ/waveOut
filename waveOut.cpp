@@ -268,9 +268,9 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 int main(int argc, char* argv[])
 {
     //C:/Users/winga/Music
-	string file = "Test/lostinspace.wav";
+	string file = "Test/callonme.wav";
 
-	Key SONG_KEY = Key::G_SHARP_MAJOR;
+	Key SONG_KEY = Key::D_MAJOR;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
 
 	cout << file << endl;
@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
 	//HighQuality l("Test/nightdrive.wav");
 	//l.Init();
 
-	int cuttoff_f = 1000;
+	int cuttoff_f = 200;
 	vector<short> leftLowPass = dat1.first;
 	vector<short> rightLowPass = dat1.second;
 	filter::lowPassFFTW_HannWindow(leftLowPass, rightLowPass, wav.SampleRate, cuttoff_f);
@@ -409,13 +409,48 @@ int main(int argc, char* argv[])
 	vector<Chunk> chunkData;
 	cout << "starting chunk haha" << endl;
 	pair<vector<short int>, vector<short int>> lowP = LeftRight(lowPassDat);
+	pair<vector<short int>, vector<short int>> highP = LeftRight(highPassDat);
+
 
 	cout << "THIS IS LOWPASS DAT SIZE: " << lowPassDat.size() << endl;
 
 
 	vector<short int> lowPP = Consolidate(lowP.first, lowP.second);
+	vector<short int> highPP = Consolidate(highP.first, highP.second);
 	cout << "THIS IS LOWPP SIZE: " << lowPP.size()<<endl;
 	vector<Chunk> cDat = MidiMaker::lowPass(lowPP);
+	vector<Chunk> midPass = MidiMaker::bandPass(highPP); //I THINK CHUNKS ARENT BEING DONE PROPERLY TIMING IS WRONG
+
+
+	for (Chunk c : cDat)
+	{
+		vector<Keys> p = c.getKeyVec();
+		for (Keys l : p)
+		{
+			
+			cout << "Low Pass iteration: "<< c.getIter()<<" TIME: "<<c.getStart() <<" to "<<c.getEnd() << " Key: " << Util::getEnumString(l) << endl;
+		}
+	}
+
+	for (Chunk q : midPass)
+	{
+		vector<Keys> p = q.getKeyVec();
+		for (Keys l : p)
+		{
+			cout << "High Pass iteration: " << q.getIter() <<" TIME: "<<q.getStart()<<" to "<<q.getEnd() << " Key: " << Util::getEnumString(l) << endl;
+		}
+	}
+
+
+
+
+
+
+
+	
+
+
+
 
 	for (int hh = 0;hh < cDat.size();hh++)
 	{

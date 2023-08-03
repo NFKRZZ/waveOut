@@ -98,3 +98,22 @@ void Chunk::clampKeys()//HI
 		}
 		//std::cout << "FINI" << std::endl;
 }
+void Chunk::setTime()
+{
+	float startTime = this->chunkDuration * this->iter;
+
+	float endTime = this->chunkDuration * this->iter + 1;
+
+	this->startMinute = static_cast<int>(startTime / 60);
+	this->startSecond = static_cast<int>(startTime) % 60;
+	this->startMili = static_cast<int>(std::round((startTime - static_cast<float>(startSecond) - static_cast<float>(startMinute) * 60) * 1000));
+
+	this->endMinute = static_cast<int>(endTime / 60);
+	this->endSecond = static_cast<int>(endTime) % 60;
+	this->endMili = static_cast<int>(std::round((endTime - static_cast<float>(endSecond) - static_cast<float>(endMinute) * 60) * 1000));
+}
+void Chunk::Init()
+{
+	this->clampKeys();
+	this->setTime();
+}

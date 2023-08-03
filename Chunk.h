@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Keys.h"
+#include <string>
 class Chunk
 {
 public:
@@ -20,11 +21,13 @@ public:
 		this->inten = inten;
 	}
 
-	Chunk(std::vector<double> freq,std::vector<double> inten,int iter)
+	Chunk(std::vector<double> freq,std::vector<double> inten,int iter,float chunkDuration)
 	{
 		freqVec = freq;
 		intenVec = inten;
 		singular = false;
+		this->iter = iter;
+		this->chunkDuration = chunkDuration;
 	}
 
 
@@ -38,7 +41,53 @@ public:
 		return freqVec;
 	}
 
-	void clampKeys(); //This function takes the raw frequency data and then clamps it to the closest appropriate note as determined by the musical Key the song is in
+	std::vector<Keys> getKeyVec()
+	{
+		return keyVec;
+	}
+
+	Keys getKey()
+	{
+		return key;
+	}
+	
+	int getIter()
+	{
+		return iter;
+	}
+
+	std::string getStartTime()
+	{
+
+		std::string minutesStr = (startMinute < 10) ? "0" + std::to_string(startMinute) : std::to_string(startMinute);
+		std::string secondsStr = (startSecond < 10) ? "0" + std::to_string(startSecond) : std::to_string(startSecond);
+		std::string millisecondsStr = (startMili < 10) ? "00" + std::to_string(startMili) : ((startMili < 100) ? "0" + std::to_string(startMili) : std::to_string(startMili));
+
+		return minutesStr + ":" + secondsStr + ":" + millisecondsStr;
+	}
+
+	std::string getEndTime()
+	{
+
+		std::string minutesStr = (endMinute < 10) ? "0" + std::to_string(endMinute) : std::to_string(endMinute);
+		std::string secondsStr = (endSecond < 10) ? "0" + std::to_string(endSecond) : std::to_string(endSecond);
+		std::string millisecondsStr = (endMili < 10) ? "00" + std::to_string(endMili) : ((endMili < 100) ? "0" + std::to_string(endMili) : std::to_string(endMili));
+
+		return minutesStr + ":" + secondsStr + ":" + millisecondsStr;
+	}
+	float getStart()
+	{
+		return this->chunkDuration * this->iter;
+	}
+
+	float getEnd()
+	{
+		return this->chunkDuration * this->iter+1;
+	}
+
+	
+	void Init();
+
 
 private:
 	bool singular;
@@ -53,5 +102,17 @@ private:
 	std::vector<Keys> keyVec;
 	Keys key;
 
+	int startMinute;
+	int startSecond;
+	int startMili;
+
+	int endMinute;
+	int endSecond;
+	int endMili;
+
+	float chunkDuration;
+
+	void setTime();
+	void clampKeys(); //This function takes the raw frequency data and then clamps it to the closest appropriate note as determined by the musical Key the song is in
 };
 

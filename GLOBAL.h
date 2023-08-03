@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <utility>
 
 class GLOBAL
 {
@@ -21,4 +23,7 @@ public:
 	static std::vector<Keys> aMajor;
 	static std::vector<Keys> aSharpMajor;
 	static std::vector<Keys> bMajor;
+	
+	static std::vector<std::pair<std::string, int>> keysString;
+
 };
