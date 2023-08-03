@@ -111,6 +111,7 @@ vector<Chunk> MidiMaker::lowPass(vector<short int> lowPassData)
 
         }
         Chunk c = Chunk(Frequencies, mag, i);
+        c.clampKeys();
         chunkData.push_back(c);
     }
 
@@ -201,6 +202,7 @@ vector<Chunk> MidiMaker::bandPass(vector<short int> bandPassData)
 
         }
         Chunk c = Chunk(Frequencies, mag, i);
+        c.clampKeys();
         chunkData.push_back(c);
     }
 
@@ -292,6 +294,7 @@ vector<Chunk> MidiMaker::highPass(vector<short int> highPassData)
 
         }
         Chunk c = Chunk(Frequencies, mag, i);
+        c.clampKeys();
         chunkData.push_back(c);
     }
 

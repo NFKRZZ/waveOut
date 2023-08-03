@@ -1,12 +1,14 @@
 #include "Chunk.h"
 #include "GLOBAL.h"
 #include <vector>
-void Chunk::clampKeys(std::vector<double> freq)
+#include <iostream>
+void Chunk::clampKeys()//HI
 {
-	Key k = GLOBAL::MUSICAL_KEY;
-	std::vector<Keys> ref;
-	switch (k)
-	{
+	//std::cout << "Clamp Keys Called"<<std::endl;
+		Key k = GLOBAL::MUSICAL_KEY;
+		std::vector<Keys> ref;
+		switch (k)
+		{
 		case Key::A_MAJOR:
 			ref = GLOBAL::aMajor;
 			break;
@@ -45,8 +47,54 @@ void Chunk::clampKeys(std::vector<double> freq)
 			break;
 		case Key::NO_KEY:
 			break;
-	}
-	
+		}
+		
+		if (this->singular == false)
+		{
+			//std::cout << "Non Singular!"<<std::endl;
+			std::vector<Keys> keyvec;
+
+			for (double f : this->freqVec)
+			{
+				double k = 0;
+				//std::cout << "THIS IS K: " << k <<" THIS IS SIZE OF freqVec: "<<freqVec.size()<<std::endl;
 
 
+				double minDiff = std::abs(f - static_cast<double>(ref[0]));
+				Keys closestKey = ref[0];
+				//std::cout << "THIS IS SIZE OF REF: " << ref.size() << std::endl;
+				for (size_t i = 1;i < ref.size();i++)
+				{
+					//std::cout << "THIS IS I: " << i << std::endl;
+					double diff = std::abs(f - static_cast<double>(ref[i]));
+					if (diff < minDiff)
+					{
+						minDiff = diff;
+						closestKey = ref[i];
+					}
+				}
+				keyvec.push_back(closestKey);
+				k++;
+			}
+			this->keyVec = keyvec;
+			
+		}
+		else
+		{
+			//std::cout << "Singular!" << std::endl;
+			double minDiff = std::abs(this->freq - static_cast<double>(ref[0]));
+			Keys closestKey = ref[0];
+
+			for (size_t i = 1;i < ref.size();i++)
+			{
+				double diff = std::abs(this->freq - static_cast<double>(ref[i]));
+				if (diff < minDiff)
+				{
+					minDiff = diff;
+					closestKey = ref[i];
+				}
+			}
+			this->key = closestKey;
+		}
+		//std::cout << "FINI" << std::endl;
 }

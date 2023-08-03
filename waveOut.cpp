@@ -270,8 +270,8 @@ int main(int argc, char* argv[])
     //C:/Users/winga/Music
 	string file = "Test/lostinspace.wav";
 
-	Key SONG_KEY = Key::A_MAJOR;
-
+	Key SONG_KEY = Key::G_SHARP_MAJOR;
+	GLOBAL::MUSICAL_KEY = SONG_KEY;
 
 	cout << file << endl;
 	HWAVEOUT hWaveOut;

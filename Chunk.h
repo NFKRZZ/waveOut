@@ -24,6 +24,7 @@ public:
 	{
 		freqVec = freq;
 		intenVec = inten;
+		singular = false;
 	}
 
 
@@ -37,7 +38,7 @@ public:
 		return freqVec;
 	}
 
-	void clampKeys(std::vector<double> freq);
+	void clampKeys(); //This function takes the raw frequency data and then clamps it to the closest appropriate note as determined by the musical Key the song is in
 
 private:
 	bool singular;

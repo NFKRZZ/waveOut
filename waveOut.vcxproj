@@ -167,6 +167,7 @@
     <ClCompile Include="MidiMaker.cpp" />
     <ClCompile Include="MidiMessage.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
+    <ClCompile Include="Note.cpp" />
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="waveOut.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="MidiMaker.h" />
     <ClInclude Include="MidiMessage.h" />
     <ClInclude Include="MiniBpm.h" />
+    <ClInclude Include="Note.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
