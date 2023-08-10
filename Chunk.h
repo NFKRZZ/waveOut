@@ -56,6 +56,12 @@ public:
 		return iter;
 	}
 
+	std::vector<double> getIntenVec()
+	{
+		return intenVec;
+	}
+
+
 	std::string getStartTime()
 	{
 

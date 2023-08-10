@@ -8,6 +8,20 @@ int GLOBAL::sampleRate = 0;
 float GLOBAL::qBeatDuration = 0;
 float GLOBAL::twoBeatDuration = 0;
 Key GLOBAL::MUSICAL_KEY = Key::NO_KEY;
+bool GLOBAL::isMonophonic = false;
+int GLOBAL::chordVoices = 0;
+
+bool GLOBAL::Init()
+{
+    if (isMonophonic && chordVoices > 1)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
 
 vector<Keys> GLOBAL::cMajor = {
     Keys::C_0,

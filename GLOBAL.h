@@ -11,6 +11,8 @@ public:
     static int sampleRate;
 	static float twoBeatDuration;
 	static Key MUSICAL_KEY;
+	static bool isMonophonic;
+	static int chordVoices;
 	static std::vector<Keys> cMajor;
 	static std::vector<Keys> cSharpMajor;
 	static std::vector<Keys> dMajor;
@@ -25,5 +27,9 @@ public:
 	static std::vector<Keys> bMajor;
 	
 	static std::vector<std::pair<std::string, int>> keysString;
+
+	static bool Init();
+
+
 
 };

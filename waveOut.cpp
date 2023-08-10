@@ -48,7 +48,7 @@ struct LIST
 	int ChunkSize;
 	char ListTypeID[4];
 };
-static int BPM = 150;
+static int BPM = 130;
 static vector<short int> getData(string file)
 {
 	vector<short int> data;
@@ -268,11 +268,11 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 int main(int argc, char* argv[])
 {
     //C:/Users/winga/Music
-	string file = "Test/callonme.wav";
+	string file = "Test/sinePure.wav";
 
-	Key SONG_KEY = Key::D_MAJOR;
+	Key SONG_KEY = Key::A_MAJOR;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
-
+	GLOBAL::isMonophonic = true; //WORK ON THIS NEXT ------------------------------------------------------------------------------------------ L()()K
 	cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
@@ -425,19 +425,21 @@ int main(int argc, char* argv[])
 	for (Chunk c : cDat)
 	{
 		vector<Keys> p = c.getKeyVec();
-		for (Keys l : p)
+		vector<double> inten = c.getIntenVec();
+		for (int i = 0;i<p.size();i++)
 		{
-			
-			cout << "Low Pass iteration: "<< c.getIter()<<" TIME: "<<c.getStart() <<" to "<<c.getEnd() << " Key: " << Util::getEnumString(l) << endl;
+			cout << "Low Pass iteration: "<< c.getIter()<<" TIME: "<<c.getStart() <<" to "<<c.getEnd() <<" Intensity: "<< 20*log(inten[i]/32768) << " Key: " << Util::getEnumString(p[i]) << endl;
 		}
 	}
 
 	for (Chunk q : midPass)
 	{
 		vector<Keys> p = q.getKeyVec();
-		for (Keys l : p)
+		vector<double> inten = q.getIntenVec();
+		vector<double> freqvec = q.getFreqV();
+		for (int i = 0;i<p.size();i++)
 		{
-			cout << "High Pass iteration: " << q.getIter() <<" TIME: "<<q.getStart()<<" to "<<q.getEnd() << " Key: " << Util::getEnumString(l) << endl;
+			cout << "High Pass iteration: " << q.getIter() <<" TIME: "<<q.getStart()<<" to "<<q.getEnd() <<" Frequency: "<<freqvec[i]<<" Hz " << " Intensity: " << 20 * log(inten[i] / 32768) << " Key: " << Util::getEnumString(p[i]) << endl;
 		}
 	}
 

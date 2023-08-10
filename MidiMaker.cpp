@@ -149,14 +149,14 @@ vector<Chunk> MidiMaker::bandPass(vector<short int> bandPassData)
         fftw_plan plan = fftw_plan_dft_1d(N, in, in, FFTW_FORWARD, FFTW_ESTIMATE);
         fftw_execute(plan);
 
-        double highestMagnitudes[3] = { 0.0 };
-        unsigned int maxIndices[3] = { 0 };
+        double highestMagnitudes[6] = { 0.0 };
+        unsigned int maxIndices[6] = { 0 };
 
         for (unsigned int l = 0; l < N; ++l) {
             double magnitude = sqrt(in[l][0] * in[l][0] + in[l][1] * in[l][1]);
 
             // Check if the magnitude is higher than any of the current top three
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 6; ++i) {
                 if (magnitude > highestMagnitudes[i]) {
                     // Shift the current values down the array to make room for the new magnitude
                     for (int j = 2; j > i; --j) {
@@ -185,7 +185,7 @@ vector<Chunk> MidiMaker::bandPass(vector<short int> bandPassData)
         }*/
         vector<double> Frequencies;
         vector<double> mag;
-        for (int a = 0;a < 3;a++)
+        for (int a = 0;a < 6;a++)
         {
             double freq = (double)maxIndices[a] * sampleRate / N;
             if (freq > sampleRate / 2)
@@ -277,7 +277,7 @@ vector<Chunk> MidiMaker::highPass(vector<short int> highPassData)
         }*/
         vector<double> Frequencies;
         vector<double> mag;
-        for (int a = 0;a < 3;a++)
+        for (int a = 0;a < 6;a++)
         {
             double freq = (double)maxIndices[a] * sampleRate / N;
             if (freq > sampleRate / 2)
