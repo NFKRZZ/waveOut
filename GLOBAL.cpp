@@ -10,6 +10,7 @@ float GLOBAL::twoBeatDuration = 0;
 Key GLOBAL::MUSICAL_KEY = Key::NO_KEY;
 bool GLOBAL::isMonophonic = false;
 int GLOBAL::chordVoices = 0;
+float GLOBAL::SONG_LENGTH = 0;
 
 bool GLOBAL::Init()
 {
@@ -706,73 +707,77 @@ vector<Keys> GLOBAL::gSharpMajor = {
     Keys::C_9
 };
 vector<Keys> GLOBAL::aMajor = {
+    Keys::C_SHARP_0,
+    Keys::D_0,
+    Keys::E_0,
+    Keys::F_SHARP_0,
+    Keys::G_SHARP_0,
     Keys::A_0,
     Keys::B_0,
     Keys::C_SHARP_1,
     Keys::D_1,
     Keys::E_1,
     Keys::F_SHARP_1,
-    Keys::G_1,
+    Keys::G_SHARP_1,
     Keys::A_1,
     Keys::B_1,
     Keys::C_SHARP_2,
     Keys::D_2,
     Keys::E_2,
     Keys::F_SHARP_2,
-    Keys::G_2,
+    Keys::G_SHARP_2,
     Keys::A_2,
     Keys::B_2,
     Keys::C_SHARP_3,
     Keys::D_3,
     Keys::E_3,
     Keys::F_SHARP_3,
-    Keys::G_3,
+    Keys::G_SHARP_3,
     Keys::A_3,
     Keys::B_3,
     Keys::C_SHARP_4,
     Keys::D_4,
     Keys::E_4,
     Keys::F_SHARP_4,
-    Keys::G_4,
+    Keys::G_SHARP_4,
     Keys::A_4,
     Keys::B_4,
     Keys::C_SHARP_5,
     Keys::D_5,
     Keys::E_5,
     Keys::F_SHARP_5,
-    Keys::G_5,
+    Keys::G_SHARP_5,
     Keys::A_5,
     Keys::B_5,
     Keys::C_SHARP_6,
     Keys::D_6,
     Keys::E_6,
     Keys::F_SHARP_6,
-    Keys::G_6,
+    Keys::G_SHARP_6,
     Keys::A_6,
     Keys::B_6,
     Keys::C_SHARP_7,
     Keys::D_7,
     Keys::E_7,
     Keys::F_SHARP_7,
-    Keys::G_7,
+    Keys::G_SHARP_7,
     Keys::A_7,
     Keys::B_7,
     Keys::C_SHARP_8,
     Keys::D_8,
     Keys::E_8,
     Keys::F_SHARP_8,
-    Keys::G_8,
+    Keys::G_SHARP_8,
     Keys::A_8,
     Keys::B_8,
     Keys::C_SHARP_9,
     Keys::D_9,
     Keys::E_9,
     Keys::F_SHARP_9,
-    Keys::G_9,
+    Keys::G_SHARP_9,
     Keys::A_9,
-    Keys::B_9,
-    Keys::C_SHARP_9
-};
+    Keys::B_9
+};               //FIXED
 vector<Keys> GLOBAL::aSharpMajor = {
     Keys::A_SHARP_0,
     Keys::C_1,
@@ -932,6 +937,11 @@ vector<pair<string, int>> GLOBAL::keysString = {
        {"A_8", 7040}, {"A_SHARP_8", 7459}, {"B_8", 7902}, {"C_9", 8372}, {"C_SHARP_9", 8870},
        {"D_9", 9397}, {"D_SHARP_9", 9956}, {"E_9", 10548}, {"F_9", 11175}, {"F_SHARP_9", 11840},
        {"G_9", 12544}, {"G_SHARP_9", 13290}, {"A_9", 14080}, {"A_SHARP_9", 14917}, {"B_9", 15804}
+};
+vector<pair<string, int>> GLOBAL::keyString = {
+    {"NO_KEY",0},{"C_MAJOR",1},{"C_SHARP_MAJOR",2},{"D_MAJOR",3},{"D_SHARP_MAJOR",4},
+    {"E_MAJOR",5},{"F_MAJOR",6},{"F_SHARP_MAJOR",7},{"G_MAJOR",8},{"G_SHARP_MAJOR",9},
+    {"A_MAJOR",10},{"A_SHARP_MAJOR",11},{"B_MAJOR",12}
 };
 
 

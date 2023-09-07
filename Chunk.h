@@ -3,6 +3,7 @@
 #include <vector>
 #include "Keys.h"
 #include <string>
+#include "GLOBAL.h"
 class Chunk
 {
 public:
@@ -88,7 +89,14 @@ public:
 
 	float getEnd()
 	{
-		return this->chunkDuration * this->iter+1;
+		if (chunkDuration * (iter + 1) > GLOBAL::SONG_LENGTH)
+		{
+			return GLOBAL::SONG_LENGTH;
+		}
+		else 
+		{
+			return this->chunkDuration * (iter + 1);
+		}
 	}
 
 	

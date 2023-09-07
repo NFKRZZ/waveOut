@@ -78,6 +78,6 @@ public:
 	}
 
 	static string getEnumString(Keys key);
-
+	static string getEnumString(Key key);
 };
 

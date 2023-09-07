@@ -1,18 +1,119 @@
 ﻿  Scanning sources for module dependencies...
+  Chunk.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(37,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
   MidiMaker.cpp
 C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
 C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(36,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(37,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(34,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(35,60): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(35,56): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(50,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(64,36): warning C4018: '<': signed/unsigned mismatch
 C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(125,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(126,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(141,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(155,36): warning C4018: '<': signed/unsigned mismatch
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(216,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(218,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(233,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(247,36): warning C4018: '<': signed/unsigned mismatch
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(126,57): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(140,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(154,36): warning C4018: '<': signed/unsigned mismatch
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(215,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(217,81): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(234,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(248,36): warning C4018: '<': signed/unsigned mismatch
+  waveOut.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(72,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(219,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(236,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(237,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(299,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(311,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(317,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(337,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(348,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(354,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(375,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(392,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(399,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(430,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(446,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(452,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(486,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(498,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(504,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(538,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(549,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(555,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=short
+          ]
+C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(37,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(216,8): warning C4101: 'D': unreferenced local variable
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(225,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(244,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(288,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(288,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(289,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(290,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(291,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(303,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(365,24): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(366,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(372,22): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(373,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(375,60): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(376,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(396,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(397,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(506,20): warning C4244: 'initializing': conversion from '__int64' to 'double', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(281,8): warning C4101: 'block': unreferenced local variable
+  Generating Code...
   waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe

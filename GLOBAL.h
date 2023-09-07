@@ -25,8 +25,10 @@ public:
 	static std::vector<Keys> aMajor;
 	static std::vector<Keys> aSharpMajor;
 	static std::vector<Keys> bMajor;
-	
+	static float SONG_LENGTH;
 	static std::vector<std::pair<std::string, int>> keysString;
+
+	static std::vector<std::pair<std::string, int>> keyString;
 
 	static bool Init();
 

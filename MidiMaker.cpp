@@ -32,7 +32,7 @@ FILE* Init(string filename)
 vector<Chunk> MidiMaker::lowPass(vector<short int> lowPassData)
 {
     int sampleSize = GLOBAL::twoBeatDuration * GLOBAL::sampleRate;
-    int numOfChunks = lowPassData.size() / (sampleSize * 2);
+    int numOfChunks = lowPassData.size() / (sampleSize);
 
     vector<vector<double>> sampleChunks;
     sampleChunks.resize(numOfChunks);
@@ -123,8 +123,7 @@ vector<Chunk> MidiMaker::lowPass(vector<short int> lowPassData)
 vector<Chunk> MidiMaker::bandPass(vector<short int> bandPassData)
 {
     int sampleSize = GLOBAL::qBeatDuration * GLOBAL::sampleRate;
-    int numOfChunks = bandPassData.size() / (sampleSize * 2);
-
+    int numOfChunks = bandPassData.size() / (sampleSize);
     vector<vector<double>> sampleChunks;
     sampleChunks.resize(numOfChunks);
     vector<Chunk> chunkData;
@@ -215,7 +214,9 @@ vector<Chunk> MidiMaker::highPass(vector<short int> highPassData)
 {
     int sampleSize = GLOBAL::qBeatDuration * GLOBAL::sampleRate;
     cout << "THIS IS SAMPLE SIZE HIGH PASS MIDI: " << sampleSize << endl;
-    int numOfChunks = highPassData.size() / (sampleSize * 2);
+    int numOfChunks = static_cast<long long>(highPassData.size()) / (sampleSize);
+    cout << "THIS IS THE numOFChunks For HighPass: " << numOfChunks << endl;
+    cout << "THIS IS THE size of highPassData: " << highPassData.size() << endl;
 
     vector<vector<double>> sampleChunks;
     sampleChunks.resize(numOfChunks);
@@ -241,14 +242,14 @@ vector<Chunk> MidiMaker::highPass(vector<short int> highPassData)
         fftw_plan plan = fftw_plan_dft_1d(N, in, in, FFTW_FORWARD, FFTW_ESTIMATE);
         fftw_execute(plan);
 
-        double highestMagnitudes[3] = { 0.0 };
-        unsigned int maxIndices[3] = { 0 };
+        double highestMagnitudes[6] = { 0.0 };
+        unsigned int maxIndices[6] = { 0 };
 
         for (unsigned int l = 0; l < N; ++l) {
             double magnitude = sqrt(in[l][0] * in[l][0] + in[l][1] * in[l][1]);
 
             // Check if the magnitude is higher than any of the current top three
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 6; ++i) {
                 if (magnitude > highestMagnitudes[i]) {
                     // Shift the current values down the array to make room for the new magnitude
                     for (int j = 2; j > i; --j) {

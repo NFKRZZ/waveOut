@@ -48,7 +48,7 @@ struct LIST
 	int ChunkSize;
 	char ListTypeID[4];
 };
-static int BPM = 130;
+static int BPM = 151;
 static vector<short int> getData(string file)
 {
 	vector<short int> data;
@@ -267,13 +267,16 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
+	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/sinePure.wav";
+	string file = "Test/247_278_235_247.wav";
 
-	Key SONG_KEY = Key::A_MAJOR;
+	Key SONG_KEY = Key::F_SHARP_MAJOR;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
 	GLOBAL::isMonophonic = true; //WORK ON THIS NEXT ------------------------------------------------------------------------------------------ L()()K
 	cout << file << endl;
+	cout << "BPM: " << BPM << endl;
+	cout << "Song Key: " << Util::getEnumString(SONG_KEY) << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
 	DWORD blockSize;
@@ -394,6 +397,7 @@ int main(int argc, char* argv[])
 	int numOfChunks = audiodata.size() /( sampleSize*2);
 	cout <<"THIS IS SAMPLESIZE MAIN FUNC " << sampleSize << endl;
 	cout << "Length of Audio is " << numOfChunks * qBeatDuration << " seconds \n";
+	GLOBAL::SONG_LENGTH = numOfChunks * qBeatDuration;
 	vector<vector<double>> sampleChunks;
 	int inputSize = 1024;//4096 wont work; possible error in how the output data is being stored
 	int outputSize = (inputSize / 2) + 1;
@@ -419,9 +423,9 @@ int main(int argc, char* argv[])
 	vector<short int> highPP = Consolidate(highP.first, highP.second);
 	cout << "THIS IS LOWPP SIZE: " << lowPP.size()<<endl;
 	vector<Chunk> cDat = MidiMaker::lowPass(lowPP);
-	vector<Chunk> midPass = MidiMaker::bandPass(highPP); //I THINK CHUNKS ARENT BEING DONE PROPERLY TIMING IS WRONG
+	vector<Chunk> midPass = MidiMaker::highPass(highPP); //I THINK CHUNKS ARENT BEING DONE PROPERLY TIMING IS WRONG
 
-
+	std::cout << "This is chunk seperation time: " << GLOBAL::twoBeatDuration << "s" << endl;
 	for (Chunk c : cDat)
 	{
 		vector<Keys> p = c.getKeyVec();
@@ -431,7 +435,7 @@ int main(int argc, char* argv[])
 			cout << "Low Pass iteration: "<< c.getIter()<<" TIME: "<<c.getStart() <<" to "<<c.getEnd() <<" Intensity: "<< 20*log(inten[i]/32768) << " Key: " << Util::getEnumString(p[i]) << endl;
 		}
 	}
-
+	cout << endl;
 	for (Chunk q : midPass)
 	{
 		vector<Keys> p = q.getKeyVec();
@@ -531,7 +535,12 @@ int main(int argc, char* argv[])
 	Util::createWavFile(lowPassDat,wav.ChunkSize,fName);
 	Util::createWavFile(highPassDat, wav.ChunkSize, lola);
 	Util::createWavFile(convolutionData, wav.ChunkSize, smar);
-	MidiMaker::doSomething();
+	//MidiMaker::doSomething();
+
+
+	std::chrono::system_clock::time_point now2 = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed = now2 - now1;
+	cout << "Took " << elapsed.count() << " seconds" << endl;
 
 	return 0;
 }
