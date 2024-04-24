@@ -170,6 +170,7 @@
     <ClCompile Include="MidiMessage.cpp" />
     <ClCompile Include="MiniBpm.cpp" />
     <ClCompile Include="Note.cpp" />
+    <ClCompile Include="NoteSegmentor.cpp" />
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="waveOut.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="MidiMessage.h" />
     <ClInclude Include="MiniBpm.h" />
     <ClInclude Include="Note.h" />
+    <ClInclude Include="NoteSegmentor.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>

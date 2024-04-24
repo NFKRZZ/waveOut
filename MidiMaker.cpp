@@ -304,6 +304,13 @@ vector<Chunk> MidiMaker::highPass(vector<short int> highPassData)
 
 }
 
+
+void makeMidi(vector<vector<Chunk>> data)
+{
+
+}
+
+
 void MidiMaker::doSomething()
 {
     Options options;

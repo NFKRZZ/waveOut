@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+﻿#define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE
 #include <windows.h>
 #include <mmsystem.h>
@@ -25,6 +25,9 @@
 #include <iomanip>
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
+
+
+
 
 struct WAVE_HEADER
 {
@@ -267,9 +270,24 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 
 int main(int argc, char* argv[])
 {
+	
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	
+	SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+
+	std::cout << " ________  ___  ___  ________  ___  ________          _________  ________          _____ ______   ___  ________  ___     \n";
+	std::cout << "|\\   __  \\|\\  \\|\\  \\|\\   ___ \\|\\  \\|\\   __  \\        |\\___   ___\\\\   __  \\        |\\   _ \\  _   \\|\\  \\|\\   ___ \\|\\  \\    \n";
+	std::cout << "\\ \\  \\|\\  \\ \\  \\\\\\  \\ \\  \\_|\\ \\ \\  \\ \\  \\|\\  \\       \\|___ \\  \\_\\ \\  \\|\\  \\       \\ \\  \\\\\\__\\ \\  \\ \\  \\ \\   \\_|\ \\ \\  \\   \n";
+	std::cout << " \\ \\   __  \\ \\  \\\\\\  \\ \\  \\ \\\\ \\ \\  \\ \\  \\\\\\  \\           \\ \\  \\ \\ \\  \\\\\   \\       \\ \\  \\\\|__| \\  \\ \\  \\ \\  \\  \\ \\ \\  \\ \n";
+	std::cout << "  \\ \\  \\ \\  \\ \\  \\\\\\  \\ \\  \\_\\\\ \\ \\  \\ \\  \\\\\\  \\           \\ \\  \\ \\ \\  \\\\\   \\       \\ \\  \\    \\ \\  \\ \\  \\ \\  \\_\\  \\ \\  \\ \n";
+	std::cout << "   \\ \\__\\ \\__\\ \\_______\\ \\_______\\ \\__\\ \\_______\\           \\ \\__\\ \\ \\_______\\       \\ \\__\\    \\ \\__\\ \\__\\ \\_______\\ \\__\\\n";
+	std::cout << "    \\|__|\\|__|\\|_______|\\|_______|\\|__|\\|_______|            \\|__|  \\|_______|        \\|__|     \\|__|\\|__|\\|_______|\\|__|\n";
+	SetConsoleTextAttribute(hConsole,7);
+
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/247_278_235_247.wav";
+	string file = "Test/nightdrive.wav";
 
 	Key SONG_KEY = Key::F_SHARP_MAJOR;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
@@ -332,7 +350,6 @@ int main(int argc, char* argv[])
 	vector<short int> lowPassDat = Stereoize(leftLowPass, rightLowPass);
 
 
-
 	leftLowPass.clear();
 	rightLowPass.clear();
 	leftLowPass.shrink_to_fit();
@@ -360,6 +377,7 @@ int main(int argc, char* argv[])
 
 	//////////////////////////////////////////////////////////////////////////
 
+	/////////////////////EFFECT SIDECHAIN////////////////////////////////////
 
 
 	float twoBeatDuration = (1 / (BPM / 60.0)) / 0.5;
@@ -453,24 +471,6 @@ int main(int argc, char* argv[])
 
 
 
-	
-
-
-
-
-	for (int hh = 0;hh < cDat.size();hh++)
-	{
-		cout << "THIS IS CHUNK FREQ: " << cDat[hh].getFreqV()[0] << endl;
-		cout << "THIS IS CHUNK FREQ 2: " << cDat[hh].getFreqV()[1] << endl;
-		cout << "THIS IS CHUNK FREQ 3: " << cDat[hh].getFreqV()[2] << endl;
-	} 
-
-
-
-
-
-
-
 
 	for (int i = 0;i < numOfChunks;i++)
 	{
@@ -501,7 +501,7 @@ int main(int argc, char* argv[])
 			test.push_back((double)output_buffer[i][0]);
 		}
 		auto lol = max_element(test.begin(), test.end());
-		cout << i << " CHUNK: " << " Time: "<< qBeatDuration*(i+1) << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (wav.SampleRate / inputSize) << endl;
+		//cout << i << " CHUNK: " << " Time: "<< qBeatDuration*(i+1) << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (wav.SampleRate / inputSize) << endl;
 
 		double frequency = distance(begin(test), lol) * (wav.SampleRate / inputSize);
 		vector<double> freqVector = { frequency };
@@ -532,15 +532,36 @@ int main(int argc, char* argv[])
 	string fName = "data.wav";
 	string lola = "high.wav";
 	string smar = "proper.wav";
+	string aja = "bigboi.wav";
+	string ooo = "jaj.wav";
+	string sid = "delay.wav";
 	Util::createWavFile(lowPassDat,wav.ChunkSize,fName);
 	Util::createWavFile(highPassDat, wav.ChunkSize, lola);
 	Util::createWavFile(convolutionData, wav.ChunkSize, smar);
+	cout << "Convolution Data Size: " << convolutionData.size() << " wav.Chunksize: " << wav.ChunkSize << endl;
 	//MidiMaker::doSomething();
+	vector<double> j = Util::normalizeVector16(preProcData, 16);
+	j[0] = 0;
+	j[1] = 0;
+	Util::createRawFile(preProcData, "jojo.raw");
+	Util::createRawFile(j, "hahaha.raw");
+	vector<double> deriv = Util::dX(j);
+	Util::createRawFile(deriv, "dderiv.raw");
 
+	std::cout << "AHAHAHA" << endl;
+	vector<double> integ = Util::integrate(j);
+	vector<short> integSc = Util::doubleToShortScaled(integ);
+	Util::createWavFileMono(Util::normalizeVector(integSc), wav.ChunkSize, ooo);
+	std::cout << "oha" << endl;
 
+	Util::saveVectorToFile(deriv, "hello.txt");
 	std::chrono::system_clock::time_point now2 = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed = now2 - now1;
 	cout << "Took " << elapsed.count() << " seconds" << endl;
+	vector<short>scaled = Util::doubleToShortScaled(deriv);
+	//Util::noteSegmentation(left, right, scaled);
+	Util::createWavFileMono(Util::normalizeVector(scaled),wav.ChunkSize, aja);
+	
 
 	return 0;
 }
