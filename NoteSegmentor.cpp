@@ -1,5 +1,5 @@
 #include "NoteSegmentor.h"
-
+#include "FUNCTIONS.h"
 std::vector<int> NoteSegmentor::getNoteStart(std::vector<short> derivativeData)
 {
 	std::vector<short> temp(derivativeData.size());
@@ -23,3 +23,15 @@ std::vector<int> NoteSegmentor::getNoteStart(std::vector<short> derivativeData)
 	}
 	return noteStartIndices;
 }
+
+std::vector<int> NoteSegmentor::onsetDetection(std::vector<short> pcmData)
+{
+	std::vector<double> pcmDat = FUNCTIONS::short_to_double(pcmData);
+
+
+
+
+
+	return std::vector<int>();
+}
+
