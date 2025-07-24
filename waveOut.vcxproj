@@ -162,6 +162,7 @@
     <ClCompile Include="FUNCTIONS.cpp" />
     <ClCompile Include="GLOBAL.cpp" />
     <ClCompile Include="HighQuality.cpp" />
+    <ClCompile Include="KeyDetection.cpp" />
     <ClCompile Include="Keys.h" />
     <ClCompile Include="MidiEvent.cpp" />
     <ClCompile Include="MidiEventList.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="FUNCTIONS.h" />
     <ClInclude Include="GLOBAL.h" />
     <ClInclude Include="HighQuality.h" />
+    <ClInclude Include="KeyDetection.h" />
     <ClInclude Include="MidiEvent.h" />
     <ClInclude Include="MidiEventList.h" />
     <ClInclude Include="MidiFile.h" />

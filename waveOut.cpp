@@ -22,6 +22,7 @@
 #include "HighQuality.h"
 #include "GLOBAL.h"
 #include "MidiMaker.h"
+#include "KeyDetection.h"
 #include <iomanip>
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
@@ -287,14 +288,12 @@ int main(int argc, char* argv[])
 
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/nightdrive.wav";
+	string file = "Test/440HzSine.wav";
 
 	Key SONG_KEY = Key::F_SHARP_MAJOR;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
 	GLOBAL::isMonophonic = true; //WORK ON THIS NEXT ------------------------------------------------------------------------------------------ L()()K
 	cout << file << endl;
-	cout << "BPM: " << BPM << endl;
-	cout << "Song Key: " << Util::getEnumString(SONG_KEY) << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
 	DWORD blockSize;
@@ -323,6 +322,11 @@ int main(int argc, char* argv[])
 	blockSize = pcmSize;
 	printf("LOADED BLOCK\n");
 	
+	
+
+
+
+
 	vector<long double> coefficients = filter::yLcalculate_high_pass_filter_coefficients(wav.SampleRate,1000,1000 ); //crappy filter or coefficients after like 500 hz there is crackling; 550hz only one instance of fucked up audio
 	//                                                                                                      600hz kicks up the shit audio & 700hz nails the coffin, num_taps does not fix this at all // reason gives
 	pair<vector<short>, vector<short>> dat1 = LeftRight(pcmData);                                           // cracks even at 500 hz at kicks
@@ -331,6 +335,39 @@ int main(int argc, char* argv[])
 
 	vector<double> leftD = filter::short_to_double(left);
 	vector<double> rightD = filter::short_to_double(right);
+
+
+	//get Song Key and BPM
+	
+	vector<short int> mono = Consolidate(dat1.first, dat1.second);
+	vector<double> monoD = filter::short_to_double(mono);
+	auto chroma = KeyDetection::getMeanChroma(monoD, wav.SampleRate);
+	std::array<std::array<double, 12>, 24> profiles;
+	std::array<std::string, 24>           names;
+	KeyDetection::buildKeyProfiles(profiles, names);
+
+	std::cout << "Key scores:\n";
+	for (int k = 0; k < 24; ++k) {
+		double s = KeyDetection::cosineSimilarity(chroma, profiles[k]);
+		std::cout << "  " << names[k]
+			<< ": " << s << "\n";
+	}
+
+
+
+	int best = KeyDetection::detectKey(chroma, profiles);
+
+	std::cout << "Detected key: " << names[best]
+		<< " (score = "
+		<< KeyDetection::cosineSimilarity(chroma, profiles[best])
+		<< ")\n";
+
+	cout << "BPM: " << BPM << endl;
+	cout << "Song Key: " << Util::getEnumString(SONG_KEY) << endl;
+
+
+
+
 
 	
 	cout << "Finished oh yea \n";
