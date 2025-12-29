@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "x64\\Release\\Keys.obj",
+            "outputs": [
+                "x64\\Release\\Keys.h_113C0F809BFE4744.ifc.dt.module.json",
+                "x64\\Release\\Keys.h_113C0F809BFE4744.ifc.dt.d.json",
+                "x64\\Release\\Keys.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\winga\\source\\repos\\waveOut\\waveOut\\Keys.h",
+                    "source-path": "c:\\users\\winga\\source\\repos\\waveout\\waveout\\keys.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

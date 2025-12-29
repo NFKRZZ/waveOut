@@ -1,36 +1,67 @@
 ﻿#pragma once
-//Implementation of https://arxiv.org/html/2505.17259v1#:~:text=The%20core%20of%20the%20described,and%20the%20predefined%20key%20representations.
-// Got the table from https://emusicology.org/index.php/EMR/article/view/5916/4785
-//We start with Krumhansl–Kessler tonal‐hierarchy profiles, this will give us how in key the sound is to C major or C minor
-//Specificly we will do cosine similarity to see which key the audio matches the best to
 #include <array>
 #include <vector>
 #include <string>
+#include <keyfinder/keyfinder.h>
+#include "Keys.h"
+namespace KeyDetection {
 
-namespace KeyDetection
-{
-
+    // Raw K–K probe-tone profiles (C major/minor) – defined in the .cpp
     extern const std::array<double, 12> C_MAJOR_RAW;
     extern const std::array<double, 12> C_MINOR_RAW;
 
-    // Compute the unit-length mean-chroma from a mono audio buffer
+    // Compute a unit-length mean chroma from mono audio at sample rate Fs.
+    // (Internally band-limits to reduce hi-hat fizz and sub-rumble.)
     std::array<double, 12> getMeanChroma(const std::vector<double>& audio, int Fs);
 
-    // Build all 24 key profiles (first 12 majors, next 12 minors)
+
+    Key getKey(const std::vector<double>& pcmData, int sampleRate, KeyFinder::KeyFinder& f);
+
+
+    // Compute a unit-length mean chroma restricted to [minFreq, maxFreq] (Hz).
+    std::array<double, 12> getMeanChromaBand(const std::vector<double>& audio,
+        int Fs, double minFreq, double maxFreq);
+
+    // Build 24 normalized key profiles (12 majors, then 12 minors) and their names.
     void buildKeyProfiles(
         std::array<std::array<double, 12>, 24>& outProfiles,
         std::array<std::string, 24>& outNames
     );
 
-    // Normalize a 12-vector in-place
-    void normalize(std::array<double, 12>& v);
+    // Utilities
+    void   normalize(std::array<double, 12>& v);
+    double cosineSimilarity(const std::array<double, 12>& a,
+        const std::array<double, 12>& b);
+    int    detectKey(const std::array<double, 12>& normalizedChroma,
+        const std::array<std::array<double, 12>, 24>& profiles);
 
-    // Cosine similarity (dot-product) of two 12-vectors
-    double cosineSimilarity(
-        const std::array<double, 12>& a,
-        const std::array<double, 12>& b
-    );
+    // Diagnostics / analysis helpers
+    void printTopKeys(const std::array<double, 12>& chroma,
+        const std::array<std::array<double, 12>, 24>& profiles,
+        const std::array<std::string, 24>& names,
+        int k = 5);
 
-    // Detect best key index [0..23] given a normalized chroma
-    int detectKey(const std::array<double, 12>& normalizedChroma, const std::array<std::array<double, 12>, 24>& profiles);
-}
+    struct KeyVoteSummary {
+        int best = -1;                 // index of most-voted key (0..23)
+        double stability = 0.0;        // votes(best) / total_windows
+        std::array<int, 24> counts{};   // histogram of window votes
+    };
+
+    KeyVoteSummary voteKeysOverTime(const std::vector<double>& audio, int Fs,
+        const std::array<std::array<double, 12>, 24>& profiles,
+        const std::array<std::string, 24>& names,
+        double winSec = 3.0, double hopSec = 1.5);
+
+    // Bass + Third aware final decision:
+    //   score = cosine + lambda * BassPrior(I,V,IV) + mu * ThirdConsistency
+    // lambda ~0.20–0.35, mu ~0.08–0.18 work well on EDM.
+    int detectKeyBassAware(const std::vector<double>& audio, int Fs,
+        const std::array<std::array<double, 12>, 24>& profiles,
+        const std::array<std::string, 24>& names,
+        double lambda = 0.28, double mu = 0.12);
+
+
+    
+
+
+} // namespace KeyDetection

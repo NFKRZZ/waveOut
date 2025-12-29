@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "x64\\Release\\Keys.h.obj",
+            "outputs": [
+                "C:\\Users\\winga\\source\\repos\\waveOut\\waveOut\\x64\\Release\\vc145.pdb",
+                "x64\\Release\\",
+                "C:\\Users\\winga\\source\\repos\\waveOut\\waveOut\\x64\\Release\\Keys.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "Keys.h",
+                    "source-path": "c:\\users\\winga\\source\\repos\\waveout\\waveout\\keys.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

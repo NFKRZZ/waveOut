@@ -1,103 +1,950 @@
-﻿  Scanning sources for module dependencies...
-  waveOut.cpp
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(126,2): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(142,2): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
-C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\Util.h(74,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\Util.h(125,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\Util.h(126,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,1): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(219,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(236,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(237,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(299,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(311,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(317,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(337,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(348,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(354,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(375,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(392,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(399,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(430,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(446,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(452,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(486,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(498,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(504,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(538,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(549,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(555,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=short
-          ]
+﻿  Binasc.cpp
+  BPMDetection.cpp
+  Chunk.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+  (compiling source file 'Chunk.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  (compiling source file 'Chunk.cpp')
+  
 C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(37,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(220,8): warning C4101: 'D': unreferenced local variable
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(229,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(248,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(282,15): warning C4129: ' ': unrecognized character escape sequence
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(283,15): warning C4129: ' ': unrecognized character escape sequence
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(284,15): warning C4129: ' ': unrecognized character escape sequence
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(305,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(305,17): warning C4244: 'initializing': conversion from 'double' to 'DWORD', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(306,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(307,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(308,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(320,50): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(420,24): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(421,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(427,22): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(428,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(430,60): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(431,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(451,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(452,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(543,20): warning C4244: 'initializing': conversion from '__int64' to 'double', possible loss of data
-C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(298,8): warning C4101: 'block': unreferenced local variable
-  waveOut.vcxproj -> C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe
+  (compiling source file 'Chunk.cpp')
+  
+  EFFECTS.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(9,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(10,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(31,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(49,18): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244: 'argument': conversion from '_Ty' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:             _Ty=double
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:         and
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(55,33): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(58,18): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(122,21): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(127,45): warning C4244: '=': conversion from 'float' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(127,45): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(127,45): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(127,45): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(127,45): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(128,47): warning C4244: '=': conversion from 'float' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(128,47): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(128,47): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(128,47): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp(128,47): warning C4244:         ]
+  filter.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+  (compiling source file 'filter.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  (compiling source file 'filter.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,75): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'filter.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(74,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'filter.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(125,75): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'filter.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(126,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'filter.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:             _Ty=double
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:             _Ty=double
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(219,18): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(236,9): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(237,9): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(299,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(311,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(317,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(337,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(348,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(354,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(375,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(392,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(399,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(430,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(446,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(452,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(486,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(498,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(504,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(538,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(549,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(555,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:         ]
+  FUNCTIONS.cpp
+  GLOBAL.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+  (compiling source file 'GLOBAL.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  (compiling source file 'GLOBAL.cpp')
+  
+  HighQuality.cpp
+  KeyDetection.cpp
+  Keys.h
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  MidiEvent.cpp
+  MidiEventList.cpp
+  MidiFile.cpp
+  MidiMaker.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+  (compiling source file 'MidiMaker.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  (compiling source file 'MidiMaker.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(37,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'MidiMaker.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(34,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(35,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(50,15): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(64,36): warning C4018: '<': signed/unsigned mismatch
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(125,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(126,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(140,15): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(154,36): warning C4018: '<': signed/unsigned mismatch
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(215,20): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(217,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(234,15): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MidiMaker.cpp(248,36): warning C4018: '<': signed/unsigned mismatch
+  MidiMessage.cpp
+  MiniBpm.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\MiniBpm.cpp(363,54): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\MiniBpm.cpp(499,22): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Note.cpp
+  NoteSegmentor.cpp
+  Options.cpp
+  Util.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+  (compiling source file 'Util.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  (compiling source file 'Util.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,75): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'Util.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(74,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'Util.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(125,75): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'Util.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(126,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'Util.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(79,33): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(79,33): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(79,33): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(79,33): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(79,33): warning C4244:         ]
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(122,11): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp(206,20): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+  Compiling...
+  waveOut.cpp
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(3,19): warning C4091: 'static ': ignored on left of 'Keys' when no variable is declared
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Keys.h(127,19): warning C4091: 'static ': ignored on left of 'Key' when no variable is declared
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(73,75): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(74,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(125,75): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Util.h(126,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:             _Ty=double
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(34,41): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244: '+=': conversion from '_Ty' to 'short', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:             _Ty=double
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(52,41): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(191,22): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(202,23): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(219,18): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(236,9): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(237,9): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(299,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(311,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(317,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(322,23): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(337,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(348,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(354,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(359,25): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(375,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(392,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(399,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(416,32): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(430,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(446,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(452,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(465,33): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(486,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(498,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(504,43): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(520,32): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(538,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(549,14): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(555,45): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244: '=': conversion from 'double' to '_Ty', possible loss of data
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:         with
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:         [
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:             _Ty=short
+C:\Users\winga\source\repos\waveOut\waveOut\filter.cpp(572,34): warning C4244:         ]
+  (compiling source file 'waveOut.cpp')
+  
+C:\Users\winga\source\repos\waveOut\waveOut\Chunk.h(37,10): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+  (compiling source file 'waveOut.cpp')
+  
+C:\vcpkg\vcpkg\installed\x64-windows\include\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,49): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'waveOut.cpp')
+      C:\vcpkg\vcpkg\installed\x64-windows\include\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,49):
+      the template instantiation context (the oldest one first) is
+          C:\essentia\src\essentia\pool.h(431,1):
+          see reference to class template instantiation 'Eigen::Tensor<essentia::Real,4,1,Eigen::DenseIndex>' being compiled
+  
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(224,8): warning C4101: 'D': unreferenced local variable
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(286,15): warning C4129: ' ': unrecognized character escape sequence
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(287,15): warning C4129: ' ': unrecognized character escape sequence
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(288,15): warning C4129: ' ': unrecognized character escape sequence
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(309,17): warning C4838: conversion from 'double' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(310,6): warning C4838: conversion from 'int' to 'DWORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(311,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(312,6): warning C4838: conversion from 'short' to 'WORD' requires a narrowing conversion
+C:\Users\winga\source\repos\waveOut\waveOut\waveOut.cpp(302,8): warning C4101: 'block': unreferenced local variable
+  Generating Code...
+essentia.lib(debugging.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(debugging.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(essentia.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(essentia.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(parameter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(parameter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(configurable.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(configurable.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(connector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(connector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(streamingalgorithm.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(streamingalgorithm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sourcebase.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sourcebase.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sinkbase.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sinkbase.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(essentia_algorithms_reg_2.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(essentia_algorithms_reg_2.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(range.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(range.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(algorithm.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(algorithm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(clickdetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(clickdetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(algorithmfactory.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(algorithmfactory.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(streamingalgorithmwrapper.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(streamingalgorithmwrapper.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(discontinuitydetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(discontinuitydetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(falsestereodetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(falsestereodetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(gapsdetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(gapsdetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(network.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(network.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(streamingalgorithmcomposite.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(streamingalgorithmcomposite.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(humdetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(humdetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(noiseburstdetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(noiseburstdetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(saturationdetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(saturationdetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(snr.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(snr.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(startstopcut.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(startstopcut.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(truepeakdetector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(truepeakdetector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(cartesiantopolar.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(cartesiantopolar.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(magnitude.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(magnitude.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(polartocartesian.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(polartocartesian.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(beatogram.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(beatogram.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(meter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(meter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(barkextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(barkextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(extractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(extractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(freesoundextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(freesoundextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(keyextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(keyextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(levelextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(levelextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(lowlevelspectraleqloudextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(lowlevelspectraleqloudextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(lowlevelspectralextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(lowlevelspectralextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(musicextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(musicextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rhythmdescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rhythmdescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tonalextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tonalextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tuningfrequencyextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tuningfrequencyextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(allpass.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(allpass.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bandpass.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bandpass.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bandreject.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bandreject.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(dcremoval.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(dcremoval.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(equalloudness.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(equalloudness.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(highpass.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(highpass.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(iir.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(iir.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(lowpass.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(lowpass.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(medianfilter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(medianfilter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(movingaverage.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(movingaverage.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(chromacrosssimilarity.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(chromacrosssimilarity.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(coversongsimilarity.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(coversongsimilarity.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(crosssimilaritymatrix.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(crosssimilaritymatrix.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(danceability.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(danceability.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(dynamiccomplexity.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(dynamiccomplexity.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(fadedetection.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(fadedetection.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(intensity.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(intensity.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pca.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pca.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sbic.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sbic.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(audioonsetsmarker.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(audioonsetsmarker.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(audioloader.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(audioloader.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(easyloader.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(easyloader.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(eqloudloader.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(eqloudloader.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(monoloader.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(monoloader.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(audiocontext.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(audiocontext.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(audiowriter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(audiowriter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(monowriter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(monowriter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(metadatareader.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(metadatareader.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(yamloutput.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(yamloutput.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(beatsloudness.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(beatsloudness.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(beattrackerdegara.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(beattrackerdegara.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(beattrackermultifeature.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(beattrackermultifeature.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bpmhistogram.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bpmhistogram.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bpmhistogramdescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bpmhistogramdescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bpmrubato.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bpmrubato.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(harmonicbpm.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(harmonicbpm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(loopbpmconfidence.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(loopbpmconfidence.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(loopbpmestimator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(loopbpmestimator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(noveltycurve.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(noveltycurve.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(noveltycurvefixedbpmestimator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(noveltycurvefixedbpmestimator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(onsetdetection.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(onsetdetection.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(onsetdetectionglobal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(onsetdetectionglobal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(onsetrate.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(onsetrate.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(onsets.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(onsets.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(percivalbpmestimator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(percivalbpmestimator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(percivalenhanceharmonics.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(percivalenhanceharmonics.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(percivalevaluatepulsetrains.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(percivalevaluatepulsetrains.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rhythmextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rhythmextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rhythmextractor2013.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rhythmextractor2013.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rhythmtransform.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rhythmtransform.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(singlebeatloudness.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(singlebeatloudness.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(superfluxextractor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(superfluxextractor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(superfluxnovelty.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(superfluxnovelty.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(superfluxpeaks.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(superfluxpeaks.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(accumulatoralgorithm.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(accumulatoralgorithm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(temposcalebands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(temposcalebands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tempotap.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tempotap.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tempotapdegara.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tempotapdegara.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tempotapmaxagreement.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tempotapmaxagreement.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tempotapticks.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tempotapticks.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(aftermaxtobeforemaxenergyratio.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(aftermaxtobeforemaxenergyratio.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(derivativesfx.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(derivativesfx.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(flatnesssfx.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(flatnesssfx.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(logattacktime.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(logattacktime.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(maxtototal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(maxtototal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(mintototal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(mintototal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchsalience.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchsalience.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(strongdecay.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(strongdecay.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tctototal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tctototal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(barkbands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(barkbands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bfcc.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bfcc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(energyband.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(energyband.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(energybandratio.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(energybandratio.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(erbbands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(erbbands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(flatnessdb.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(flatnessdb.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(flux.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(flux.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(frequencybands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(frequencybands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(gfcc.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(gfcc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(hfc.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(hfc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(hpcp.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(hpcp.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(logspectrum.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(logspectrum.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(maxmagfreq.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(maxmagfreq.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(melbands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(melbands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(mfcc.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(mfcc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(panning.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(panning.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rolloff.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rolloff.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectralcentroidtime.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectralcentroidtime.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectralcomplexity.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectralcomplexity.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectralcontrast.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectralcontrast.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectralpeaks.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectralpeaks.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectralwhitening.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectralwhitening.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectrumtocent.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectrumtocent.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(strongpeak.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(strongpeak.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(triangularbands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(triangularbands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(triangularbarkbands.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(triangularbarkbands.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(autocorrelation.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(autocorrelation.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(binaryoperator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(binaryoperator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(binaryoperatorstream.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(binaryoperatorstream.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(bpf.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(bpf.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(constantq.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(constantq.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(chromagram.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(chromagram.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(clipper.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(clipper.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(crosscorrelation.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(crosscorrelation.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(cubicspline.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(cubicspline.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(dct.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(dct.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(derivative.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(derivative.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(envelope.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(envelope.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(fftw.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(fftw.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(fftwcomplex.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(fftwcomplex.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(ifftw.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(ifftw.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(ifftwcomplex.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(ifftwcomplex.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(framebuffer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(framebuffer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(framecutter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(framecutter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(frametoreal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(frametoreal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(idct.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(idct.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(maxfilter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(maxfilter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(minmax.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(minmax.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(monomixer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(monomixer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(multiplexer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(multiplexer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(noiseadder.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(noiseadder.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(nsgconstantq.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(nsgconstantq.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(nsgconstantqstreaming.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(nsgconstantqstreaming.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(nsgiconstantq.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(nsgiconstantq.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(overlapadd.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(overlapadd.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(peakdetection.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(peakdetection.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pooltotensor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pooltotensor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(powerspectrum.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(powerspectrum.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(realaccumulator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(realaccumulator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(replaygain.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(replaygain.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(scale.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(scale.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(silencerate.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(silencerate.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(slicer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(slicer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectrum.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectrum.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spectrumCQ.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spectrumCQ.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spline.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spline.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(startstopsilence.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(startstopsilence.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(stereodemuxer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(stereodemuxer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(stereomuxer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(stereomuxer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(stereotrimmer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(stereotrimmer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tensornormalize.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tensornormalize.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tensortopool.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tensortopool.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tensortovectorreal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tensortovectorreal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tensortranspose.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tensortranspose.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(trimmer.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(trimmer.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(unaryoperator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(unaryoperator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(unaryoperatorstream.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(unaryoperatorstream.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(vectorrealaccumulator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(vectorrealaccumulator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(vectorrealtotensor.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(vectorrealtotensor.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(viterbi.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(viterbi.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(warpedautocorrelation.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(warpedautocorrelation.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(welch.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(welch.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(windowing.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(windowing.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(centralmoments.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(centralmoments.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(centroid.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(centroid.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(crest.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(crest.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(decrease.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(decrease.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(distributionshape.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(distributionshape.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(energy.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(energy.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(entropy.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(entropy.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(flatness.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(flatness.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(geometricmean.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(geometricmean.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(histogram.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(histogram.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(instantpower.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(instantpower.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(mean.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(mean.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(median.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(median.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(poolaggregator.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(poolaggregator.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(powermean.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(powermean.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rawmoments.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rawmoments.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(rms.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(rms.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(singlegaussian.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(singlegaussian.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(variance.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(variance.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(harmonicmask.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(harmonicmask.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(harmonicmodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(harmonicmodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(hprmodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(hprmodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(hpsmodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(hpsmodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(resamplefft.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(resamplefft.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sinemodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sinemodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sinemodelsynth.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sinemodelsynth.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sinesubtraction.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sinesubtraction.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sprmodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sprmodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(sprmodelsynth.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(sprmodelsynth.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spsmodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spsmodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(spsmodelsynth.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(spsmodelsynth.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(stochasticmodelanal.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(stochasticmodelanal.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(stochasticmodelsynth.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(stochasticmodelsynth.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(duration.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(duration.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(effectiveduration.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(effectiveduration.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(larm.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(larm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(leq.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(leq.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(loudness.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(loudness.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(loudnessebur128.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(loudnessebur128.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(loudnessebur128filter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(loudnessebur128filter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(loudnessvickers.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(loudnessvickers.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(lpc.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(lpc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(zerocrossingrate.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(zerocrossingrate.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(audio2midi.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(audio2midi.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(audio2pitch.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(audio2pitch.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(chordsdescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(chordsdescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(chordsdetection.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(chordsdetection.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(chordsdetectionbeats.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(chordsdetectionbeats.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(dissonance.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(dissonance.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(harmonicpeaks.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(harmonicpeaks.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(highresolutionfeatures.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(highresolutionfeatures.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(inharmonicity.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(inharmonicity.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(key.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(key.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(multipitchklapuri.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(multipitchklapuri.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(multipitchmelodia.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(multipitchmelodia.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(nnlschroma.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(nnlschroma.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(oddtoevenharmonicenergyratio.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(oddtoevenharmonicenergyratio.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitch2midi.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitch2midi.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchcontours.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchcontours.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchcontoursegmentation.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchcontoursegmentation.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchcontoursmelody.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchcontoursmelody.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchcontoursmonomelody.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchcontoursmonomelody.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchcontoursmultimelody.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchcontoursmultimelody.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchfilter.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchfilter.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchmelodia.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchmelodia.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchsaliencefunction.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchsaliencefunction.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchsaliencefunctionpeaks.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchsaliencefunctionpeaks.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchyin.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchyin.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchyinfft.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchyinfft.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchyinprobabilistic.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchyinprobabilistic.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchyinprobabilities.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchyinprobabilities.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pitchyinprobabilitieshmm.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pitchyinprobabilitieshmm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(predominantpitchmelodia.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(predominantpitchmelodia.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tonicindianartmusic.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tonicindianartmusic.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tristimulus.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tristimulus.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(tuningfrequency.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(tuningfrequency.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(vibrato.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(vibrato.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(fileoutputproxy.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(fileoutputproxy.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(stringutil.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(stringutil.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(pool.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(pool.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(poolstorage.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(poolstorage.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(iv.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(iv.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(devnull.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(devnull.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(FreesoundLowlevelDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(FreesoundLowlevelDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(FreesoundRhythmDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(FreesoundRhythmDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(FreesoundSfxDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(FreesoundSfxDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(FreesoundTonalDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(FreesoundTonalDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(MusicLowlevelDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(MusicLowlevelDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(MusicRhythmDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(MusicRhythmDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(MusicTonalDescriptors.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(MusicTonalDescriptors.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(splineutil.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(splineutil.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(synth_utils.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(synth_utils.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(gamma.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(gamma.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+essentia.lib(polevl.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '0' doesn't match value '2' in Binasc.obj
+essentia.lib(polevl.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MD_DynamicRelease' doesn't match value 'MDd_DynamicDebug' in Binasc.obj
+     Creating library C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.lib and object C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exp
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+C:\Users\winga\source\repos\waveOut\x64\Debug\waveOut.exe : fatal error LNK1319: 574 mismatches detected

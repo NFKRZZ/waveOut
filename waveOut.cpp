@@ -24,6 +24,11 @@
 #include "MidiMaker.h"
 #include "KeyDetection.h"
 #include <iomanip>
+#include "StemSeperator.h"
+#include <filesystem>
+
+#include <keyfinder/keyfinder.h>
+
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
@@ -274,7 +279,6 @@ int main(int argc, char* argv[])
 	
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	
 	SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
 
 	std::cout << " ________  ___  ___  ________  ___  ________          _________  ________          _____ ______   ___  ________  ___     \n";
@@ -288,9 +292,30 @@ int main(int argc, char* argv[])
 
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/440HzSine.wav";
+	string file = "Test/distance2.wav";
+	std::filesystem::path p(file);
+	string filename = p.stem().string();
 
-	Key SONG_KEY = Key::F_SHARP_MAJOR;
+	std::cout << "Running Stem Seperation with CUDA!" << endl;
+	StemSeperator::split(file);
+	std::cout << "Finished!" << endl;
+	cout << filename << endl;
+	//path of stems is ../seperated/htdemucs_ft/file_name
+	// bass drums other vocals
+	string bass = "separated/htdemucs_ft/"+ filename + "/bass.wav";
+	string vocals = "separated/htdemucs_ft/"+filename+"/vocals.wav";
+	string drums = "separated/htdemucs_ft/"+filename+"/drums.wav";
+	string other = "separated/htdemucs_ft/"+filename+"/other.wav";
+
+
+	//lets load these files
+
+	vector<short int> bassData = getData(bass);
+	vector<short int> vocalData = getData(vocals);
+	vector<short int> drumData = getData(drums);
+	vector<short int> chordData = getData(other);
+	cout << "Loaded stems into memory" << endl;
+	Key SONG_KEY = Key::NO_KEY;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
 	GLOBAL::isMonophonic = true; //WORK ON THIS NEXT ------------------------------------------------------------------------------------------ L()()K
 	cout << file << endl;
@@ -341,30 +366,18 @@ int main(int argc, char* argv[])
 	
 	vector<short int> mono = Consolidate(dat1.first, dat1.second);
 	vector<double> monoD = filter::short_to_double(mono);
-	auto chroma = KeyDetection::getMeanChroma(monoD, wav.SampleRate);
-	std::array<std::array<double, 12>, 24> profiles;
-	std::array<std::string, 24>           names;
-	KeyDetection::buildKeyProfiles(profiles, names);
+	
+	KeyFinder::KeyFinder kf;
 
-	std::cout << "Key scores:\n";
-	for (int k = 0; k < 24; ++k) {
-		double s = KeyDetection::cosineSimilarity(chroma, profiles[k]);
-		std::cout << "  " << names[k]
-			<< ": " << s << "\n";
-	}
+	Key k = KeyDetection::getKey(monoD, wav.SampleRate, kf);
+
+	string key = Util::getEnumString(k);
 
 
-
-	int best = KeyDetection::detectKey(chroma, profiles);
-
-	std::cout << "Detected key: " << names[best]
-		<< " (score = "
-		<< KeyDetection::cosineSimilarity(chroma, profiles[best])
-		<< ")\n";
 
 	cout << "BPM: " << BPM << endl;
-	cout << "Song Key: " << Util::getEnumString(SONG_KEY) << endl;
-
+	cout << "Song Key: " << Util::getEnumString(k) << endl;
+	
 
 
 
@@ -478,6 +491,7 @@ int main(int argc, char* argv[])
 	vector<short int> highPP = Consolidate(highP.first, highP.second);
 	cout << "THIS IS LOWPP SIZE: " << lowPP.size()<<endl;
 	vector<Chunk> cDat = MidiMaker::lowPass(lowPP);
+	cout << "DID LOW PASS\n";
 	vector<Chunk> midPass = MidiMaker::highPass(highPP); //I THINK CHUNKS ARENT BEING DONE PROPERLY TIMING IS WRONG
 
 	std::cout << "This is chunk seperation time: " << GLOBAL::twoBeatDuration << "s" << endl;
