@@ -26,6 +26,8 @@
 #include <iomanip>
 #include "StemSeperator.h"
 #include <filesystem>
+#include "BPMDetection.h"
+
 
 #include <keyfinder/keyfinder.h>
 
@@ -57,7 +59,7 @@ struct LIST
 	int ChunkSize;
 	char ListTypeID[4];
 };
-static int BPM = 151;
+static int BPM = 0;
 static vector<short int> getData(string file)
 {
 	vector<short int> data;
@@ -292,7 +294,7 @@ int main(int argc, char* argv[])
 
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/distance2.wav";
+	string file = "Test/callonme.wav";
 	std::filesystem::path p(file);
 	string filename = p.stem().string();
 
@@ -373,11 +375,15 @@ int main(int argc, char* argv[])
 
 	string key = Util::getEnumString(k);
 
+	//get BPM
 
+	BPM = BPMDetection::getBpmMonoAubio(monoD, wav.SampleRate);
 
 	cout << "BPM: " << BPM << endl;
 	cout << "Song Key: " << Util::getEnumString(k) << endl;
 	
+	
+
 
 
 
@@ -460,7 +466,7 @@ int main(int argc, char* argv[])
 	vector<short int> preProcData = Consolidate(dat.first, dat.second);
 	vector<double> audiodata(preProcData.begin(), preProcData.end());
 	cout << "BPM: " << BPM << endl;
-	cout << qBeatDuration<<endl;
+	cout << qBeatDuration<<endl;    
 	int sampleSize = qBeatDuration * (wav.SampleRate/2);
 	int numOfChunks = audiodata.size() /( sampleSize*2);
 	cout <<"THIS IS SAMPLESIZE MAIN FUNC " << sampleSize << endl;

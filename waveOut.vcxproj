@@ -142,7 +142,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\libkeyfinder\install\include;C:\Users\winga\source\repos\waveOut\waveOut\FFTW;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\vcpkg\vcpkg\installed\x64-windows\include;C:\libkeyfinder\install\include;C:\Users\winga\source\repos\waveOut\waveOut\FFTW;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -150,8 +150,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\winga\source\repos\waveOut\waveOut\FFTW;C:\libkeyfinder\install\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libfftw3-3.lib;mmdevapi.lib;keyfinder.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\vcpkg\vcpkg\installed\x64-windows\lib;C:\Users\winga\source\repos\waveOut\waveOut\FFTW;C:\libkeyfinder\install\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>aubio.lib;libfftw3-3.lib;mmdevapi.lib;keyfinder.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /y "C:\Users\winga\source\repos\waveOut\waveOut\FFTW\keyfinder.dll" "$(TargetDir)"
