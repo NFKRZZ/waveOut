@@ -44,9 +44,12 @@ BPM_REFINE_HOP = 256              # hop for onset strength in refinement (smalle
 BPM_REFINE_SMOOTH_AC = 5          # smooth autocorr a bit (odd int; 0 disables)
 
 # final snapping (integer clamp)
-SNAP_FINAL_BPM_TO_INT = True      # clamp to whole numbers (after drift-refine too)
+SNAP_FINAL_BPM_TO_INT = False      # clamp to whole numbers (after drift-refine too)
 BPM_INT_RANGE_LO = 60
 BPM_INT_RANGE_HI = 200
+# Optionally allow decimal snapping (e.g. 125.1 BPM)
+SNAP_FINAL_BPM_TO_TENTH = True  # when True, snap to `BPM_DECIMAL_PLACES` places
+BPM_DECIMAL_PLACES = 1          # number of decimal places for decimal snapping (1 => tenths)
 
 
 # ============================================================
@@ -66,7 +69,7 @@ DRIFT_LAMBDA = 0.25               # penalty weight on drift slope
 # Kick-ish detector used for drift scoring
 KICK_LP_FC_HZ = 180.0
 KICK_SMOOTH_MS = 2.5
-KICK_THR_SIGMA = 5.0
+KICK_THR_SIGMA = 2.0
 KICK_MIN_SEP_S = 0.18
 
 # Debug plot behavior
@@ -130,6 +133,22 @@ def snap_bpm_integer(bpm: float):
     if b < BPM_INT_RANGE_LO or b > BPM_INT_RANGE_HI:
         return float(bpm)
     return float(b)
+
+
+def snap_bpm_decimal(bpm: float, places: int = 1):
+    """
+    Snap BPM to a given number of decimal places (e.g. 1 -> tenths).
+    Behavior mirrors integer snapping: if the rounded integer is outside
+    BPM_INT_RANGE_LO..BPM_INT_RANGE_HI we return the original bpm.
+    """
+    if not np.isfinite(bpm) or bpm <= 0:
+        return 0.0
+    # check integer range based on rounded integer value
+    b_int = int(round(bpm))
+    if b_int < BPM_INT_RANGE_LO or b_int > BPM_INT_RANGE_HI:
+        return float(bpm)
+    fmt = round(float(bpm), int(max(0, int(places))))
+    return float(fmt)
 
 
 # ============================
@@ -345,9 +364,11 @@ def bpm_ensemble_from_audio(mono: np.ndarray, sr: int):
         smooth_ac_win=BPM_REFINE_SMOOTH_AC
     )
 
-    bpm_final_int = bpm_refined
+    bpm_final = bpm_refined
     if SNAP_FINAL_BPM_TO_INT:
-        bpm_final_int = snap_bpm_integer(bpm_refined)
+        bpm_final = snap_bpm_integer(bpm_refined)
+    elif SNAP_FINAL_BPM_TO_TENTH:
+        bpm_final = snap_bpm_decimal(bpm_refined, BPM_DECIMAL_PLACES)
 
     details = {
         "raw_bpms": raw,
@@ -356,10 +377,10 @@ def bpm_ensemble_from_audio(mono: np.ndarray, sr: int):
         "clusters": clusters,
         "bpm_initial": float(bpm_initial),
         "bpm_refined": float(bpm_refined),
-        "bpm_final_int": float(bpm_final_int),
+        "bpm_final": float(bpm_final),
         "used_sr": used_sr,
     }
-    return float(bpm_final_int), float(bpm_refined), details
+    return float(bpm_final), float(bpm_refined), details
 
 
 # ============================================================
@@ -875,7 +896,12 @@ class BeatGridViewer(QtWidgets.QMainWindow):
                                  hop_length=BPM_REFINE_HOP, fold_lo=BPM_FOLD_LO, fold_hi=BPM_FOLD_HI,
                                  smooth_ac_win=BPM_REFINE_SMOOTH_AC)
             self.bpm_refined = float(b)
-            self.bpm = snap_bpm_integer(b) if SNAP_FINAL_BPM_TO_INT else float(b)
+            if SNAP_FINAL_BPM_TO_INT:
+                self.bpm = snap_bpm_integer(b)
+            elif SNAP_FINAL_BPM_TO_TENTH:
+                self.bpm = snap_bpm_decimal(b, BPM_DECIMAL_PLACES)
+            else:
+                self.bpm = float(b)
 
         # ----------------------------
         # Anchor candidates
@@ -929,6 +955,8 @@ class BeatGridViewer(QtWidgets.QMainWindow):
             bpm_final = float(self.bpm_drift_best)
             if SNAP_FINAL_BPM_TO_INT:
                 bpm_final = snap_bpm_integer(bpm_final)
+            elif SNAP_FINAL_BPM_TO_TENTH:
+                bpm_final = snap_bpm_decimal(bpm_final, BPM_DECIMAL_PLACES)
 
             self.bpm_before_drift = float(self.bpm_refined)
             self.bpm = float(bpm_final)
@@ -948,7 +976,7 @@ class BeatGridViewer(QtWidgets.QMainWindow):
             print("BPM raw:", bpm_details["raw_bpms"])
             print("BPM folded:", bpm_details["folded_bpms"])
             print("BPM clusters:", bpm_details["clusters"])
-            print(f"bpm_initial={bpm_details['bpm_initial']:.4f}  bpm_refined={bpm_details['bpm_refined']:.4f}  bpm_final_int={bpm_details['bpm_final_int']:.2f}")
+            print(f"bpm_initial={bpm_details['bpm_initial']:.4f}  bpm_refined={bpm_details['bpm_refined']:.4f}  bpm_final={bpm_details['bpm_final']:.2f}")
         if self.drift_dbg:
             print("Drift best_info:", self.drift_dbg.get("best_info", {}))
             print("kicks per drift window:", self.drift_dbg.get("kicks_per_window", []))
@@ -1191,7 +1219,7 @@ class BeatGridViewer(QtWidgets.QMainWindow):
 
 
 def main():
-    audio_path = r"J:\SERATO GOOD QUALITY SONGS\01 LEYO & FS Green - U Remind Me (Bootleg).mp3"  # <-- change me
+    audio_path = r"C:\Users\winga\Downloads\Clouds_-_Take_A_Bow_Unreleased_BTV_KLICKAUD.mp3"  # <-- change me
     app = QtWidgets.QApplication([])
     w = BeatGridViewer(audio_path, window_s=8.0, fps=120, beats_per_bar=4)
     w.resize(1300, 520)
