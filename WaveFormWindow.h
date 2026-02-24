@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <cstddef>
 #include <vector>
 #include <string>
 
@@ -14,6 +15,37 @@ namespace WaveformWindow
         double audioStartSeconds = 0.0;
         double approxOnsetSeconds = 0.0;
         double kickAttackSeconds = 0.0;
+    };
+
+    struct PlaybackSyncSnapshot
+    {
+        bool valid = false;
+        bool playing = false;
+        bool isStereo = false;
+        int sampleRate = 0;
+        std::size_t totalFrames = 0;
+        double currentFrame = 0.0;
+        double zoomFactor = 1.0;
+        long long panOffsetFrames = 0;
+        double playheadXRatio = 0.25;
+        GridOverlayConfig grid{};
+    };
+
+    struct StemPlaybackConfig
+    {
+        bool enabled = false;
+        std::vector<short>* vocalsInterleavedStereo = nullptr;
+        int vocalsSampleRate = 0;
+        int vocalsChannels = 2;
+        std::vector<short>* drumsInterleavedStereo = nullptr;
+        int drumsSampleRate = 0;
+        int drumsChannels = 2;
+        std::vector<short>* bassInterleavedStereo = nullptr;
+        int bassSampleRate = 0;
+        int bassChannels = 2;
+        std::vector<short>* chordsInterleavedStereo = nullptr;
+        int chordsSampleRate = 0;
+        int chordsChannels = 2;
     };
 
     // Copies the samples into the window thread (safer).
@@ -32,4 +64,9 @@ namespace WaveformWindow
     void ShowWaveformAsyncCopyPlayStereo(const std::vector<short>& interleavedStereoSamples, int sampleRate, bool startPlaying = false, const std::wstring& title = L"Waveform");
     void ShowWaveformAsyncRefPlayStereo(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying = false, const std::wstring& title = L"Waveform");
     void ShowWaveformAsyncRefPlayStereoGrid(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying, const GridOverlayConfig& grid, const std::wstring& title = L"Waveform");
+    void ShowWaveformAsyncRefPlayStereoGridStems(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying, const GridOverlayConfig& grid, const StemPlaybackConfig& stems, const std::wstring& title = L"Waveform");
+
+    // Read-only snapshot for companion windows (e.g., spectrogram) to stay synced
+    // with the currently active waveform playback/viewport.
+    bool GetPlaybackSyncSnapshot(PlaybackSyncSnapshot& out);
 }

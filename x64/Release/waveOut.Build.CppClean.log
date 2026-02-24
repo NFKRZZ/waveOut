@@ -1,5 +1,5 @@
 c:\users\winga\source\repos\waveout\waveout\x64\release\vc145.pdb
-c:\users\winga\source\repos\waveout\waveout\x64\release\stemseperator.obj
+c:\users\winga\source\repos\waveout\waveout\x64\release\pianorollrenderer.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\options.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\notesegmentor.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\note.obj
@@ -22,6 +22,8 @@ c:\users\winga\source\repos\waveout\waveout\x64\release\binasc.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\waveout.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\waveformwindow.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\util.obj
+c:\users\winga\source\repos\waveout\waveout\x64\release\stemseperator.obj
+c:\users\winga\source\repos\waveout\waveout\x64\release\spectrogramwindow.obj
 c:\users\winga\source\repos\waveout\waveout\x64\release\keys.h.ifc
 c:\users\winga\source\repos\waveout\waveout\x64\release\keys.h.ifc.d.json
 c:\users\winga\source\repos\waveout\waveout\x64\release\keys.h.obj

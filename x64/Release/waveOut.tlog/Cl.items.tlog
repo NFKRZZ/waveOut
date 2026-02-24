@@ -1,5 +1,7 @@
 C:\Users\winga\source\repos\waveOut\waveOut\Binasc.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\Binasc.obj
 C:\Users\winga\source\repos\waveOut\waveOut\BPMDetection.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\BPMDetection.obj
+C:\Users\winga\source\repos\waveOut\waveOut\AudioEngine.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\AudioEngine.obj
+C:\Users\winga\source\repos\waveOut\waveOut\AudioFileLoader.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\AudioFileLoader.obj
 C:\Users\winga\source\repos\waveOut\waveOut\Chunk.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\Chunk.obj
 C:\Users\winga\source\repos\waveOut\waveOut\DSP.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\DSP.obj
 C:\Users\winga\source\repos\waveOut\waveOut\EFFECTS.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\EFFECTS.obj
@@ -18,6 +20,8 @@ C:\Users\winga\source\repos\waveOut\waveOut\MiniBpm.cpp;C:\Users\winga\source\re
 C:\Users\winga\source\repos\waveOut\waveOut\Note.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\Note.obj
 C:\Users\winga\source\repos\waveOut\waveOut\NoteSegmentor.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\NoteSegmentor.obj
 C:\Users\winga\source\repos\waveOut\waveOut\Options.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\Options.obj
+C:\Users\winga\source\repos\waveOut\waveOut\PianoRollRenderer.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\PianoRollRenderer.obj
+C:\Users\winga\source\repos\waveOut\waveOut\SpectrogramWindow.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\SpectrogramWindow.obj
 C:\Users\winga\source\repos\waveOut\waveOut\StemSeperator.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\StemSeperator.obj
 C:\Users\winga\source\repos\waveOut\waveOut\Util.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\Util.obj
 C:\Users\winga\source\repos\waveOut\waveOut\WaveFormWindow.cpp;C:\Users\winga\source\repos\waveOut\waveOut\x64\Release\WaveFormWindow.obj

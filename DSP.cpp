@@ -4,11 +4,18 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <mutex>
 
 namespace dsp
 {
     static constexpr double PI = 3.141592653589793238462643383279502884;
     static constexpr double EPS = 1e-20;
+
+    static std::mutex& fftw_plan_mutex()
+    {
+        static std::mutex m;
+        return m;
+    }
 
     double clamp(double x, double lo, double hi)
     {
@@ -148,12 +155,20 @@ namespace dsp
         m_out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (std::size_t)(m_nfft / 2 + 1));
 
         // FFTW_ESTIMATE is fast to create; good for interactive UI. (MEASURE can stall.)
-        m_plan = fftw_plan_dft_r2c_1d(m_nfft, m_in, m_out, FFTW_ESTIMATE);
+        {
+            std::lock_guard<std::mutex> lock(fftw_plan_mutex());
+            m_plan = fftw_plan_dft_r2c_1d(m_nfft, m_in, m_out, FFTW_ESTIMATE);
+        }
     }
 
     void FftwR2C::destroy()
     {
-        if (m_plan) { fftw_destroy_plan(m_plan); m_plan = nullptr; }
+        if (m_plan)
+        {
+            std::lock_guard<std::mutex> lock(fftw_plan_mutex());
+            fftw_destroy_plan(m_plan);
+            m_plan = nullptr;
+        }
         if (m_out) { fftw_free(m_out); m_out = nullptr; }
         if (m_in) { fftw_free(m_in); m_in = nullptr; }
         m_nfft = 0;
@@ -306,6 +321,86 @@ namespace dsp
 
         // Convert energies to colors
         for (int x = 0; x < widthPx; ++x)
+        {
+            const auto& e = energies[(std::size_t)x];
+            RGB8 c = color_from_bands(e.low, e.mid, e.high, e.total, maxTotal);
+            outColorref[(std::size_t)x] = to_colorref(c);
+        }
+    }
+
+    void build_waveform_cache_pcm16_chunks(const short* samples,
+        std::size_t totalSamples,
+        int sampleRate,
+        int numOfChunks,
+        int sampleSize,
+        StftBandAnalyzer& analyzer,
+        const BandConfig& cfg,
+        std::vector<short>& outMinS,
+        std::vector<short>& outMaxS,
+        std::vector<uint32_t>& outColorref)
+    {
+        outMinS.clear();
+        outMaxS.clear();
+        outColorref.clear();
+
+        if (!samples || totalSamples == 0 || numOfChunks <= 0 || sampleSize <= 0)
+            return;
+
+        if (analyzer.sampleRate() != sampleRate)
+            analyzer.init(analyzer.nfft() > 0 ? analyzer.nfft() : 1024, sampleRate);
+
+        outMinS.resize((std::size_t)numOfChunks);
+        outMaxS.resize((std::size_t)numOfChunks);
+        outColorref.resize((std::size_t)numOfChunks);
+
+        // Store energies first so we can normalize brightness by maxTotal
+        std::vector<BandEnergies> energies((std::size_t)numOfChunks);
+
+        double maxTotal = 0.0;
+
+        for (int x = 0; x < numOfChunks; ++x)
+        {
+            const std::size_t chunkStart = (std::size_t)x * (std::size_t)sampleSize;
+            if (chunkStart >= totalSamples)
+            {
+                outMinS[(std::size_t)x] = 0;
+                outMaxS[(std::size_t)x] = 0;
+                energies[(std::size_t)x] = BandEnergies{};
+                continue;
+            }
+
+            const std::size_t chunkEnd = (std::min)(chunkStart + (std::size_t)sampleSize, totalSamples);
+            const std::size_t chunkLen = chunkEnd - chunkStart;
+            if (chunkLen == 0)
+            {
+                outMinS[(std::size_t)x] = 0;
+                outMaxS[(std::size_t)x] = 0;
+                energies[(std::size_t)x] = BandEnergies{};
+                continue;
+            }
+
+            short mn = samples[chunkStart];
+            short mx = samples[chunkStart];
+            for (std::size_t i = chunkStart + 1; i < chunkEnd; ++i)
+            {
+                mn = (std::min)(mn, samples[i]);
+                mx = (std::max)(mx, samples[i]);
+            }
+            outMinS[(std::size_t)x] = mn;
+            outMaxS[(std::size_t)x] = mx;
+
+            energies[(std::size_t)x] = analyzer.analyzeCenteredPcm16(
+                samples + chunkStart,
+                chunkLen,
+                chunkLen / 2,
+                cfg);
+
+            if (energies[(std::size_t)x].total > maxTotal)
+                maxTotal = energies[(std::size_t)x].total;
+        }
+
+        // Convert energies to colors
+        for (int x = 0; x < numOfChunks; ++x)
         {
             const auto& e = energies[(std::size_t)x];
             RGB8 c = color_from_bands(e.low, e.mid, e.high, e.total, maxTotal);

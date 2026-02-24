@@ -162,6 +162,8 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
   <ItemGroup>
     <ClCompile Include="Binasc.cpp" />
     <ClCompile Include="BPMDetection.cpp" />
+    <ClCompile Include="AudioEngine.cpp" />
+    <ClCompile Include="AudioFileLoader.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="DSP.cpp" />
     <ClCompile Include="EFFECTS.cpp" />
@@ -180,6 +182,8 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
     <ClCompile Include="Note.cpp" />
     <ClCompile Include="NoteSegmentor.cpp" />
     <ClCompile Include="Options.cpp" />
+    <ClCompile Include="PianoRollRenderer.cpp" />
+    <ClCompile Include="SpectrogramWindow.cpp" />
     <ClCompile Include="StemSeperator.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="WaveFormWindow.cpp" />
@@ -188,6 +192,8 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
   <ItemGroup>
     <ClInclude Include="Binasc.h" />
     <ClInclude Include="BPMDetection.h" />
+    <ClInclude Include="AudioEngine.h" />
+    <ClInclude Include="AudioFileLoader.h" />
     <ClInclude Include="Chunk.h" />
     <ClInclude Include="DSP.h" />
     <ClInclude Include="EFFECTS.h" />
@@ -204,6 +210,8 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
     <ClInclude Include="Note.h" />
     <ClInclude Include="NoteSegmentor.h" />
     <ClInclude Include="Options.h" />
+    <ClInclude Include="PianoRollRenderer.h" />
+    <ClInclude Include="SpectrogramWindow.h" />
     <ClInclude Include="StemSeperator.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="WaveFormWindow.h" />

@@ -13,6 +13,7 @@
 #include <chrono>
 #include <array>
 #include <cmath>
+#include <cstring>
 #include "MiniBpm.h"
 #include <fftw3.h>
 #include "filter.cpp"
@@ -28,6 +29,7 @@
 #include "StemSeperator.h"
 #include <filesystem>
 #include "BPMDetection.h"
+#include "AudioFileLoader.h"
 
 #include <keyfinder/keyfinder.h>
 
@@ -35,6 +37,7 @@
 using namespace std;
 
 #include "WaveFormWindow.h" // <-- new: waveform GUI helper
+#include "SpectrogramWindow.h"
 
 struct WAVE_HEADER
 {
@@ -274,6 +277,50 @@ vector<short> Stereoize(vector<short> left, vector<short> right)
 	return interleaved;
 }
 
+static std::vector<short> ForceInterleavedStereo(const std::vector<short>& src, int channels)
+{
+	if (channels <= 0 || src.empty()) return {};
+
+	if (channels == 2)
+		return src;
+
+	const size_t ch = static_cast<size_t>(channels);
+	const size_t frames = src.size() / ch;
+	std::vector<short> out(frames * 2, 0);
+
+	if (channels == 1)
+	{
+		for (size_t i = 0; i < frames; ++i)
+		{
+			const short s = src[i];
+			out[2 * i] = s;
+			out[2 * i + 1] = s;
+		}
+		return out;
+	}
+
+	// Downmix multi-channel inputs to stereo by averaging even/odd channel groups.
+	for (size_t i = 0; i < frames; ++i)
+	{
+		const size_t base = i * ch;
+		long long accL = 0;
+		long long accR = 0;
+		int nL = 0;
+		int nR = 0;
+		for (int c = 0; c < channels; ++c)
+		{
+			const short s = src[base + static_cast<size_t>(c)];
+			if ((c % 2) == 0) { accL += s; ++nL; }
+			else { accR += s; ++nR; }
+		}
+		if (nL == 0) { accL = accR; nL = (nR > 0 ? nR : 1); }
+		if (nR == 0) { accR = accL; nR = (nL > 0 ? nL : 1); }
+		out[2 * i] = static_cast<short>(accL / nL);
+		out[2 * i + 1] = static_cast<short>(accR / nR);
+	}
+	return out;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -293,7 +340,7 @@ int main(int argc, char* argv[])
 
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/spectrum.wav";
+	string file = "Test/Nick_Curly_-_Underground_Caleb_Laurenson_Danny_P_Remix.mp3";
 	std::filesystem::path p(file);
 	string filename = p.stem().string();
 
@@ -310,12 +357,21 @@ int main(int argc, char* argv[])
 
 
 	//lets load these files
+	WAVE_HEADER bassHdr = getHDR(bass);
+	WAVE_HEADER vocalsHdr = getHDR(vocals);
+	WAVE_HEADER drumsHdr = getHDR(drums);
+	WAVE_HEADER otherHdr = getHDR(other);
 
 	vector<short int> bassData = getData(bass);
 	vector<short int> vocalData = getData(vocals);
 	vector<short int> drumData = getData(drums);
 	vector<short int> chordData = getData(other);
 	std::cout << "Loaded stems into memory" << endl;
+	std::cout << "Stem sample rates/channels: "
+		<< "vocals=" << vocalsHdr.SampleRate << "Hz/" << vocalsHdr.NumChannels << "ch, "
+		<< "drums=" << drumsHdr.SampleRate << "Hz/" << drumsHdr.NumChannels << "ch, "
+		<< "bass=" << bassHdr.SampleRate << "Hz/" << bassHdr.NumChannels << "ch, "
+		<< "chords=" << otherHdr.SampleRate << "Hz/" << otherHdr.NumChannels << "ch" << endl;
 	Key SONG_KEY = Key::NO_KEY;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
 	GLOBAL::isMonophonic = true; //WORK ON THIS NEXT ------------------------------------------------------------------------------------------ L()()K
@@ -323,7 +379,36 @@ int main(int argc, char* argv[])
 	HWAVEOUT hWaveOut;
 	LPSTR block;
 	DWORD blockSize;
-	WAVE_HEADER wav = getHDR(file);
+	audiofile::DecodedPcm16 decodedMain;
+	std::string decodeError;
+	if (!audiofile::AudioFileLoader::LoadPcm16(file, decodedMain, &decodeError))
+	{
+		std::cerr << "Failed to decode source audio (" << file << "): " << decodeError << std::endl;
+		return 1;
+	}
+	vector<short int> pcmData = ForceInterleavedStereo(decodedMain.samples, decodedMain.channels);
+	if (pcmData.empty())
+	{
+		std::cerr << "Decoded source audio is empty after stereo conversion: " << file << std::endl;
+		return 1;
+	}
+	std::cout << "Loaded source audio via AudioFileLoader: "
+		<< decodedMain.channels << "ch @" << decodedMain.sampleRate << "Hz -> stereo PCM16 (" << pcmData.size() / 2 << " frames)" << std::endl;
+
+	WAVE_HEADER wav{};
+	std::memcpy(wav.Chunk, "RIFF", 4);
+	std::memcpy(wav.format, "WAVE", 4);
+	std::memcpy(wav.Sub_chunk1ID, "fmt ", 4);
+	std::memcpy(wav.Sub_chunk2ID, "data", 4);
+	wav.Sub_chunk1Size = 16;
+	wav.AudioFormat = 1;
+	wav.NumChannels = 2;
+	wav.SampleRate = decodedMain.sampleRate;
+	wav.BitsPerSample = 16;
+	wav.BlockAlign = static_cast<short>(wav.NumChannels * (wav.BitsPerSample / 8));
+	wav.ByteRate = wav.SampleRate * wav.BlockAlign;
+	wav.Sub_chunk2Size = static_cast<int>(pcmData.size() * sizeof(short int));
+	wav.ChunkSize = 36 + wav.Sub_chunk2Size;
 	WAVEFORMATEX format = 
 	{
 		WAVE_FORMAT_PCM,	//FORMAT
@@ -342,7 +427,6 @@ int main(int argc, char* argv[])
 		ExitProcess(0);
 	}
 	printf("The Wave Mapper devicce was loaded\n");
-	vector<short int> pcmData = getData(file);
 	int pcmSize = sizeof(short int) * pcmData.size();
 	cout << "PCMDATA SIZE  " << pcmSize <<endl;
 	blockSize = pcmSize;
@@ -493,7 +577,23 @@ int main(int argc, char* argv[])
 	gridCfg.audioStartSeconds = gridEstimate.audioStart;
 	gridCfg.approxOnsetSeconds = gridEstimate.approxOnset;
 	gridCfg.kickAttackSeconds = gridEstimate.kickAttack;
-	WaveformWindow::ShowWaveformAsyncRefPlayStereoGrid(&data, wav.SampleRate, true, gridCfg, wname);
+	WaveformWindow::StemPlaybackConfig stemCfg;
+	stemCfg.enabled = true;
+	stemCfg.vocalsInterleavedStereo = &vocalData;
+	stemCfg.vocalsSampleRate = vocalsHdr.SampleRate;
+	stemCfg.vocalsChannels = vocalsHdr.NumChannels;
+	stemCfg.drumsInterleavedStereo = &drumData;
+	stemCfg.drumsSampleRate = drumsHdr.SampleRate;
+	stemCfg.drumsChannels = drumsHdr.NumChannels;
+	stemCfg.bassInterleavedStereo = &bassData;
+	stemCfg.bassSampleRate = bassHdr.SampleRate;
+	stemCfg.bassChannels = bassHdr.NumChannels;
+	stemCfg.chordsInterleavedStereo = &chordData;
+	stemCfg.chordsSampleRate = otherHdr.SampleRate;
+	stemCfg.chordsChannels = otherHdr.NumChannels;
+	WaveformWindow::ShowWaveformAsyncRefPlayStereoGridStems(&data, wav.SampleRate, true, gridCfg, stemCfg, wname);
+	std::wstring sname = std::wstring(filename.begin(), filename.end()) + L" - Spectrum Analyzer";
+	SpectrogramWindow::ShowSpectrogramAsyncRefStereoSynced(&data, wav.SampleRate, gridCfg, sname);
 
 	int lol;
 	cin >> lol;
