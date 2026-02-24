@@ -12,6 +12,7 @@
 #include <ctime>
 #include <chrono>
 #include <array>
+#include <cmath>
 #include "MiniBpm.h"
 #include <fftw3.h>
 #include "filter.cpp"
@@ -28,14 +29,12 @@
 #include <filesystem>
 #include "BPMDetection.h"
 
-
 #include <keyfinder/keyfinder.h>
 
 #pragma comment(lib,"Winmm.lib")
 using namespace std;
 
-
-
+#include "WaveFormWindow.h" // <-- new: waveform GUI helper
 
 struct WAVE_HEADER
 {
@@ -294,7 +293,7 @@ int main(int argc, char* argv[])
 
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/callonme.wav";
+	string file = "Test/spectrum.wav";
 	std::filesystem::path p(file);
 	string filename = p.stem().string();
 
@@ -316,11 +315,11 @@ int main(int argc, char* argv[])
 	vector<short int> vocalData = getData(vocals);
 	vector<short int> drumData = getData(drums);
 	vector<short int> chordData = getData(other);
-	cout << "Loaded stems into memory" << endl;
+	std::cout << "Loaded stems into memory" << endl;
 	Key SONG_KEY = Key::NO_KEY;
 	GLOBAL::MUSICAL_KEY = SONG_KEY;
 	GLOBAL::isMonophonic = true; //WORK ON THIS NEXT ------------------------------------------------------------------------------------------ L()()K
-	cout << file << endl;
+	std::cout << file << endl;
 	HWAVEOUT hWaveOut;
 	LPSTR block;
 	DWORD blockSize;
@@ -375,11 +374,15 @@ int main(int argc, char* argv[])
 
 	string key = Util::getEnumString(k);
 
-	//get BPM
+	// get BPM + initial grid anchor (t0) using aubio + simple onset/kick logic
+	BPMDetection::BeatGridEstimate gridEstimate = BPMDetection::estimateBeatGridMonoAubio(monoD, wav.SampleRate);
+	BPM = static_cast<int>(std::round(gridEstimate.bpm));
+	if (BPM <= 0) BPM = 120;
 
-	BPM = BPMDetection::getBpmMonoAubio(monoD, wav.SampleRate);
-
-	cout << "BPM: " << BPM << endl;
+	cout << "BPM (float estimate): " << gridEstimate.bpm << endl;
+	cout << "BPM (int legacy): " << BPM << endl;
+	cout << "Grid t0: " << gridEstimate.t0 << "s (audioStart=" << gridEstimate.audioStart
+		<< ", onset=" << gridEstimate.approxOnset << ", kick=" << gridEstimate.kickAttack << ")\n";
 	cout << "Song Key: " << Util::getEnumString(k) << endl;
 	
 	
@@ -479,10 +482,24 @@ int main(int argc, char* argv[])
 	cout << "HELLO THIS IS NUMOFCHUNKS MAIN FUNC " <<numOfChunks <<endl;
 	cout <<"THIS IS AUDIODATA SIZE MAIN FUNC " << audiodata.size() << endl;
 
-	cout << "THIS IS qBEAT MAIN " << std::setprecision(15) <<qBeatDuration << endl;
+	// Show waveform GUI and start playback (reference mode).
+	// Renderer now uses aubioTest.py-style color envelope layers (base + low/mid/high).
+	std::wstring wname = std::wstring(filename.begin(), filename.end()) + L" - Color Waveform";
+	WaveformWindow::GridOverlayConfig gridCfg;
+	gridCfg.enabled = (gridEstimate.bpm > 0.0);
+	gridCfg.bpm = gridEstimate.bpm;
+	gridCfg.t0Seconds = gridEstimate.t0;
+	gridCfg.beatsPerBar = 4;
+	gridCfg.audioStartSeconds = gridEstimate.audioStart;
+	gridCfg.approxOnsetSeconds = gridEstimate.approxOnset;
+	gridCfg.kickAttackSeconds = gridEstimate.kickAttack;
+	WaveformWindow::ShowWaveformAsyncRefPlayStereoGrid(&data, wav.SampleRate, true, gridCfg, wname);
 
-	sampleChunks.resize(numOfChunks);
-	int N = 10;
+	int lol;
+	cin >> lol;
+
+
+	cout << "THIS IS qBEAT MAIN " << std::setprecision(15) <<qBeatDuration << endl;
 
 	vector<Chunk> chunkData;
 	cout << "starting chunk haha" << endl;
@@ -523,57 +540,50 @@ int main(int argc, char* argv[])
 	}
 
 
-
-
-
-
-
-
 	for (int i = 0;i < numOfChunks;i++)
 	{
 		for (int j = 0;j < sampleSize;j++)
 		{
 			sampleChunks[i].push_back(audiodata[(i*sampleSize)+j]);
 		}
-		// DO FFT get back n Frequencies
-		// 2D array ----> [ [0,FREQENCIES],[1,FREQUENCIES]   ]
-		// ITERATE THROUGH ALL SAMPLES
-		
-		//then the top N amount of frequencies will be logged
-		// this will be stored in an object that has the following member variables: a pair vector with frequency and intensity, 
-		// also put in the object is the chunk iteration or corresponding time range
-		// there will be a vector of these objects
-
-		//then we will attempt to create a midi file from this 
 	}
+	int N = 10;
 	for (int i = 0;i < numOfChunks;i++)
 	{
-		vector<double>* pointer = &sampleChunks[i];
+		// compute FFT for chunk i
 		fftw_complex* output_buffer = static_cast<fftw_complex*>(fftw_malloc(outputSize * sizeof(fftw_complex)));
-		fftw_plan plan = fftw_plan_dft_r2c_1d(inputSize,&sampleChunks[i][0] , output_buffer, flags);
+		fftw_plan plan = fftw_plan_dft_r2c_1d(inputSize, &sampleChunks[i][0], output_buffer, flags);
 		fftw_execute(plan);
-		vector<double> test;
-		for (int i = 0; i < outputSize - 1;i++)
-		{
-			test.push_back((double)output_buffer[i][0]);
-		}
-		auto lol = max_element(test.begin(), test.end());
-		//cout << i << " CHUNK: " << " Time: "<< qBeatDuration*(i+1) << " " << numOfChunks << "  Largest frequency is " << distance(begin(test), lol) * (wav.SampleRate / inputSize) << endl;
 
+		vector<double> test;
+		for (int k = 0; k < outputSize - 1; ++k)
+		{
+			test.push_back((double)output_buffer[k][0]);
+		}
+
+		auto lol = max_element(test.begin(), test.end());
 		double frequency = distance(begin(test), lol) * (wav.SampleRate / inputSize);
 		vector<double> freqVector = { frequency };
 		vector<double> intenVector = { 1.0 };
 
-		Chunk chunk = Chunk(make_pair(freqVector,intenVector), i, qBeatDuration * (i + 1), qBeatDuration * (i + 2));
+		Chunk chunk = Chunk(make_pair(freqVector, intenVector), i, qBeatDuration * (i + 1), qBeatDuration * (i + 2));
 		chunkData.push_back(chunk);
-		//get nth top frequencies
-		vector<size_t> index(test.size());
-		iota(test.begin(), test.end(), 0);
-		std::partial_sort(index.begin(), index.begin() + N, index.end(),
-			[&](size_t A, size_t B) {
-			return test[A] > test[B];
-		});
 
+		// build index list and find top-N safely
+		vector<size_t> index(test.size());
+		iota(index.begin(), index.end(), 0);               // FIX: fill index, not test
+		int topN = std::min<int>(N, static_cast<int>(index.size()));
+		if (topN > 0)
+		{
+			std::partial_sort(index.begin(), index.begin() + topN, index.end(),
+				[&](size_t A, size_t B) {
+					return test[A] > test[B];
+				});
+		}
+
+		// cleanup FFTW allocations & plan
+		fftw_destroy_plan(plan);
+		fftw_free(output_buffer);
 	}
 
 	cout << "Length of ChunkData " << chunkData.size() << " \n";
@@ -613,8 +623,8 @@ int main(int argc, char* argv[])
 
 	Util::saveVectorToFile(deriv, "hello.txt");
 	std::chrono::system_clock::time_point now2 = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed = now2 - now1;
-	cout << "Took " << elapsed.count() << " seconds" << endl;
+	std::chrono::duration<double> elapsed2 = now2 - now1;
+	cout << "Took " << elapsed2.count() << " seconds" << endl;
 	vector<short>scaled = Util::doubleToShortScaled(deriv);
 	//Util::noteSegmentation(left, right, scaled);
 	Util::createWavFileMono(Util::normalizeVector(scaled),wav.ChunkSize, aja);

@@ -1219,7 +1219,7 @@ class BeatGridViewer(QtWidgets.QMainWindow):
 
 
 def main():
-    audio_path = r"C:\Users\winga\Downloads\Clouds_-_Take_A_Bow_Unreleased_BTV_KLICKAUD.mp3"  # <-- change me
+    audio_path = r"C:\Users\winga\source\repos\waveOut\waveOut\Test\spectrum.wav"  # <-- change me
     app = QtWidgets.QApplication([])
     w = BeatGridViewer(audio_path, window_s=8.0, fps=120, beats_per_bar=4)
     w.resize(1300, 520)

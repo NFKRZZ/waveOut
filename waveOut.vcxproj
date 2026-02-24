@@ -163,6 +163,7 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
     <ClCompile Include="Binasc.cpp" />
     <ClCompile Include="BPMDetection.cpp" />
     <ClCompile Include="Chunk.cpp" />
+    <ClCompile Include="DSP.cpp" />
     <ClCompile Include="EFFECTS.cpp" />
     <ClCompile Include="filter.cpp" />
     <ClCompile Include="FUNCTIONS.cpp" />
@@ -181,12 +182,14 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="StemSeperator.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="WaveFormWindow.cpp" />
     <ClCompile Include="waveOut.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Binasc.h" />
     <ClInclude Include="BPMDetection.h" />
     <ClInclude Include="Chunk.h" />
+    <ClInclude Include="DSP.h" />
     <ClInclude Include="EFFECTS.h" />
     <ClInclude Include="FUNCTIONS.h" />
     <ClInclude Include="GLOBAL.h" />
@@ -203,6 +206,7 @@ xcopy /y /d "C:\vcpkg\vcpkg\installed\x64-windows\bin\fftw*.dll" "$(TargetDir)" 
     <ClInclude Include="Options.h" />
     <ClInclude Include="StemSeperator.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="WaveFormWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

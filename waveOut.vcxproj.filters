@@ -81,6 +81,12 @@
     <ClCompile Include="StemSeperator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WaveFormWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DSP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniBpm.h">
@@ -138,6 +144,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StemSeperator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveFormWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DSP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
