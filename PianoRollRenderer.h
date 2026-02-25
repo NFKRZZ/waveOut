@@ -5,6 +5,23 @@
 
 namespace PianoRollRenderer
 {
+    enum GridMode
+    {
+        Grid_None = 0,
+        Grid_1_6_Step,
+        Grid_1_4_Step,
+        Grid_1_3_Step,
+        Grid_1_2_Step,
+        Grid_Step,
+        Grid_1_6_Beat,
+        Grid_1_4_Beat,
+        Grid_1_3_Beat,
+        Grid_1_2_Beat,
+        Grid_Beat,
+        Grid_Bar,
+        Grid_Count
+    };
+
     struct NoteEvent
     {
         double startSeconds = 0.0;
@@ -24,6 +41,7 @@ namespace PianoRollRenderer
         double bpm = 0.0;
         double t0Seconds = 0.0;
         int beatsPerBar = 4;
+        int gridMode = Grid_Beat;
     };
 
     struct Config
@@ -35,4 +53,3 @@ namespace PianoRollRenderer
 
     void Draw(HDC hdc, const RECT& rc, const ViewState& view, const Config& cfg = {}, const std::vector<NoteEvent>* notes = nullptr);
 }
-

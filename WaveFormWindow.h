@@ -25,6 +25,7 @@ namespace WaveformWindow
         int sampleRate = 0;
         std::size_t totalFrames = 0;
         double currentFrame = 0.0;
+        double playbackRate = 1.0;
         double zoomFactor = 1.0;
         long long panOffsetFrames = 0;
         double playheadXRatio = 0.25;
@@ -62,11 +63,21 @@ namespace WaveformWindow
 
     // Stereo variants: samples must be interleaved stereo (L,R,L,R,...).
     void ShowWaveformAsyncCopyPlayStereo(const std::vector<short>& interleavedStereoSamples, int sampleRate, bool startPlaying = false, const std::wstring& title = L"Waveform");
-    void ShowWaveformAsyncRefPlayStereo(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying = false, const std::wstring& title = L"Waveform");
-    void ShowWaveformAsyncRefPlayStereoGrid(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying, const GridOverlayConfig& grid, const std::wstring& title = L"Waveform");
-    void ShowWaveformAsyncRefPlayStereoGridStems(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying, const GridOverlayConfig& grid, const StemPlaybackConfig& stems, const std::wstring& title = L"Waveform");
+    void ShowWaveformAsyncRefPlayStereo(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying = false, const std::wstring& title = L"Waveform", const std::wstring& sourcePathHint = L"");
+    void ShowWaveformAsyncRefPlayStereoGrid(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying, const GridOverlayConfig& grid, const std::wstring& title = L"Waveform", const std::wstring& sourcePathHint = L"");
+    void ShowWaveformAsyncRefPlayStereoGridStems(std::vector<short>* interleavedStereoSamples, int sampleRate, bool startPlaying, const GridOverlayConfig& grid, const StemPlaybackConfig& stems, const std::wstring& title = L"Waveform", const std::wstring& sourcePathHint = L"");
 
     // Read-only snapshot for companion windows (e.g., spectrogram) to stay synced
     // with the currently active waveform playback/viewport.
     bool GetPlaybackSyncSnapshot(PlaybackSyncSnapshot& out);
+
+    // Shared musical-grid mode used by piano roll tabs and piano spectrograms.
+    // Values match PianoRollRenderer::GridMode.
+    int GetSharedPianoGridMode();
+    void SetSharedPianoGridMode(int mode);
+
+    // Builds a mono analysis window representing the current playback output signal
+    // (stems/mix selection + EQ + volume + playback-rate resampling), centered at the
+    // provided timeline frame. Returns false if no active playback source is available.
+    bool BuildPlaybackSpectrogramMonoWindow(double centerFrame, int frameCount, std::vector<double>& outMono);
 }

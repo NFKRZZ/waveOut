@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 namespace audio
@@ -22,6 +23,7 @@ namespace audio
         double eqLowDb = 0.0;
         double eqMidDb = 0.0;
         double eqHighDb = 0.0;
+        double masterGainDb = 0.0;
     };
 
     class AudioEngine
@@ -34,6 +36,7 @@ namespace audio
         AudioEngine& operator=(const AudioEngine&) = delete;
 
         bool Initialize(std::vector<short>* interleavedPcm16, int sampleRate, bool isStereo);
+        bool InitializeFromWavFile(const std::wstring& wavPath);
         bool ReplaceSource(std::vector<short>* interleavedPcm16, int sampleRate, bool isStereo);
         bool SetLiveMixConfig(const LiveMixConfig& cfg);
         void Shutdown();
@@ -42,6 +45,8 @@ namespace audio
         void Pause();
         void Stop();
         void SeekFrame(std::size_t frame);
+        bool SetPlaybackRate(double rate);
+        double GetPlaybackRate() const;
 
         std::size_t GetCurrentFrame() const;
         bool IsPlaying() const;

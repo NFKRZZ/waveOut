@@ -53,6 +53,113 @@ namespace PianoRollRenderer
             }
             return 600.0;
         }
+
+        static double GridModeBeats(int mode, int beatsPerBar)
+        {
+            switch (mode)
+            {
+            case Grid_1_6_Step: return 1.0 / 24.0;
+            case Grid_1_4_Step: return 1.0 / 16.0;
+            case Grid_1_3_Step: return 1.0 / 12.0;
+            case Grid_1_2_Step: return 1.0 / 8.0;
+            case Grid_Step: return 1.0 / 4.0;
+            case Grid_1_6_Beat: return 1.0 / 6.0;
+            case Grid_1_4_Beat: return 1.0 / 4.0;
+            case Grid_1_3_Beat: return 1.0 / 3.0;
+            case Grid_1_2_Beat: return 1.0 / 2.0;
+            case Grid_Beat: return 1.0;
+            case Grid_Bar: return (double)(std::max)(1, beatsPerBar);
+            default: return 0.0;
+            }
+        }
+
+        static void DrawMusicalGrid(HDC hdc, const RECT& gridRc, const ViewState& view, double visibleSeconds,
+            HPEN subdivPen, HPEN beatPen, HPEN barPen)
+        {
+            if (!view.showBeatGrid || view.bpm <= 0.0)
+                return;
+            if (view.gridMode == Grid_None)
+                return;
+
+            const int w = (std::max)(0, (int)(gridRc.right - gridRc.left));
+            if (w <= 0 || !(visibleSeconds > 0.0))
+                return;
+
+            const int beatsPerBar = (std::max)(1, view.beatsPerBar);
+            const double beatSec = 60.0 / view.bpm;
+            if (!std::isfinite(beatSec) || beatSec <= 0.0)
+                return;
+
+            const double pxPerSec = (double)w / visibleSeconds;
+            constexpr double kMinSubdivPx = 10.0;
+            constexpr double kMinBeatPx = 12.0;
+            constexpr double kMinBarPx = 14.0;
+
+            struct Candidate { int mode; double beats; };
+            Candidate cands[Grid_Count - 1]{};
+            int candCount = 0;
+            for (int m = 1; m < Grid_Count; ++m)
+            {
+                const double b = GridModeBeats(m, beatsPerBar);
+                if (b > 0.0 && std::isfinite(b))
+                    cands[candCount++] = Candidate{ m, b };
+            }
+            std::sort(cands, cands + candCount, [](const Candidate& a, const Candidate& b)
+            {
+                if (std::fabs(a.beats - b.beats) > 1e-12) return a.beats < b.beats;
+                return a.mode < b.mode;
+            });
+            if (candCount <= 0)
+                return;
+
+            const double requestedBeats = GridModeBeats(view.gridMode, beatsPerBar);
+            if (!(requestedBeats > 0.0))
+                return;
+
+            double chosenBeats = cands[candCount - 1].beats;
+            int chosenMode = cands[candCount - 1].mode;
+            for (int i = 0; i < candCount; ++i)
+            {
+                if (cands[i].beats + 1e-12 < requestedBeats) continue; // never finer than requested
+                chosenBeats = cands[i].beats;
+                chosenMode = cands[i].mode;
+                if (cands[i].beats * beatSec * pxPerSec >= kMinSubdivPx)
+                    break;
+            }
+
+            auto drawLinesAtBeats = [&](double lineBeats, HPEN pen)
+            {
+                if (!(lineBeats > 0.0) || !std::isfinite(lineBeats)) return;
+                const double lineSec = lineBeats * beatSec;
+                if (!(lineSec > 0.0)) return;
+                long long k0 = (long long)std::floor((view.tLeftSeconds - view.t0Seconds) / lineSec) - 2;
+                long long k1 = (long long)std::ceil((view.tRightSeconds - view.t0Seconds) / lineSec) + 2;
+                HGDIOBJ oldPenLocal = SelectObject(hdc, pen);
+                for (long long k = k0; k <= k1; ++k)
+                {
+                    const double tg = view.t0Seconds + (double)k * lineSec;
+                    if (tg < view.tLeftSeconds || tg > view.tRightSeconds) continue;
+                    const double xNorm = (tg - view.tLeftSeconds) / visibleSeconds;
+                    int x = gridRc.left + (int)std::lround(xNorm * (double)(gridRc.right - gridRc.left));
+                    x = (std::max)((int)gridRc.left, (std::min)(x, (int)gridRc.right - 1));
+                    MoveToEx(hdc, x, gridRc.top, NULL);
+                    LineTo(hdc, x, gridRc.bottom);
+                }
+                SelectObject(hdc, oldPenLocal);
+            };
+
+            const double chosenPx = chosenBeats * beatSec * pxPerSec;
+            if (chosenPx >= kMinSubdivPx)
+                drawLinesAtBeats(chosenBeats, subdivPen);
+
+            const double beatPx = beatSec * pxPerSec;
+            if (chosenMode != Grid_Beat && chosenMode != Grid_Bar && beatPx >= kMinBeatPx)
+                drawLinesAtBeats(1.0, beatPen);
+
+            const double barPx = beatSec * (double)beatsPerBar * pxPerSec;
+            if (barPx >= kMinBarPx)
+                drawLinesAtBeats((double)beatsPerBar, barPen);
+        }
     }
 
     void Draw(HDC hdc, const RECT& rc, const ViewState& view, const Config& cfg, const std::vector<NoteEvent>* notes)
@@ -171,25 +278,9 @@ namespace PianoRollRenderer
             TextOutW(hdc, tx, static_cast<int>(rc.top) + 2, lbl.c_str(), (int)lbl.size());
         }
 
-        // Beat/bar grid aligned to waveform grid
-        if (view.showBeatGrid && view.bpm > 0.0)
-        {
-            const double T = 60.0 / view.bpm;
-            const int beatsPerBar = (std::max)(1, view.beatsPerBar);
-            long long k0 = (long long)std::floor((view.tLeftSeconds - view.t0Seconds) / T) - 2;
-            long long k1 = (long long)std::ceil((view.tRightSeconds - view.t0Seconds) / T) + 2;
-            for (long long k = k0; k <= k1; ++k)
-            {
-                const double tg = view.t0Seconds + (double)k * T;
-                if (tg < view.tLeftSeconds || tg > view.tRightSeconds) continue;
-                const double xNorm = (tg - view.tLeftSeconds) / visibleSeconds;
-                int x = gridRc.left + (int)std::lround(xNorm * (double)(gridRc.right - gridRc.left));
-                x = (std::max)(static_cast<int>(gridRc.left), (std::min)(x, static_cast<int>(gridRc.right - 1)));
-                SelectObject(hdc, ((k % beatsPerBar) == 0) ? barPen : beatPen);
-                MoveToEx(hdc, x, rc.top, NULL);
-                LineTo(hdc, x, rc.bottom);
-            }
-        }
+        // Musical grid aligned to waveform grid (step/beat/bar with zoom-based fallback).
+        HPEN subdivPen = CreatePen(PS_SOLID, 1, RGB(110, 95, 30));
+        DrawMusicalGrid(hdc, gridRc, view, visibleSeconds, subdivPen, beatPen, barPen);
 
         // Placeholder note layer (future MIDI notes)
         if (!notes || notes->empty())
@@ -260,6 +351,7 @@ namespace PianoRollRenderer
         DeleteObject(sepPen);
         DeleteObject(timePen);
         DeleteObject(timeStrongPen);
+        DeleteObject(subdivPen);
         DeleteObject(beatPen);
         DeleteObject(barPen);
         DeleteObject(borderPen);

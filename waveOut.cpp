@@ -341,6 +341,7 @@ int main(int argc, char* argv[])
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
 	string file = "Test/Nick_Curly_-_Underground_Caleb_Laurenson_Danny_P_Remix.mp3";
+	//string file = R"(J:\SERATO GOOD QUALITY SONGS\Van She - Idea of Happiness (SebastiAn Remix).flac)";
 	std::filesystem::path p(file);
 	string filename = p.stem().string();
 
@@ -591,7 +592,8 @@ int main(int argc, char* argv[])
 	stemCfg.chordsInterleavedStereo = &chordData;
 	stemCfg.chordsSampleRate = otherHdr.SampleRate;
 	stemCfg.chordsChannels = otherHdr.NumChannels;
-	WaveformWindow::ShowWaveformAsyncRefPlayStereoGridStems(&data, wav.SampleRate, true, gridCfg, stemCfg, wname);
+	std::wstring sourcePathHint = std::wstring(file.begin(), file.end());
+	WaveformWindow::ShowWaveformAsyncRefPlayStereoGridStems(&data, wav.SampleRate, true, gridCfg, stemCfg, wname, sourcePathHint);
 	std::wstring sname = std::wstring(filename.begin(), filename.end()) + L" - Spectrum Analyzer";
 	SpectrogramWindow::ShowSpectrogramAsyncRefStereoSynced(&data, wav.SampleRate, gridCfg, sname);
 
