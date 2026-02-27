@@ -11,6 +11,7 @@
 #include <timeapi.h>
 #pragma comment(lib,"Winmm.lib")
 #pragma comment(lib,"Winmm.lib") // mci lives here too
+#pragma comment(lib,"Msimg32.lib") // AlphaBlend for translucent spectrogram notes
 
 #include <memory>
 #include <algorithm>
@@ -178,6 +179,8 @@ struct ThreadParam
     std::chrono::steady_clock::time_point playStartTime;
     size_t pausedSampleIndex = 0;     // sample index when paused (frame index, NOT sample index if stereo)
     long long panOffsetSamples = 0;   // manual pan offset (in frames)
+    bool followPlayhead = true;       // when false, keep viewport parked and let playhead move through it
+    double manualCenterFrame = 0.0;   // absolute viewport center used while followPlayhead == false
     int dragLastX = 0;
     bool dragScrubActive = false;
     bool dragPanActive = false;
@@ -244,6 +247,23 @@ struct ThreadParam
     RECT tabDetachDragTabsRc{};
     RECT pianoRollRcGridButton{};
     bool liveResizeActive = false;
+    std::vector<PianoRollRenderer::NoteEvent> pianoRollNotes[kPianoTabCount];
+    enum PianoNoteDragMode
+    {
+        PianoNoteDrag_None = 0,
+        PianoNoteDrag_Move,
+        PianoNoteDrag_ResizeRight
+    };
+    bool pianoNoteDragActive = false;
+    int pianoNoteDragTab = -1;
+    size_t pianoNoteDragIndex = 0;
+    int pianoNoteDragMode = PianoNoteDrag_None;
+    POINT pianoNoteDragStartPt{};
+    double pianoNoteDragMouseStartSeconds = 0.0;
+    int pianoNoteDragMouseStartMidi = 60;
+    double pianoNoteDragAnchorStartSeconds = 0.0;
+    double pianoNoteDragAnchorEndSeconds = 0.0;
+    int pianoNoteDragAnchorMidi = 60;
 
     // ---- embedded piano spectrogram tab cache (viewport-synced) ----
     bool embeddedPianoSpecUseProcessedMix = true;
@@ -308,12 +328,22 @@ struct PixelAggregate
     double avgV = 0.0;
 };
 
+struct WaveViewportFrameState
+{
+    double currentFrame = 0.0;
+    double centerFrame = 0.0;
+    double visibleFrames = 1.0;
+    double startFrame = 0.0;
+    double unclampedStartFrame = 0.0;
+};
+
 static void MciOpenIfNeeded(ThreadParam* tp);
 static void MciClose(ThreadParam* tp);
 static void SyncPausedFromMciPosition(ThreadParam* tp);
 static void SeekToFrame(ThreadParam* tp, size_t frame, bool resumePlayback);
 static size_t GetTotalFrames(const ThreadParam* tp);
 static double GetCurrentFrameForView(const ThreadParam* tp);
+static bool ComputeWaveViewportFrameState(const ThreadParam* tp, size_t totalFrames, WaveViewportFrameState& out);
 static bool HasStemPlayback(const ThreadParam* tp);
 static bool UsingAudioEngine(const ThreadParam* tp);
 static bool ShouldUseSourcePlaybackDirect(const ThreadParam* tp);
@@ -346,12 +376,19 @@ static bool HandleSharedPianoGridMenuMouseDown(HWND hwnd, ThreadParam* tp, POINT
 static bool UpdateSharedPianoGridMenuHover(HWND hwnd, ThreadParam* tp, POINT pt);
 static void DrawSharedPianoGridMenu(HDC hdc, const ThreadParam* tp);
 static const wchar_t* PianoRollGridModeLabel(int mode);
+static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
+static bool HandlePianoRollNoteMouseMove(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
+static bool HandlePianoRollNoteDeleteAtPoint(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
+static bool HandlePianoRollNoteLButtonUp(HWND hwnd, ThreadParam* tp);
+static bool UpdatePianoRollHoverCursor(HWND hwnd, ThreadParam* tp, POINT pt);
 static const wchar_t* EmbeddedPianoGridModeLabel(int mode);
 static void DrawEmbeddedPianoSpectrogramMusicalGrid(HDC hdc, const RECT& plotRc, const RECT& timeRc,
     ThreadParam* tp, double tLeft, double tRight);
+static RECT ComputeEmbeddedPianoSpecPlotRect(const RECT& rc);
 static RECT ComputeEmbeddedPianoSpecLeftScaleRect(const RECT& rc);
 static RECT ComputeEmbeddedPianoSpecMidiSliderTrackRect(const RECT& leftRc);
 static bool SetEmbeddedPianoSpecMidiSliderFromY(ThreadParam* tp, const RECT& trackRc, int y);
+static void DrawEmbeddedPianoSpecNotesOverlay(HDC hdc, const RECT& plotRc, ThreadParam* tp, double tLeft, double tRight);
 static void DrawEmbeddedPianoSpectrogramTab(HDC hdc, const RECT& pianoRc, ThreadParam* tp,
     double tLeft, double tRight, double curSeconds, int playheadX);
 
@@ -444,7 +481,14 @@ static void PublishPlaybackSync(const ThreadParam* tp)
     gSharedPlayback.currentFrame.store(static_cast<long long>(std::llround(curFrameD)));
     gSharedPlayback.playbackRate.store(UsingAudioEngine(tp) ? tp->audioEngine.GetPlaybackRate() : (tp->halfSpeedPlayback ? 0.5 : 1.0));
     gSharedPlayback.zoomFactor.store(tp->zoomFactor);
-    gSharedPlayback.panOffsetFrames.store(tp->panOffsetSamples);
+    long long sharedPanOffsetFrames = tp->panOffsetSamples;
+    if (!tp->followPlayhead)
+    {
+        double rel = tp->manualCenterFrame - curFrameD;
+        if (!std::isfinite(rel)) rel = 0.0;
+        sharedPanOffsetFrames = static_cast<long long>(std::llround(rel));
+    }
+    gSharedPlayback.panOffsetFrames.store(sharedPanOffsetFrames);
     gSharedPlayback.playheadXRatio.store(tp->playheadXRatio);
     gSharedPlayback.gridEnabled.store(tp->gridEnabled);
     gSharedPlayback.gridBpm.store(tp->gridBpm);
@@ -1633,6 +1677,37 @@ static double GetCurrentFrameForView(const ThreadParam* tp)
     return static_cast<double>(tp->pausedSampleIndex);
 }
 
+static bool ComputeWaveViewportFrameState(const ThreadParam* tp, size_t totalFrames, WaveViewportFrameState& out)
+{
+    out = {};
+    if (!tp || totalFrames == 0)
+        return false;
+
+    const double maxFrame = static_cast<double>(totalFrames - 1);
+    out.currentFrame = GetCurrentFrameForView(tp);
+    if (!std::isfinite(out.currentFrame))
+        out.currentFrame = 0.0;
+    out.currentFrame = std::clamp(out.currentFrame, 0.0, maxFrame);
+
+    const double zoom = GetEffectiveZoomFactor(tp, totalFrames);
+    out.visibleFrames = (std::max)(1.0, static_cast<double>(totalFrames) / zoom);
+
+    double centerFrame = out.currentFrame + static_cast<double>(tp->panOffsetSamples);
+    if (!tp->followPlayhead)
+        centerFrame = tp->manualCenterFrame;
+    if (!std::isfinite(centerFrame))
+        centerFrame = out.currentFrame;
+    out.centerFrame = std::clamp(centerFrame, 0.0, maxFrame);
+
+    out.unclampedStartFrame = out.centerFrame - tp->playheadXRatio * out.visibleFrames;
+    out.startFrame = out.unclampedStartFrame;
+    if (out.startFrame < 0.0) out.startFrame = 0.0;
+    if (out.startFrame + out.visibleFrames > static_cast<double>(totalFrames))
+        out.startFrame = static_cast<double>(totalFrames) - out.visibleFrames;
+    if (out.startFrame < 0.0) out.startFrame = 0.0;
+    return true;
+}
+
 static bool TryMapWavePointToFrame(HWND hwnd, ThreadParam* tp, int x, int y, size_t& outFrame)
 {
     if (!hwnd || !tp) return false;
@@ -1646,23 +1721,530 @@ static bool TryMapWavePointToFrame(HWND hwnd, ThreadParam* tp, int x, int y, siz
     if (!PtInRect(&waveRc, pt)) return false;
 
     const int w = (std::max)(1, static_cast<int>(waveRc.right - waveRc.left));
-    double curFrameD = GetCurrentFrameForView(tp);
-    curFrameD = std::clamp(curFrameD, 0.0, static_cast<double>(((std::max))(size_t{ 1 }, totalFrames) - 1));
-
-    double centerFrame = curFrameD + static_cast<double>(tp->panOffsetSamples);
-    centerFrame = std::clamp(centerFrame, 0.0, static_cast<double>(((std::max))(size_t{ 1 }, totalFrames) - 1));
-    const double zoom = GetEffectiveZoomFactor(tp, totalFrames);
-    double visibleFrames = (std::max)(1.0, static_cast<double>(totalFrames) / zoom);
-    double startFrame = centerFrame - tp->playheadXRatio * visibleFrames;
-    if (startFrame < 0.0) startFrame = 0.0;
-    if (startFrame + visibleFrames > static_cast<double>(totalFrames))
-        startFrame = static_cast<double>(totalFrames) - visibleFrames;
-    if (startFrame < 0.0) startFrame = 0.0;
+    WaveViewportFrameState view{};
+    if (!ComputeWaveViewportFrameState(tp, totalFrames, view))
+        return false;
 
     const double xNorm = std::clamp((static_cast<double>(x - waveRc.left) / static_cast<double>(w)), 0.0, 1.0);
-    double frameD = startFrame + xNorm * visibleFrames;
+    double frameD = view.startFrame + xNorm * view.visibleFrames;
     if (frameD >= static_cast<double>(totalFrames)) frameD = static_cast<double>(totalFrames - 1);
     outFrame = static_cast<size_t>((std::max)(0.0, std::floor(frameD)));
+    return true;
+}
+
+struct PianoRollViewportState
+{
+    double tLeftSeconds = 0.0;
+    double tRightSeconds = 0.0;
+    double visibleSeconds = 0.0;
+    double currentSeconds = 0.0;
+};
+
+struct PianoRollHitTestResult
+{
+    bool hit = false;
+    bool rightEdge = false;
+    size_t index = 0;
+    RECT rc{};
+};
+
+static constexpr int kPianoRollResizeEdgePx = 6;
+
+static bool HasNoteLayerTab(int tab)
+{
+    return tab >= 0 && tab < kPianoTabCount;
+}
+
+static bool IsSpectrogramPianoTab(int tab)
+{
+    return tab == kPianoSpectrogramTabIndex;
+}
+
+static bool ComputePianoRollViewportState(const ThreadParam* tp, PianoRollViewportState& out)
+{
+    out = {};
+    if (!tp || tp->sampleRate <= 0)
+        return false;
+
+    const size_t totalFrames = GetTotalFrames(tp);
+    if (totalFrames == 0)
+        return false;
+
+    WaveViewportFrameState view{};
+    if (!ComputeWaveViewportFrameState(tp, totalFrames, view))
+        return false;
+
+    out.tLeftSeconds = view.startFrame / static_cast<double>(tp->sampleRate);
+    out.tRightSeconds = (view.startFrame + view.visibleFrames) / static_cast<double>(tp->sampleRate);
+    out.visibleSeconds = out.tRightSeconds - out.tLeftSeconds;
+    out.currentSeconds = view.currentFrame / static_cast<double>(tp->sampleRate);
+    return std::isfinite(out.tLeftSeconds) && std::isfinite(out.tRightSeconds) && out.visibleSeconds > 0.0;
+}
+
+static bool BuildTabNoteInteractionContext(const ThreadParam* tp, const RECT& pianoRc, int tab,
+    RECT& outNoteRc, PianoRollViewportState& outViewport, PianoRollRenderer::Config& outCfg)
+{
+    SetRectEmpty(&outNoteRc);
+    outViewport = {};
+    outCfg = PianoRollRenderer::Config{};
+
+    if (!tp || !HasNoteLayerTab(tab))
+        return false;
+
+    PianoRollViewportState baseViewport{};
+    if (!ComputePianoRollViewportState(tp, baseViewport))
+        return false;
+
+    if (!IsSpectrogramPianoTab(tab))
+    {
+        outNoteRc = pianoRc;
+        outViewport = baseViewport;
+        return (outNoteRc.right > outNoteRc.left) &&
+            (outNoteRc.bottom > outNoteRc.top) &&
+            (outViewport.visibleSeconds > 0.0);
+    }
+
+    const RECT plotRc = ComputeEmbeddedPianoSpecPlotRect(pianoRc);
+    if (plotRc.right <= plotRc.left || plotRc.bottom <= plotRc.top)
+        return false;
+
+    const int fullW = (std::max)(1, (int)(pianoRc.right - pianoRc.left));
+    const double fullSpan = baseViewport.tRightSeconds - baseViewport.tLeftSeconds;
+    if (!(fullSpan > 0.0) || !std::isfinite(fullSpan))
+        return false;
+
+    const double plotLeftNorm = ((double)plotRc.left - (double)pianoRc.left) / (double)fullW;
+    const double plotRightNorm = ((double)plotRc.right - (double)pianoRc.left) / (double)fullW;
+    outViewport = baseViewport;
+    outViewport.tLeftSeconds = baseViewport.tLeftSeconds + fullSpan * plotLeftNorm;
+    outViewport.tRightSeconds = baseViewport.tLeftSeconds + fullSpan * plotRightNorm;
+    outViewport.visibleSeconds = outViewport.tRightSeconds - outViewport.tLeftSeconds;
+    if (!(outViewport.visibleSeconds > 0.0) || !std::isfinite(outViewport.visibleSeconds))
+        return false;
+
+    outCfg.midiMin = (std::min)(tp->embeddedPianoSpecMidiMin, tp->embeddedPianoSpecMidiMax);
+    outCfg.midiMax = (std::max)(tp->embeddedPianoSpecMidiMin, tp->embeddedPianoSpecMidiMax);
+    outNoteRc = plotRc;
+    return true;
+}
+
+static double PianoRollGridModeBeats(int mode, int beatsPerBar)
+{
+    using namespace PianoRollRenderer;
+    switch (mode)
+    {
+    case Grid_1_6_Step: return 1.0 / 24.0;
+    case Grid_1_4_Step: return 1.0 / 16.0;
+    case Grid_1_3_Step: return 1.0 / 12.0;
+    case Grid_1_2_Step: return 1.0 / 8.0;
+    case Grid_Step: return 1.0 / 4.0;
+    case Grid_1_6_Beat: return 1.0 / 6.0;
+    case Grid_1_4_Beat: return 1.0 / 4.0;
+    case Grid_1_3_Beat: return 1.0 / 3.0;
+    case Grid_1_2_Beat: return 1.0 / 2.0;
+    case Grid_Beat: return 1.0;
+    case Grid_Bar: return static_cast<double>((std::max)(1, beatsPerBar));
+    default: return 0.0;
+    }
+}
+
+static double PianoRollGridStepSeconds(const ThreadParam* tp, const PianoRollViewportState& viewport)
+{
+    if (!tp)
+        return 0.1;
+
+    const int mode = WaveformWindow::GetSharedPianoGridMode();
+    if (mode != PianoRollRenderer::Grid_None && tp->gridBpm > 0.0 && std::isfinite(tp->gridBpm))
+    {
+        const double beatSec = 60.0 / tp->gridBpm;
+        const double beats = PianoRollGridModeBeats(mode, tp->gridBeatsPerBar);
+        if (std::isfinite(beatSec) && beatSec > 0.0 && std::isfinite(beats) && beats > 0.0)
+            return beatSec * beats;
+    }
+
+    const double fallback = ChooseTimeTickStep((std::max)(0.1, viewport.visibleSeconds)) * 0.25;
+    return (std::max)(0.025, fallback);
+}
+
+static double PianoRollSnapTimeSeconds(const ThreadParam* tp, const PianoRollViewportState& viewport, double seconds)
+{
+    if (!std::isfinite(seconds))
+        seconds = 0.0;
+
+    const double step = PianoRollGridStepSeconds(tp, viewport);
+    if (!(step > 0.0) || !std::isfinite(step))
+        return seconds;
+
+    const int mode = WaveformWindow::GetSharedPianoGridMode();
+    double anchor = 0.0;
+    if (tp && mode != PianoRollRenderer::Grid_None && tp->gridBpm > 0.0 && std::isfinite(tp->gridT0Seconds))
+        anchor = tp->gridT0Seconds;
+
+    const double snapped = anchor + std::round((seconds - anchor) / step) * step;
+    return std::isfinite(snapped) ? snapped : seconds;
+}
+
+static double PianoRollTimelineDurationSeconds(const ThreadParam* tp)
+{
+    if (!tp || tp->sampleRate <= 0)
+        return 0.0;
+    const size_t totalFrames = GetTotalFrames(tp);
+    return static_cast<double>(totalFrames) / static_cast<double>(tp->sampleRate);
+}
+
+static double PianoRollPointToSeconds(const RECT& pianoRc, const PianoRollViewportState& viewport, int x)
+{
+    const int w = (std::max)(1, static_cast<int>(pianoRc.right - pianoRc.left));
+    const double xNorm = std::clamp(static_cast<double>(x - pianoRc.left) / static_cast<double>(w), 0.0, 1.0);
+    return viewport.tLeftSeconds + xNorm * viewport.visibleSeconds;
+}
+
+static int PianoRollPointToMidi(const RECT& pianoRc, int y, int midiMin, int midiMax)
+{
+    const int h = (std::max)(1, static_cast<int>(pianoRc.bottom - pianoRc.top));
+    const int noteCount = (std::max)(1, midiMax - midiMin + 1);
+    const double rowH = static_cast<double>(h) / static_cast<double>(noteCount);
+    const int idx = std::clamp(static_cast<int>(std::floor((static_cast<double>(y - pianoRc.top)) / rowH)), 0, noteCount - 1);
+    return midiMax - idx;
+}
+
+static bool ComputePianoRollNoteRectPx(const RECT& pianoRc, const PianoRollViewportState& viewport,
+    const PianoRollRenderer::Config& cfg, const PianoRollRenderer::NoteEvent& note, RECT& outRc)
+{
+    const int midiMin = (std::min)(cfg.midiMin, cfg.midiMax);
+    const int midiMax = (std::max)(cfg.midiMin, cfg.midiMax);
+    if (note.endSeconds <= note.startSeconds) return false;
+    if (note.midiNote < midiMin || note.midiNote > midiMax) return false;
+    if (!(viewport.visibleSeconds > 0.0)) return false;
+    if (note.endSeconds < viewport.tLeftSeconds || note.startSeconds > viewport.tRightSeconds) return false;
+
+    const int w = static_cast<int>(pianoRc.right - pianoRc.left);
+    const int h = static_cast<int>(pianoRc.bottom - pianoRc.top);
+    if (w <= 0 || h <= 0) return false;
+
+    const double x0n = (note.startSeconds - viewport.tLeftSeconds) / viewport.visibleSeconds;
+    const double x1n = (note.endSeconds - viewport.tLeftSeconds) / viewport.visibleSeconds;
+
+    int x0 = pianoRc.left + static_cast<int>(std::floor(x0n * static_cast<double>(w)));
+    int x1 = pianoRc.left + static_cast<int>(std::ceil(x1n * static_cast<double>(w)));
+    x0 = (std::max)(static_cast<int>(pianoRc.left), (std::min)(x0, static_cast<int>(pianoRc.right - 1)));
+    x1 = (std::max)(x0 + 1, (std::min)(x1, static_cast<int>(pianoRc.right)));
+
+    const int noteCount = (std::max)(1, midiMax - midiMin + 1);
+    const double rowH = static_cast<double>(h) / static_cast<double>(noteCount);
+    const int idx = midiMax - note.midiNote;
+    int y0 = pianoRc.top + static_cast<int>(std::floor(idx * rowH)) + 1;
+    int y1 = pianoRc.top + static_cast<int>(std::floor((idx + 1) * rowH)) - 1;
+    y1 = (std::max)(y0 + 2, y1);
+
+    outRc = RECT{ static_cast<LONG>(x0), static_cast<LONG>(y0), static_cast<LONG>(x1), static_cast<LONG>(y1) };
+    return true;
+}
+
+static std::vector<PianoRollRenderer::NoteEvent>* GetPianoRollNotesForTab(ThreadParam* tp, int tab)
+{
+    if (!tp || !HasNoteLayerTab(tab))
+        return nullptr;
+    return &tp->pianoRollNotes[tab];
+}
+
+static const std::vector<PianoRollRenderer::NoteEvent>* GetPianoRollNotesForTab(const ThreadParam* tp, int tab)
+{
+    if (!tp || !HasNoteLayerTab(tab))
+        return nullptr;
+    return &tp->pianoRollNotes[tab];
+}
+
+static void ClearPianoRollNoteSelection(std::vector<PianoRollRenderer::NoteEvent>& notes)
+{
+    for (auto& n : notes)
+        n.selected = false;
+}
+
+static void SetPianoRollSingleSelection(std::vector<PianoRollRenderer::NoteEvent>& notes, size_t idx)
+{
+    for (size_t i = 0; i < notes.size(); ++i)
+        notes[i].selected = (i == idx);
+}
+
+static PianoRollHitTestResult HitTestPianoRollNotes(const RECT& pianoRc, const PianoRollViewportState& viewport,
+    const PianoRollRenderer::Config& cfg, const std::vector<PianoRollRenderer::NoteEvent>& notes, POINT pt)
+{
+    PianoRollHitTestResult out{};
+    for (size_t rev = notes.size(); rev > 0; --rev)
+    {
+        const size_t i = rev - 1;
+        RECT nr{};
+        if (!ComputePianoRollNoteRectPx(pianoRc, viewport, cfg, notes[i], nr))
+            continue;
+        if (!PtInRect(&nr, pt))
+            continue;
+        out.hit = true;
+        out.index = i;
+        out.rc = nr;
+        out.rightEdge = (pt.x >= nr.right - kPianoRollResizeEdgePx);
+        return out;
+    }
+    return out;
+}
+
+static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
+{
+    if (!hwnd || !tp || !HasNoteLayerTab(tp->activePianoRollTab))
+        return false;
+
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->activePianoRollTab, noteRc, viewport, cfg))
+        return false;
+    if (!PtInRect(&noteRc, pt))
+        return false;
+
+    if (!IsSpectrogramPianoTab(tp->activePianoRollTab))
+    {
+        LayoutPianoRollGridControl(tp, pianoRc);
+        if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
+            PtInRect(&tp->pianoRollRcGridButton, pt))
+        {
+            return false;
+        }
+    }
+
+    auto* notes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
+    if (!notes)
+        return false;
+
+    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, *notes, pt);
+
+    const double mouseSec = PianoRollPointToSeconds(noteRc, viewport, pt.x);
+    const int mouseMidi = PianoRollPointToMidi(noteRc, pt.y, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+
+    if (hit.hit)
+    {
+        SetPianoRollSingleSelection(*notes, hit.index);
+        const auto& note = (*notes)[hit.index];
+        tp->pianoNoteDragActive = true;
+        tp->pianoNoteDragTab = tp->activePianoRollTab;
+        tp->pianoNoteDragIndex = hit.index;
+        tp->pianoNoteDragMode = hit.rightEdge ? ThreadParam::PianoNoteDrag_ResizeRight : ThreadParam::PianoNoteDrag_Move;
+        tp->pianoNoteDragStartPt = pt;
+        tp->pianoNoteDragMouseStartSeconds = mouseSec;
+        tp->pianoNoteDragMouseStartMidi = mouseMidi;
+        tp->pianoNoteDragAnchorStartSeconds = note.startSeconds;
+        tp->pianoNoteDragAnchorEndSeconds = note.endSeconds;
+        tp->pianoNoteDragAnchorMidi = note.midiNote;
+        SetCapture(hwnd);
+        InvalidateWaveRegion(hwnd, tp);
+        return true;
+    }
+
+    ClearPianoRollNoteSelection(*notes);
+    const double stepSec = PianoRollGridStepSeconds(tp, viewport);
+    const double minDur = (std::max)(0.03, stepSec);
+    const double timelineEnd = PianoRollTimelineDurationSeconds(tp);
+    const double maxStart = (std::max)(0.0, timelineEnd - minDur);
+
+    PianoRollRenderer::NoteEvent n{};
+    n.startSeconds = std::clamp(PianoRollSnapTimeSeconds(tp, viewport, mouseSec), 0.0, maxStart);
+    n.endSeconds = (std::min)(timelineEnd, n.startSeconds + minDur);
+    if (n.endSeconds <= n.startSeconds)
+        n.endSeconds = n.startSeconds + minDur;
+    n.midiNote = std::clamp(mouseMidi, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+    n.velocity = 100;
+    n.selected = true;
+    notes->push_back(n);
+
+    const size_t idx = notes->size() - 1;
+    tp->pianoNoteDragActive = true;
+    tp->pianoNoteDragTab = tp->activePianoRollTab;
+    tp->pianoNoteDragIndex = idx;
+    tp->pianoNoteDragMode = ThreadParam::PianoNoteDrag_Move;
+    tp->pianoNoteDragStartPt = pt;
+    tp->pianoNoteDragMouseStartSeconds = mouseSec;
+    tp->pianoNoteDragMouseStartMidi = mouseMidi;
+    tp->pianoNoteDragAnchorStartSeconds = n.startSeconds;
+    tp->pianoNoteDragAnchorEndSeconds = n.endSeconds;
+    tp->pianoNoteDragAnchorMidi = n.midiNote;
+    SetCapture(hwnd);
+    InvalidateWaveRegion(hwnd, tp);
+    return true;
+}
+
+static bool HandlePianoRollNoteMouseMove(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
+{
+    if (!hwnd || !tp || !tp->pianoNoteDragActive)
+        return false;
+    if (!HasNoteLayerTab(tp->pianoNoteDragTab))
+    {
+        tp->pianoNoteDragActive = false;
+        return false;
+    }
+    if (tp->activePianoRollTab != tp->pianoNoteDragTab)
+        return false;
+
+    auto* notes = GetPianoRollNotesForTab(tp, tp->pianoNoteDragTab);
+    if (!notes || tp->pianoNoteDragIndex >= notes->size())
+    {
+        tp->pianoNoteDragActive = false;
+        return false;
+    }
+
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->pianoNoteDragTab, noteRc, viewport, cfg))
+        return false;
+
+    auto& note = (*notes)[tp->pianoNoteDragIndex];
+    const double mouseSec = PianoRollPointToSeconds(noteRc, viewport, pt.x);
+    const int mouseMidi = PianoRollPointToMidi(noteRc, pt.y, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+
+    const double stepSec = PianoRollGridStepSeconds(tp, viewport);
+    const double minDur = (std::max)(0.03, stepSec);
+    const double timelineEnd = (std::max)(minDur, PianoRollTimelineDurationSeconds(tp));
+
+    if (tp->pianoNoteDragMode == ThreadParam::PianoNoteDrag_ResizeRight)
+    {
+        const double rawEnd = tp->pianoNoteDragAnchorEndSeconds + (mouseSec - tp->pianoNoteDragMouseStartSeconds);
+        double newEnd = PianoRollSnapTimeSeconds(tp, viewport, rawEnd);
+        newEnd = std::clamp(newEnd, note.startSeconds + minDur, timelineEnd);
+        note.endSeconds = newEnd;
+        SetCursor(LoadCursorW(nullptr, IDC_SIZEWE));
+    }
+    else
+    {
+        const double len = (std::max)(0.01, tp->pianoNoteDragAnchorEndSeconds - tp->pianoNoteDragAnchorStartSeconds);
+        const double rawStart = tp->pianoNoteDragAnchorStartSeconds + (mouseSec - tp->pianoNoteDragMouseStartSeconds);
+        const double maxStart = (std::max)(0.0, timelineEnd - len);
+        double newStart = std::clamp(PianoRollSnapTimeSeconds(tp, viewport, rawStart), 0.0, maxStart);
+        double newEnd = newStart + len;
+        if (newEnd > timelineEnd)
+        {
+            newEnd = timelineEnd;
+            newStart = (std::max)(0.0, newEnd - len);
+        }
+
+        const int midiDelta = mouseMidi - tp->pianoNoteDragMouseStartMidi;
+        const int newMidi = std::clamp(tp->pianoNoteDragAnchorMidi + midiDelta,
+            (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+
+        note.startSeconds = newStart;
+        note.endSeconds = (std::max)(newStart + minDur, newEnd);
+        note.midiNote = newMidi;
+        SetCursor(LoadCursorW(nullptr, IDC_SIZEALL));
+    }
+
+    InvalidateWaveRegion(hwnd, tp);
+    return true;
+}
+
+static bool HandlePianoRollNoteDeleteAtPoint(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
+{
+    if (!hwnd || !tp || !HasNoteLayerTab(tp->activePianoRollTab))
+        return false;
+    if (!IsSpectrogramPianoTab(tp->activePianoRollTab))
+    {
+        LayoutPianoRollGridControl(tp, pianoRc);
+        if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
+            PtInRect(&tp->pianoRollRcGridButton, pt))
+        {
+            return false;
+        }
+    }
+
+    auto* notes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
+    if (!notes || notes->empty())
+        return false;
+
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->activePianoRollTab, noteRc, viewport, cfg))
+        return false;
+    if (!PtInRect(&noteRc, pt))
+        return false;
+
+    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, *notes, pt);
+    if (!hit.hit)
+        return false;
+
+    notes->erase(notes->begin() + static_cast<ptrdiff_t>(hit.index));
+    tp->pianoNoteDragActive = false;
+    tp->pianoNoteDragMode = ThreadParam::PianoNoteDrag_None;
+    tp->pianoNoteDragTab = -1;
+    tp->pianoNoteDragIndex = 0;
+    InvalidateWaveRegion(hwnd, tp);
+    return true;
+}
+
+static bool HandlePianoRollNoteLButtonUp(HWND hwnd, ThreadParam* tp)
+{
+    if (!hwnd || !tp || !tp->pianoNoteDragActive)
+        return false;
+    tp->pianoNoteDragActive = false;
+    tp->pianoNoteDragMode = ThreadParam::PianoNoteDrag_None;
+    tp->pianoNoteDragTab = -1;
+    tp->pianoNoteDragIndex = 0;
+    InvalidateWaveRegion(hwnd, tp);
+    if (GetCapture() == hwnd) ReleaseCapture();
+    return true;
+}
+
+static bool UpdatePianoRollHoverCursor(HWND hwnd, ThreadParam* tp, POINT pt)
+{
+    if (!hwnd || !tp)
+        return false;
+    if (!HasNoteLayerTab(tp->activePianoRollTab))
+        return false;
+
+    RECT rc{};
+    GetClientRect(hwnd, &rc);
+    RECT tabsRc{}, pianoRc{};
+    ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->activePianoRollTab, noteRc, viewport, cfg))
+        return false;
+    if (!PtInRect(&noteRc, pt))
+        return false;
+
+    if (tp->pianoNoteDragActive)
+    {
+        if (tp->pianoNoteDragMode == ThreadParam::PianoNoteDrag_ResizeRight)
+            SetCursor(LoadCursorW(nullptr, IDC_SIZEWE));
+        else
+            SetCursor(LoadCursorW(nullptr, IDC_SIZEALL));
+        return true;
+    }
+
+    if (!IsSpectrogramPianoTab(tp->activePianoRollTab))
+    {
+        LayoutPianoRollGridControl(tp, pianoRc);
+        if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
+            PtInRect(&tp->pianoRollRcGridButton, pt))
+        {
+            SetCursor(LoadCursorW(nullptr, IDC_ARROW));
+            return true;
+        }
+    }
+
+    const auto* notes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
+    if (!notes || notes->empty())
+    {
+        SetCursor(LoadCursorW(nullptr, IDC_ARROW));
+        return true;
+    }
+
+    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, *notes, pt);
+    if (hit.hit)
+    {
+        SetCursor(LoadCursorW(nullptr, hit.rightEdge ? IDC_SIZEWE : IDC_SIZEALL));
+        return true;
+    }
+
+    SetCursor(LoadCursorW(nullptr, IDC_ARROW));
     return true;
 }
 
@@ -4030,6 +4612,121 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, const Thread
         SRCCOPY);
 }
 
+static void AlphaFillRectColor(HDC hdc, const RECT& rc, COLORREF color, BYTE alpha)
+{
+    if (!hdc || alpha == 0)
+        return;
+    const int w = (std::max)(0, (int)(rc.right - rc.left));
+    const int h = (std::max)(0, (int)(rc.bottom - rc.top));
+    if (w <= 0 || h <= 0)
+        return;
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = 1;
+    bmi.bmiHeader.biHeight = -1; // top-down
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    void* bits = nullptr;
+    HBITMAP bmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+    if (!bmp || !bits)
+    {
+        if (bmp) DeleteObject(bmp);
+        return;
+    }
+
+    const BYTE a = alpha;
+    const BYTE r = (BYTE)MulDiv((int)GetRValue(color), (int)a, 255);
+    const BYTE g = (BYTE)MulDiv((int)GetGValue(color), (int)a, 255);
+    const BYTE b = (BYTE)MulDiv((int)GetBValue(color), (int)a, 255);
+    *(uint32_t*)bits = (uint32_t(a) << 24) | (uint32_t(b) << 16) | (uint32_t(g) << 8) | uint32_t(r);
+
+    HDC src = CreateCompatibleDC(hdc);
+    if (src)
+    {
+        HGDIOBJ oldBmp = SelectObject(src, bmp);
+        BLENDFUNCTION bf{};
+        bf.BlendOp = AC_SRC_OVER;
+        bf.BlendFlags = 0;
+        bf.SourceConstantAlpha = 255;
+        bf.AlphaFormat = AC_SRC_ALPHA;
+        AlphaBlend(hdc, rc.left, rc.top, w, h, src, 0, 0, 1, 1, bf);
+        SelectObject(src, oldBmp);
+        DeleteDC(src);
+    }
+
+    DeleteObject(bmp);
+}
+
+static void DrawEmbeddedPianoSpecNotesOverlay(HDC hdc, const RECT& plotRc, ThreadParam* tp, double tLeft, double tRight)
+{
+    if (!hdc || !tp || plotRc.right <= plotRc.left || plotRc.bottom <= plotRc.top)
+        return;
+    if (!(tRight > tLeft) || !std::isfinite(tLeft) || !std::isfinite(tRight))
+        return;
+
+    const auto* notes = GetPianoRollNotesForTab(tp, kPianoSpectrogramTabIndex);
+    if (!notes || notes->empty())
+        return;
+
+    PianoRollViewportState view{};
+    view.tLeftSeconds = tLeft;
+    view.tRightSeconds = tRight;
+    view.visibleSeconds = tRight - tLeft;
+    if (!(view.visibleSeconds > 0.0))
+        return;
+
+    PianoRollRenderer::Config cfg{};
+    cfg.midiMin = (std::min)(tp->embeddedPianoSpecMidiMin, tp->embeddedPianoSpecMidiMax);
+    cfg.midiMax = (std::max)(tp->embeddedPianoSpecMidiMin, tp->embeddedPianoSpecMidiMax);
+    if (cfg.midiMax < cfg.midiMin)
+        return;
+
+    int saved = SaveDC(hdc);
+    IntersectClipRect(hdc, plotRc.left, plotRc.top, plotRc.right, plotRc.bottom);
+
+    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    SetBkMode(hdc, TRANSPARENT);
+    HPEN pen = CreatePen(PS_SOLID, 1, RGB(240, 206, 150));
+    HPEN penSel = CreatePen(PS_SOLID, 1, RGB(255, 238, 196));
+
+    for (const auto& n : *notes)
+    {
+        RECT nr{};
+        if (!ComputePianoRollNoteRectPx(plotRc, view, cfg, n, nr))
+            continue;
+
+        AlphaFillRectColor(hdc, nr, n.selected ? RGB(255, 190, 92) : RGB(232, 142, 54), n.selected ? 120 : 84);
+
+        const int rx = (std::min)(8, (std::max)(4, (int)(nr.right - nr.left) / 3));
+        const int ry = (std::min)(8, (std::max)(4, (int)(nr.bottom - nr.top)));
+        HGDIOBJ oldPen = SelectObject(hdc, n.selected ? penSel : pen);
+        HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+        RoundRect(hdc, nr.left, nr.top, nr.right, nr.bottom, rx, ry);
+        SelectObject(hdc, oldBrush);
+        SelectObject(hdc, oldPen);
+
+        if ((nr.right - nr.left) >= 22 && (nr.bottom - nr.top) >= 10)
+        {
+            std::wstring label = EmbeddedPianoSpecNoteName(n.midiNote);
+            RECT tr = nr;
+            tr.left += 4;
+            tr.right -= 2;
+            SetTextColor(hdc, RGB(255, 245, 228));
+            DrawTextW(hdc, label.c_str(), -1, &tr,
+                DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+        }
+    }
+
+    DeleteObject(pen);
+    DeleteObject(penSel);
+    SelectObject(hdc, oldFont);
+    if (saved > 0)
+        RestoreDC(hdc, saved);
+}
+
 static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, ThreadParam* tp,
     double reqTLeft, double reqTRight, int playheadX)
 {
@@ -4260,6 +4957,7 @@ static void DrawEmbeddedPianoSpectrogramTab(HDC hdc, const RECT& pianoRc, Thread
         const bool suppressHeavySpecWork = tp->liveResizeActive || tp->dragPanActive || tp->dragScrubActive;
         UpdateEmbeddedPianoSpecViewport(tp, specTLeft, specTRight, plotW, plotH, !suppressHeavySpecWork);
         DrawEmbeddedPianoSpecImage(hdc, plotRc, tp);
+        DrawEmbeddedPianoSpecNotesOverlay(hdc, plotRc, tp, specTLeft, specTRight);
         DrawEmbeddedPianoSpecGridAndLabels(hdc, pianoRc, tp, specTLeft, specTRight, playheadX);
     }
 }
@@ -4617,8 +5315,18 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         {
             return 0;
         }
+        if (tp->activePianoRollTab == kPianoSpectrogramTabIndex &&
+            HandlePianoRollNoteLButtonDown(hwnd, tp, pianoRc, pt))
+        {
+            return 0;
+        }
         if (tp->activePianoRollTab != kPianoSpectrogramTabIndex &&
             HandlePianoRollGridClick(hwnd, tp, pianoRc, pt))
+        {
+            return 0;
+        }
+        if (tp->activePianoRollTab != kPianoSpectrogramTabIndex &&
+            HandlePianoRollNoteLButtonDown(hwnd, tp, pianoRc, pt))
         {
             return 0;
         }
@@ -4660,6 +5368,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             InvalidateRect(hwnd, &oldRc, FALSE);
         }
         RECT rc{}; GetClientRect(hwnd, &rc);
+        RECT tabsRc{}, pianoRc{};
+        ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
+        if (HandlePianoRollNoteDeleteAtPoint(hwnd, tp, pianoRc, pt))
+            return 0;
+
         RECT waveRc = ComputeWaveRect(rc, tp);
         // Allow horizontal timeline panning from both waveform and piano-roll regions.
         RECT timelineRc = rc;
@@ -4674,13 +5387,36 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         return 0;
     }
 
+    case WM_SETCURSOR:
+    {
+        if (tp && LOWORD(lParam) == HTCLIENT)
+        {
+            POINT pt{};
+            GetCursorPos(&pt);
+            ScreenToClient(hwnd, &pt);
+            if (UpdatePianoRollHoverCursor(hwnd, tp, pt))
+                return TRUE;
+        }
+        break;
+    }
+
     case WM_MOUSEMOVE:
     {
         if (!tp) break;
+        POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
         if (!(wParam & (MK_LBUTTON | MK_RBUTTON)))
         {
-            POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
             if (UpdateSharedPianoGridMenuHover(hwnd, tp, pt))
+                return 0;
+            if (UpdatePianoRollHoverCursor(hwnd, tp, pt))
+                return 0;
+        }
+        if ((wParam & MK_LBUTTON) && tp->pianoNoteDragActive)
+        {
+            RECT rc{}; GetClientRect(hwnd, &rc);
+            RECT tabsRc{}, pianoRc{};
+            ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
+            if (HandlePianoRollNoteMouseMove(hwnd, tp, pianoRc, pt))
                 return 0;
         }
         if ((wParam & MK_LBUTTON) && tp->embeddedPianoSpecMidiSliderDragActive)
@@ -4690,7 +5426,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
             const RECT leftRc = ComputeEmbeddedPianoSpecLeftScaleRect(pianoRc);
             const RECT sliderTrackRc = ComputeEmbeddedPianoSpecMidiSliderTrackRect(leftRc);
-            POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
             if (SetEmbeddedPianoSpecMidiSliderFromY(tp, sliderTrackRc, pt.y))
                 InvalidateWaveRegion(hwnd, tp);
             else
@@ -4699,7 +5434,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
         if ((wParam & MK_LBUTTON) && tp->toolbarDragKnob >= 0)
         {
-            POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
             const int dy = pt.y - tp->toolbarDragStartY;
             constexpr double kKnobDbPerPixel = 0.18;
             const double newDb = tp->toolbarDragStartDb - static_cast<double>(dy) * kKnobDbPerPixel;
@@ -4777,6 +5511,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
             int dx = pt.x - tp->dragLastX;
             tp->dragLastX = pt.x;
+            if (dx == 0)
+                return 0;
             RECT rc; GetClientRect(hwnd, &rc);
             RECT waveRc = ComputeWaveRect(rc, tp);
             int waveW = (std::max)(1, static_cast<int>(waveRc.right - waveRc.left));
@@ -4785,7 +5521,22 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             double visibleFrames = (totalFrames > 0) ? ((double)totalFrames / zoom) : 1.0;
             double framesPerPx = visibleFrames / (double)waveW;
             constexpr double kPanSensitivity = 1.5;
-            tp->panOffsetSamples -= static_cast<long long>(dx * framesPerPx * kPanSensitivity);
+            const double maxFrame = (totalFrames > 0) ? static_cast<double>(totalFrames - 1) : 0.0;
+            double curFrameD = GetCurrentFrameForView(tp);
+            if (!std::isfinite(curFrameD))
+                curFrameD = 0.0;
+            curFrameD = std::clamp(curFrameD, 0.0, maxFrame);
+            double centerFrame = tp->followPlayhead
+                ? (curFrameD + static_cast<double>(tp->panOffsetSamples))
+                : tp->manualCenterFrame;
+            if (!std::isfinite(centerFrame))
+                centerFrame = curFrameD;
+            centerFrame -= static_cast<double>(dx) * framesPerPx * kPanSensitivity;
+            centerFrame = std::clamp(centerFrame, 0.0, maxFrame);
+
+            tp->manualCenterFrame = centerFrame;
+            tp->followPlayhead = false;
+            tp->panOffsetSamples = 0;
             tp->cacheDirty = true;
             InvalidateWaveRegion(hwnd, tp);
             return 0;
@@ -4799,6 +5550,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
     case WM_LBUTTONUP:
     {
+        if (tp && HandlePianoRollNoteLButtonUp(hwnd, tp))
+            return 0;
         if (tp && tp->embeddedPianoSpecMidiSliderDragActive)
         {
             tp->embeddedPianoSpecMidiSliderDragActive = false;
@@ -4881,6 +5634,15 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             return 0;
         }
+
+        size_t hitFrame = 0;
+        if (TryMapWavePointToFrame(hwnd, tp, pt.x, pt.y, hitFrame))
+        {
+            const bool keepPlaying = tp->playing.load();
+            SeekToFrame(tp, hitFrame, keepPlaying);
+            InvalidateWaveRegion(hwnd, tp);
+            return 0;
+        }
         break;
     }
 
@@ -4911,7 +5673,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         if (PtInRect(&timelineRc, pt))
         {
             tp->dragPanActive = false;
+            tp->followPlayhead = true;
             tp->panOffsetSamples = 0;
+            const size_t totalFrames = GetTotalFrames(tp);
+            const double maxFrame = (totalFrames > 0) ? static_cast<double>(totalFrames - 1) : 0.0;
+            double curFrameD = GetCurrentFrameForView(tp);
+            if (!std::isfinite(curFrameD))
+                curFrameD = 0.0;
+            tp->manualCenterFrame = std::clamp(curFrameD, 0.0, maxFrame);
             tp->cacheDirty = true;
             if (GetCapture() == hwnd) ReleaseCapture();
             PublishPlaybackSync(tp);
@@ -5095,24 +5864,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             if (tp->envBlocks == 0)
                 PrepareColorWaveEnvelopes(tp);
 
-            // compute current playhead frame
-            double curFrameD = GetCurrentFrameForView(tp);
-            if (totalFrames > 0)
-                curFrameD = std::clamp(curFrameD, 0.0, static_cast<double>(totalFrames - 1));
-            else
-                curFrameD = 0.0;
-
-            double centerFrame = curFrameD + (double)tp->panOffsetSamples;
-            if (centerFrame < 0) centerFrame = 0;
-            if (centerFrame >= (double)totalFrames) centerFrame = (double)totalFrames - 1.0;
-
-            const double zoom = GetEffectiveZoomFactor(tp, totalFrames);
-            double visibleFrames = std::max(1.0, (double)totalFrames / zoom);
-            const double unclampedStartFrame = centerFrame - tp->playheadXRatio * visibleFrames;
-            double startFrame = unclampedStartFrame;
-            if (startFrame < 0) startFrame = 0;
-            if (startFrame + visibleFrames > (double)totalFrames)
-                startFrame = (double)totalFrames - visibleFrames;
+            WaveViewportFrameState view{};
+            ComputeWaveViewportFrameState(tp, totalFrames, view);
+            const double curFrameD = view.currentFrame;
+            const double visibleFrames = view.visibleFrames;
+            const double startFrame = view.startFrame;
+            const double unclampedStartFrame = view.unclampedStartFrame;
 
             int saved = SaveDC(hdc);
             IntersectClipRect(hdc, waveRc.left, waveRc.top, waveRc.right, waveRc.bottom);
@@ -5167,12 +5924,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             // Draw waveform time labels after grid lines so they remain visible on the Spec tab too.
             DrawTimeMarksOverlay(hdc, waveRc, tLeft, tRight, true);
 
-            // Draw playhead marker. During normal scrolling it stays at the fixed anchor ratio,
-            // but once the viewport hits the song boundary (e.g. near the end), let the marker
-            // move to the actual visible playback position so it can travel to the edge.
+            // In follow mode, keep the marker on the fixed anchor unless we are clamped at the song
+            // boundary. In manual-pan mode, always draw it at the true playback position.
             const bool viewportClamped = std::fabs(startFrame - unclampedStartFrame) > 1e-6;
             double playheadXNorm = tp->playheadXRatio;
-            if (viewportClamped && visibleFrames > 0.0)
+            if ((!tp->followPlayhead || viewportClamped) && visibleFrames > 0.0)
             {
                 const double denom = (visibleFrames > 1.0) ? (visibleFrames - 1.0) : visibleFrames;
                 playheadXNorm = (denom > 0.0) ? ((curFrameD - startFrame) / denom) : tp->playheadXRatio;
@@ -5267,7 +6023,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         pv.gridMode = WaveformWindow::GetSharedPianoGridMode();
 
                         PianoRollRenderer::Config pc{};
-                        PianoRollRenderer::Draw(hdc, pianoRc, pv, pc, nullptr);
+                        const auto* tabNotes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
+                        PianoRollRenderer::Draw(hdc, pianoRc, pv, pc, tabNotes);
 
                         LayoutPianoRollGridControl(tp, pianoRc);
                         if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left)

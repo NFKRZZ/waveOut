@@ -282,11 +282,11 @@ namespace PianoRollRenderer
         HPEN subdivPen = CreatePen(PS_SOLID, 1, RGB(110, 95, 30));
         DrawMusicalGrid(hdc, gridRc, view, visibleSeconds, subdivPen, beatPen, barPen);
 
-        // Placeholder note layer (future MIDI notes)
+        // MIDI notes layer
         if (!notes || notes->empty())
         {
-            SetTextColor(hdc, RGB(140, 140, 140));
-            const wchar_t* msg = L"Piano Roll (notes pending: audio -> MIDI alignment)";
+            SetTextColor(hdc, RGB(130, 130, 130));
+            const wchar_t* msg = L"Left-click to add notes";
             TextOutW(hdc,
                 (std::max)(static_cast<int>(gridRc.left) + 10, static_cast<int>(keyRc.right) + 10),
                 static_cast<int>(rc.top) + 22,
@@ -295,8 +295,16 @@ namespace PianoRollRenderer
         }
         else
         {
-            HBRUSH noteBrush = CreateSolidBrush(RGB(50, 180, 255));
-            HBRUSH noteSelBrush = CreateSolidBrush(RGB(255, 170, 0));
+            HBRUSH noteBrush = CreateSolidBrush(RGB(223, 136, 46));
+            HBRUSH noteSelBrush = CreateSolidBrush(RGB(255, 181, 84));
+            HBRUSH noteGloss = CreateSolidBrush(RGB(250, 208, 146));
+            HBRUSH noteSelGloss = CreateSolidBrush(RGB(255, 224, 170));
+            HPEN notePen = CreatePen(PS_SOLID, 1, RGB(176, 96, 30));
+            HPEN noteSelPen = CreatePen(PS_SOLID, 1, RGB(255, 214, 154));
+            HFONT noteFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+            HFONT oldNoteFont = (HFONT)SelectObject(hdc, noteFont);
+            SetBkMode(hdc, TRANSPARENT);
+
             for (const auto& n : *notes)
             {
                 if (n.endSeconds <= n.startSeconds) continue;
@@ -315,10 +323,41 @@ namespace PianoRollRenderer
                 int y1 = rc.top + (int)std::floor((idx + 1) * rowH) - 1;
                 y1 = (std::max)(y0 + 2, y1);
                 RECT nr{ (LONG)x0, (LONG)y0, (LONG)x1, (LONG)y1 };
-                FillRect(hdc, &nr, n.selected ? noteSelBrush : noteBrush);
+
+                HGDIOBJ oldPenNote = SelectObject(hdc, n.selected ? noteSelPen : notePen);
+                HGDIOBJ oldBrushNote = SelectObject(hdc, n.selected ? noteSelBrush : noteBrush);
+                const int rx = (std::min)(8, (std::max)(4, (x1 - x0) / 3));
+                const int ry = (std::min)(8, (std::max)(4, (y1 - y0)));
+                RoundRect(hdc, nr.left, nr.top, nr.right, nr.bottom, rx, ry);
+                SelectObject(hdc, oldBrushNote);
+                SelectObject(hdc, oldPenNote);
+
+                if ((nr.right - nr.left) > 10 && (nr.bottom - nr.top) > 6)
+                {
+                    RECT gloss{ nr.left + 2, nr.top + 1, nr.right - 2, nr.top + 3 };
+                    FillRect(hdc, &gloss, n.selected ? noteSelGloss : noteGloss);
+                }
+
+                if ((nr.right - nr.left) >= 22 && (nr.bottom - nr.top) >= 10)
+                {
+                    RECT tr = nr;
+                    tr.left += 4;
+                    tr.right -= 3;
+                    SetTextColor(hdc, n.selected ? RGB(34, 24, 10) : RGB(30, 20, 10));
+                    const std::wstring label = NoteName(n.midiNote);
+                    int savedText = SaveDC(hdc);
+                    IntersectClipRect(hdc, nr.left + 1, nr.top + 1, nr.right - 1, nr.bottom - 1);
+                    DrawTextW(hdc, label.c_str(), -1, &tr, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+                    RestoreDC(hdc, savedText);
+                }
             }
+            SelectObject(hdc, oldNoteFont);
             DeleteObject(noteBrush);
             DeleteObject(noteSelBrush);
+            DeleteObject(noteGloss);
+            DeleteObject(noteSelGloss);
+            DeleteObject(notePen);
+            DeleteObject(noteSelPen);
         }
 
         // Playhead
