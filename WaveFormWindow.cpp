@@ -186,10 +186,27 @@ struct ThreadParam
     bool dragPanActive = false;
     bool dragResumeAfterScrub = false;
     double dragScrubFrameAccum = 0.0;
-    DWORD renderIntervalMs = 8;
+    DWORD renderIntervalMs = 16; // target ~60Hz update cadence
     HANDLE renderTimerQueue = nullptr;
     HANDLE renderTimer = nullptr;
     std::atomic<bool> renderTickQueued{ false };
+    double renderLastPaintMs = 0.0;
+    double renderAvgPaintMs = 0.0;
+    double renderFps = 0.0;
+    bool renderTimingValid = false;
+    std::chrono::steady_clock::time_point renderLastPaintStamp{};
+    double updateLastTickMs = 0.0;
+    double updateAvgTickMs = 0.0;
+    double updateFps = 0.0;
+    double updateLastWorkMs = 0.0;
+    double updateAvgWorkMs = 0.0;
+    bool updateTimingValid = false;
+    std::chrono::steady_clock::time_point updateLastTickStamp{};
+    HDC frameBackbufferDc = nullptr;
+    HBITMAP frameBackbufferBmp = nullptr;
+    HBITMAP frameBackbufferOldBmp = nullptr;
+    int frameBackbufferW = 0;
+    int frameBackbufferH = 0;
     bool buttonTextRefreshPending = true;
     int buttonTextRefreshRetries = 3;
     RECT toolbarButtonRects[kToolbarButtonCount]{};
@@ -286,6 +303,8 @@ struct ThreadParam
     bool embeddedPianoSpecDirty = true;
     double embeddedPianoSpecCacheTLeft = std::numeric_limits<double>::quiet_NaN();
     double embeddedPianoSpecCacheTRight = std::numeric_limits<double>::quiet_NaN();
+    std::chrono::steady_clock::time_point embeddedPianoSpecLastHeavyUpdate{};
+    bool embeddedPianoSpecLastHeavyUpdateValid = false;
     RECT embeddedPianoSpecRcProcessedToggle{};
     RECT embeddedPianoSpecRcDbButton{};
     RECT embeddedPianoSpecRcResButton{};
@@ -1452,6 +1471,53 @@ static short ClampShort16(double v)
     if (v > 32767.0) return 32767;
     if (v < -32768.0) return -32768;
     return static_cast<short>(std::lround(v));
+}
+
+static void ReleaseFrameBackbuffer(ThreadParam* tp)
+{
+    if (!tp) return;
+    if (tp->frameBackbufferDc)
+    {
+        if (tp->frameBackbufferOldBmp)
+            SelectObject(tp->frameBackbufferDc, tp->frameBackbufferOldBmp);
+        tp->frameBackbufferOldBmp = nullptr;
+        if (tp->frameBackbufferBmp)
+            DeleteObject(tp->frameBackbufferBmp);
+        tp->frameBackbufferBmp = nullptr;
+        DeleteDC(tp->frameBackbufferDc);
+        tp->frameBackbufferDc = nullptr;
+    }
+    tp->frameBackbufferW = 0;
+    tp->frameBackbufferH = 0;
+}
+
+static bool EnsureFrameBackbuffer(ThreadParam* tp, HDC referenceDc, int w, int h)
+{
+    if (!tp || !referenceDc || w <= 0 || h <= 0)
+        return false;
+    if (tp->frameBackbufferDc && tp->frameBackbufferBmp &&
+        tp->frameBackbufferW == w && tp->frameBackbufferH == h)
+    {
+        return true;
+    }
+
+    ReleaseFrameBackbuffer(tp);
+
+    tp->frameBackbufferDc = CreateCompatibleDC(referenceDc);
+    if (!tp->frameBackbufferDc)
+        return false;
+
+    tp->frameBackbufferBmp = CreateCompatibleBitmap(referenceDc, w, h);
+    if (!tp->frameBackbufferBmp)
+    {
+        ReleaseFrameBackbuffer(tp);
+        return false;
+    }
+
+    tp->frameBackbufferOldBmp = (HBITMAP)SelectObject(tp->frameBackbufferDc, tp->frameBackbufferBmp);
+    tp->frameBackbufferW = w;
+    tp->frameBackbufferH = h;
+    return true;
 }
 
 static RECT ComputeWaveRect(const RECT& clientRc, const ThreadParam* tp)
@@ -3400,9 +3466,67 @@ static void HandleRenderTick(HWND hwnd, ThreadParam* tp)
 {
     if (!tp) return;
     tp->renderTickQueued.store(false);
+    const auto tickStart = std::chrono::steady_clock::now();
+
+    auto finalizeUpdateTiming = [&](const std::chrono::steady_clock::time_point& tickEnd)
+    {
+        const double workMs = std::chrono::duration<double, std::milli>(tickEnd - tickStart).count();
+        tp->updateLastWorkMs = (std::isfinite(workMs) && workMs >= 0.0) ? workMs : 0.0;
+
+        if (!tp->updateTimingValid || !std::isfinite(tp->updateAvgWorkMs) || tp->updateAvgWorkMs <= 0.0)
+        {
+            tp->updateAvgWorkMs = tp->updateLastWorkMs;
+        }
+        else
+        {
+            constexpr double kWorkEmaKeep = 0.90;
+            tp->updateAvgWorkMs = (tp->updateAvgWorkMs * kWorkEmaKeep) + (tp->updateLastWorkMs * (1.0 - kWorkEmaKeep));
+        }
+
+        if (tp->updateTimingValid)
+        {
+            const double dt = std::chrono::duration<double>(tickEnd - tp->updateLastTickStamp).count();
+            if (std::isfinite(dt) && dt > 1e-6)
+            {
+                const double dtMs = dt * 1000.0;
+                tp->updateLastTickMs = dtMs;
+                if (!std::isfinite(tp->updateAvgTickMs) || tp->updateAvgTickMs <= 0.0)
+                {
+                    tp->updateAvgTickMs = dtMs;
+                }
+                else
+                {
+                    constexpr double kTickEmaKeep = 0.85;
+                    tp->updateAvgTickMs = (tp->updateAvgTickMs * kTickEmaKeep) + (dtMs * (1.0 - kTickEmaKeep));
+                }
+
+                const double fpsNow = 1.0 / dt;
+                if (!std::isfinite(tp->updateFps) || tp->updateFps <= 0.0)
+                {
+                    tp->updateFps = fpsNow;
+                }
+                else
+                {
+                    constexpr double kFpsEmaKeep = 0.85;
+                    tp->updateFps = (tp->updateFps * kFpsEmaKeep) + (fpsNow * (1.0 - kFpsEmaKeep));
+                }
+            }
+        }
+
+        tp->updateLastTickStamp = tickEnd;
+        tp->updateTimingValid = true;
+    };
 
     if (!tp->playing.load())
+    {
+        tp->updateLastTickMs = 0.0;
+        tp->updateAvgTickMs = 0.0;
+        tp->updateFps = 0.0;
+        tp->updateLastWorkMs = 0.0;
+        tp->updateAvgWorkMs = 0.0;
+        tp->updateTimingValid = false;
         return; // avoid continuous idle repaints while paused/stopped
+    }
 
     if (tp->playing.load() && tp->samples)
     {
@@ -3430,9 +3554,13 @@ static void HandleRenderTick(HWND hwnd, ThreadParam* tp)
     }
 
     if (tp->liveResizeActive)
+    {
+        finalizeUpdateTiming(std::chrono::steady_clock::now());
         return; // keep resize interactions responsive; repaint when the resize step itself invalidates
+    }
 
     InvalidateWaveRegion(hwnd, tp);
+    finalizeUpdateTiming(std::chrono::steady_clock::now());
 }
 
 static void DrawBeatGridOverlay(HDC hdc, const RECT& waveRc, const ThreadParam* tp,
@@ -3519,6 +3647,7 @@ static void InvalidateEmbeddedPianoSpec(ThreadParam* tp)
 {
     if (!tp) return;
     tp->embeddedPianoSpecDirty = true;
+    tp->embeddedPianoSpecLastHeavyUpdateValid = false;
 }
 
 static void OpenPianoSpectrogramPopoutFromWaveform(ThreadParam* tp)
@@ -4584,7 +4713,8 @@ static void UpdateEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doubl
     tp->embeddedPianoSpecCacheTRight = quantizedTLeft + span;
 }
 
-static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, const ThreadParam* tp)
+static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, const ThreadParam* tp,
+    double reqTLeft, double reqTRight)
 {
     if (!hdc || !tp) return;
     if (tp->embeddedPianoSpecImageW <= 0 || tp->embeddedPianoSpecImageH <= 0 || tp->embeddedPianoSpecImageBgra.empty())
@@ -4602,14 +4732,95 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, const Thread
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
 
-    StretchDIBits(
-        hdc,
-        plotRc.left, plotRc.top, dstW, dstH,
-        0, 0, tp->embeddedPianoSpecImageW, tp->embeddedPianoSpecImageH,
-        tp->embeddedPianoSpecImageBgra.data(),
-        &bmi,
-        DIB_RGB_COLORS,
-        SRCCOPY);
+    const int srcW = tp->embeddedPianoSpecImageW;
+    const int srcH = tp->embeddedPianoSpecImageH;
+    int shiftSrcPx = 0;
+
+    if (std::isfinite(reqTLeft) && std::isfinite(reqTRight) && reqTRight > reqTLeft &&
+        std::isfinite(tp->embeddedPianoSpecCacheTLeft) && std::isfinite(tp->embeddedPianoSpecCacheTRight))
+    {
+        const double cacheSpan = tp->embeddedPianoSpecCacheTRight - tp->embeddedPianoSpecCacheTLeft;
+        if (std::isfinite(cacheSpan) && cacheSpan > 1e-9)
+        {
+            const double shiftPxD =
+                (reqTLeft - tp->embeddedPianoSpecCacheTLeft) * (double)srcW / cacheSpan;
+            if (std::isfinite(shiftPxD))
+                shiftSrcPx = static_cast<int>(std::lround(shiftPxD));
+        }
+    }
+
+    const uint32_t bgBgra = EmbeddedPianoSpecHeatColor(-tp->embeddedPianoSpecDbRange, tp->embeddedPianoSpecDbRange);
+    const COLORREF bgColor = RGB(
+        static_cast<BYTE>(bgBgra & 0xffu),
+        static_cast<BYTE>((bgBgra >> 8) & 0xffu),
+        static_cast<BYTE>((bgBgra >> 16) & 0xffu));
+    auto fillBg = [&](const RECT& r)
+    {
+        if (r.right <= r.left || r.bottom <= r.top) return;
+        HBRUSH br = CreateSolidBrush(bgColor);
+        FillRect(hdc, &r, br);
+        DeleteObject(br);
+    };
+
+    if (shiftSrcPx == 0)
+    {
+        StretchDIBits(
+            hdc,
+            plotRc.left, plotRc.top, dstW, dstH,
+            0, 0, srcW, srcH,
+            tp->embeddedPianoSpecImageBgra.data(),
+            &bmi,
+            DIB_RGB_COLORS,
+            SRCCOPY);
+        return;
+    }
+
+    if (std::abs(shiftSrcPx) >= srcW)
+    {
+        fillBg(plotRc);
+        return;
+    }
+
+    const double xScale = (srcW > 0) ? (static_cast<double>(dstW) / static_cast<double>(srcW)) : 1.0;
+    if (shiftSrcPx > 0)
+    {
+        const int srcX = shiftSrcPx;
+        const int srcDrawW = srcW - shiftSrcPx;
+        const int dstDrawW = (std::max)(0, (std::min)(dstW, static_cast<int>(std::lround(srcDrawW * xScale))));
+        if (srcDrawW > 0 && dstDrawW > 0)
+        {
+            StretchDIBits(
+                hdc,
+                plotRc.left, plotRc.top, dstDrawW, dstH,
+                srcX, 0, srcDrawW, srcH,
+                tp->embeddedPianoSpecImageBgra.data(),
+                &bmi,
+                DIB_RGB_COLORS,
+                SRCCOPY);
+        }
+        RECT gap{ plotRc.left + dstDrawW, plotRc.top, plotRc.right, plotRc.bottom };
+        fillBg(gap);
+    }
+    else
+    {
+        const int srcShift = -shiftSrcPx;
+        const int srcDrawW = srcW - srcShift;
+        const int dstShift = (std::max)(0, (std::min)(dstW, static_cast<int>(std::lround(srcShift * xScale))));
+        const int dstDrawW = dstW - dstShift;
+        if (srcDrawW > 0 && dstDrawW > 0)
+        {
+            StretchDIBits(
+                hdc,
+                plotRc.left + dstShift, plotRc.top, dstDrawW, dstH,
+                0, 0, srcDrawW, srcH,
+                tp->embeddedPianoSpecImageBgra.data(),
+                &bmi,
+                DIB_RGB_COLORS,
+                SRCCOPY);
+        }
+        RECT gap{ plotRc.left, plotRc.top, plotRc.left + dstShift, plotRc.bottom };
+        fillBg(gap);
+    }
 }
 
 static void AlphaFillRectColor(HDC hdc, const RECT& rc, COLORREF color, BYTE alpha)
@@ -4739,9 +4950,14 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
     const RECT timeRc = ComputeEmbeddedPianoSpecBottomAxisRect(pianoRc);
     if (plotRc.right <= plotRc.left || plotRc.bottom <= plotRc.top) return;
 
-    const double axisTLeft = std::isfinite(tp->embeddedPianoSpecCacheTLeft) ? tp->embeddedPianoSpecCacheTLeft : reqTLeft;
-    const double axisTRight = std::isfinite(tp->embeddedPianoSpecCacheTRight) ? tp->embeddedPianoSpecCacheTRight : reqTRight;
-    const double visibleSeconds = (axisTRight > axisTLeft) ? (axisTRight - axisTLeft) : (reqTRight - reqTLeft);
+    double axisTLeft = reqTLeft;
+    double axisTRight = reqTRight;
+    if (!std::isfinite(axisTLeft) || !std::isfinite(axisTRight) || !(axisTRight > axisTLeft))
+    {
+        axisTLeft = tp->embeddedPianoSpecCacheTLeft;
+        axisTRight = tp->embeddedPianoSpecCacheTRight;
+    }
+    const double visibleSeconds = axisTRight - axisTLeft;
     if (!(visibleSeconds > 0.0) || !std::isfinite(visibleSeconds)) return;
 
     const int plotW = (int)(plotRc.right - plotRc.left);
@@ -4954,9 +5170,48 @@ static void DrawEmbeddedPianoSpectrogramTab(HDC hdc, const RECT& pianoRc, Thread
         const double specTLeft = tLeft + fullSpan * plotLeftNorm;
         const double specTRight = tLeft + fullSpan * plotRightNorm;
 
-        const bool suppressHeavySpecWork = tp->liveResizeActive || tp->dragPanActive || tp->dragScrubActive;
-        UpdateEmbeddedPianoSpecViewport(tp, specTLeft, specTRight, plotW, plotH, !suppressHeavySpecWork);
-        DrawEmbeddedPianoSpecImage(hdc, plotRc, tp);
+        bool allowHeavySpecWork = !(tp->liveResizeActive || tp->dragPanActive || tp->dragScrubActive);
+        const bool needsSpecBootstrap =
+            tp->embeddedPianoSpecDirty ||
+            tp->embeddedPianoSpecImageW != plotW ||
+            tp->embeddedPianoSpecImageH != plotH ||
+            !std::isfinite(tp->embeddedPianoSpecCacheTLeft) ||
+            !std::isfinite(tp->embeddedPianoSpecCacheTRight);
+
+        if (needsSpecBootstrap)
+        {
+            allowHeavySpecWork = true;
+        }
+        else if (allowHeavySpecWork && tp->playing.load())
+        {
+            // Adaptive spectrogram work budget while playback is running.
+            // Keep wave/playhead updates smooth and throttle spectral column synthesis when paint is over budget.
+            DWORD minHeavyIntervalMs = 16; // nominal ~60Hz
+            const double paintAvgMs = tp->renderAvgPaintMs;
+            if (std::isfinite(paintAvgMs))
+            {
+                if (paintAvgMs > 24.0) minHeavyIntervalMs = 66;      // ~15Hz heavy updates
+                else if (paintAvgMs > 19.0) minHeavyIntervalMs = 50; // ~20Hz heavy updates
+                else if (paintAvgMs > 16.5) minHeavyIntervalMs = 33; // ~30Hz heavy updates
+            }
+
+            const auto now = std::chrono::steady_clock::now();
+            if (tp->embeddedPianoSpecLastHeavyUpdateValid)
+            {
+                const double elapsedMs =
+                    std::chrono::duration<double, std::milli>(now - tp->embeddedPianoSpecLastHeavyUpdate).count();
+                if (std::isfinite(elapsedMs) && elapsedMs < static_cast<double>(minHeavyIntervalMs))
+                    allowHeavySpecWork = false;
+            }
+            if (allowHeavySpecWork)
+            {
+                tp->embeddedPianoSpecLastHeavyUpdate = now;
+                tp->embeddedPianoSpecLastHeavyUpdateValid = true;
+            }
+        }
+
+        UpdateEmbeddedPianoSpecViewport(tp, specTLeft, specTRight, plotW, plotH, allowHeavySpecWork);
+        DrawEmbeddedPianoSpecImage(hdc, plotRc, tp, specTLeft, specTRight);
         DrawEmbeddedPianoSpecNotesOverlay(hdc, plotRc, tp, specTLeft, specTRight);
         DrawEmbeddedPianoSpecGridAndLabels(hdc, pianoRc, tp, specTLeft, specTRight, playheadX);
     }
@@ -4988,6 +5243,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         if (tp)
         {
             tp->cacheDirty = true;
+            ReleaseFrameBackbuffer(tp);
             CloseSharedPianoGridMenu(tp);
             // Rebuild the embedded spectrogram for the new viewport size after resize settles.
             InvalidateEmbeddedPianoSpec(tp);
@@ -5744,6 +6000,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
         PAINTSTRUCT ps;
         HDC wndDC = BeginPaint(hwnd, &ps);
+        const auto paintStart = std::chrono::steady_clock::now();
 
         RECT rc;
         GetClientRect(hwnd, &rc);
@@ -5765,16 +6022,27 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HDC memDC = NULL;
         HBITMAP memBmp = NULL;
         HBITMAP oldBmp = NULL;
+        bool usingPersistentBackbuffer = false;
         if (fullW > 0 && fullH > 0)
         {
-            memDC = CreateCompatibleDC(wndDC);
-            if (memDC)
+            if (tp && EnsureFrameBackbuffer(tp, wndDC, fullW, fullH))
             {
-                memBmp = CreateCompatibleBitmap(wndDC, fullW, fullH);
-                if (memBmp)
+                memDC = tp->frameBackbufferDc;
+                memBmp = tp->frameBackbufferBmp;
+                hdc = memDC;
+                usingPersistentBackbuffer = true;
+            }
+            else
+            {
+                memDC = CreateCompatibleDC(wndDC);
+                if (memDC)
                 {
-                    oldBmp = (HBITMAP)SelectObject(memDC, memBmp);
-                    hdc = memDC;
+                    memBmp = CreateCompatibleBitmap(wndDC, fullW, fullH);
+                    if (memBmp)
+                    {
+                        oldBmp = (HBITMAP)SelectObject(memDC, memBmp);
+                        hdc = memDC;
+                    }
                 }
             }
         }
@@ -5953,10 +6221,16 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             std::wstring totalTime = FormatTimeLabel(durationSeconds, true);
             const wchar_t* mixModeLabel = ShouldUseSourcePlaybackDirect(tp) ? L"SRC" : L"STEMS";
             const wchar_t* audioBackendLabel = UsingAudioEngine(tp) ? L"miniaudio" : L"MCI";
+            const double frameMsHud = tp->renderLastPaintMs;
+            const double frameAvgMsHud = tp->renderAvgPaintMs;
+            const double frameFpsHud = tp->renderFps;
+            const double updateMsHud = tp->updateLastTickMs;
+            const double updateAvgMsHud = tp->updateAvgTickMs;
+            const double updateFpsHud = tp->updateFps;
 
-            wchar_t buf1[384];
+            wchar_t buf1[768];
             swprintf_s(buf1,
-                L"t=%s / %s  frame=%zu  zoom=%.2fx  play=%s  src=%s  audio=%s  mix=%s  grid=%s",
+                L"t=%s / %s  frame=%zu  zoom=%.2fx  play=%s  src=%s  audio=%s  mix=%s  grid=%s  paint=%.2fms avg=%.2fms fps=%.1f  loop=%.2fms avg=%.2fms fps=%.1f",
                 curTime.c_str(),
                 totalTime.c_str(),
                 static_cast<size_t>((curFrameD < 0.0) ? 0 : static_cast<size_t>(curFrameD)),
@@ -5965,7 +6239,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 tp->isStereo ? L"Stereo" : L"Mono",
                 audioBackendLabel,
                 mixModeLabel,
-                tp->gridEnabled ? L"ON" : L"off");
+                tp->gridEnabled ? L"ON" : L"off",
+                frameMsHud,
+                frameAvgMsHud,
+                frameFpsHud,
+                updateMsHud,
+                updateAvgMsHud,
+                updateFpsHud);
 
             wchar_t buf2[512];
             swprintf_s(buf2,
@@ -6071,7 +6351,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
         }
 
-        if (memDC)
+        if (!usingPersistentBackbuffer && memDC)
         {
             if (oldBmp) SelectObject(memDC, oldBmp);
             if (memBmp) DeleteObject(memBmp);
@@ -6091,6 +6371,44 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                     RedrawWindow(hStem, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_FRAME);
             }
             tp->buttonTextRefreshPending = false;
+        }
+
+        if (tp)
+        {
+            const auto paintEnd = std::chrono::steady_clock::now();
+            const double paintMs = std::chrono::duration<double, std::milli>(paintEnd - paintStart).count();
+            tp->renderLastPaintMs = (std::isfinite(paintMs) && paintMs >= 0.0) ? paintMs : 0.0;
+
+            if (!tp->renderTimingValid || !std::isfinite(tp->renderAvgPaintMs) || tp->renderAvgPaintMs <= 0.0)
+            {
+                tp->renderAvgPaintMs = tp->renderLastPaintMs;
+            }
+            else
+            {
+                constexpr double kPaintEmaKeep = 0.90;
+                tp->renderAvgPaintMs = (tp->renderAvgPaintMs * kPaintEmaKeep) + (tp->renderLastPaintMs * (1.0 - kPaintEmaKeep));
+            }
+
+            if (tp->renderTimingValid)
+            {
+                const double dt = std::chrono::duration<double>(paintEnd - tp->renderLastPaintStamp).count();
+                if (std::isfinite(dt) && dt > 1e-6)
+                {
+                    const double fpsNow = 1.0 / dt;
+                    if (!std::isfinite(tp->renderFps) || tp->renderFps <= 0.0)
+                    {
+                        tp->renderFps = fpsNow;
+                    }
+                    else
+                    {
+                        constexpr double kFpsEmaKeep = 0.85;
+                        tp->renderFps = (tp->renderFps * kFpsEmaKeep) + (fpsNow * (1.0 - kFpsEmaKeep));
+                    }
+                }
+            }
+
+            tp->renderLastPaintStamp = paintEnd;
+            tp->renderTimingValid = true;
         }
 
         EndPaint(hwnd, &ps);
@@ -6125,6 +6443,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             {
                 DeleteFileW(tp->tempPath.c_str());
             }
+            ReleaseFrameBackbuffer(tp);
         }
         PostQuitMessage(0);
         return 0;
@@ -6267,6 +6586,7 @@ static DWORD WINAPI ThreadProc(LPVOID lpParameter)
     tp->useAudioEngine = false;
     if (tp->mciOpened) MciClose(tp.get());
     if (!tp->tempPath.empty()) DeleteFileW(tp->tempPath.c_str());
+    ReleaseFrameBackbuffer(tp.get());
 
     timeEndPeriod(1);
     return static_cast<DWORD>(msg.wParam);
