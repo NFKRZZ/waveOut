@@ -1155,7 +1155,7 @@ class BeatGridViewer(QtWidgets.QMainWindow):
                          self.base_min[b0:b1], self.base_max[b0:b1])
         self._set_signed(self.low_pos, self.low_neg, x,
                          self.low_min[b0:b1], self.low_max[b0:b1])
-        self._set_signed(self.mid_pos, self.mid_neg, x,
+        self._set_signed(self.mid_pos, self.mid_neg, x, 
                          self.mid_min[b0:b1], self.mid_max[b0:b1])
         self._set_signed(self.high_pos, self.high_neg, x,
                          self.high_min[b0:b1], self.high_max[b0:b1])

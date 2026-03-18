@@ -6,12 +6,14 @@
 #endif
 #include <windows.h>
 #include <windowsx.h>   // for GET_X_LPARAM / GET_Y_LPARAM
+#include <d2d1.h>
 #include <mmsystem.h>
 #include <mciapi.h>
 #include <timeapi.h>
 #pragma comment(lib,"Winmm.lib")
 #pragma comment(lib,"Winmm.lib") // mci lives here too
 #pragma comment(lib,"Msimg32.lib") // AlphaBlend for translucent spectrogram notes
+#pragma comment(lib,"D2d1.lib")
 
 #include <memory>
 #include <algorithm>
@@ -110,6 +112,16 @@ namespace
     std::atomic<int> gSharedPianoGridMode{ PianoRollRenderer::Grid_Beat };
     std::atomic<HWND> gSharedWaveformHwnd{ nullptr };
 
+    template <typename T>
+    void SafeReleaseCom(T*& p)
+    {
+        if (p)
+        {
+            p->Release();
+            p = nullptr;
+        }
+    }
+
     HFONT GetWaveUiMessageFont()
     {
         static HFONT sFont = nullptr;
@@ -186,7 +198,7 @@ struct ThreadParam
     bool dragPanActive = false;
     bool dragResumeAfterScrub = false;
     double dragScrubFrameAccum = 0.0;
-    DWORD renderIntervalMs = 16; // target ~60Hz update cadence
+    DWORD renderIntervalMs = 8; // target ~120Hz update cadence (8ms timer granularity ~=125Hz)
     HANDLE renderTimerQueue = nullptr;
     HANDLE renderTimer = nullptr;
     std::atomic<bool> renderTickQueued{ false };
@@ -207,6 +219,17 @@ struct ThreadParam
     HBITMAP frameBackbufferOldBmp = nullptr;
     int frameBackbufferW = 0;
     int frameBackbufferH = 0;
+    bool gpuWaveEnabled = true;
+    ID2D1Factory* waveD2dFactory = nullptr;
+    ID2D1DCRenderTarget* waveD2dRenderTarget = nullptr;
+    ID2D1SolidColorBrush* waveD2dBrushBase = nullptr;
+    ID2D1SolidColorBrush* waveD2dBrushLow = nullptr;
+    ID2D1SolidColorBrush* waveD2dBrushMid = nullptr;
+    ID2D1SolidColorBrush* waveD2dBrushHigh = nullptr;
+    ID2D1Bitmap* waveD2dEmbeddedSpecBitmap = nullptr;
+    int waveD2dEmbeddedSpecBitmapW = 0;
+    int waveD2dEmbeddedSpecBitmapH = 0;
+    bool waveGpuActive = false;
     bool buttonTextRefreshPending = true;
     int buttonTextRefreshRetries = 3;
     RECT toolbarButtonRects[kToolbarButtonCount]{};
@@ -300,6 +323,7 @@ struct ThreadParam
     std::vector<uint32_t> embeddedPianoSpecImageBgra;
     int embeddedPianoSpecImageW = 0;
     int embeddedPianoSpecImageH = 0;
+    bool embeddedPianoSpecGpuDirty = true;
     bool embeddedPianoSpecDirty = true;
     double embeddedPianoSpecCacheTLeft = std::numeric_limits<double>::quiet_NaN();
     double embeddedPianoSpecCacheTRight = std::numeric_limits<double>::quiet_NaN();
@@ -1518,6 +1542,93 @@ static bool EnsureFrameBackbuffer(ThreadParam* tp, HDC referenceDc, int w, int h
     tp->frameBackbufferW = w;
     tp->frameBackbufferH = h;
     return true;
+}
+
+static D2D1_COLOR_F D2dColorFromRgb(COLORREF rgb, float alpha = 1.0f)
+{
+    return D2D1_COLOR_F
+    {
+        static_cast<float>(GetRValue(rgb)) / 255.0f,
+        static_cast<float>(GetGValue(rgb)) / 255.0f,
+        static_cast<float>(GetBValue(rgb)) / 255.0f,
+        alpha
+    };
+}
+
+static void ReleaseWaveGpuTarget(ThreadParam* tp)
+{
+    if (!tp) return;
+    SafeReleaseCom(tp->waveD2dEmbeddedSpecBitmap);
+    tp->waveD2dEmbeddedSpecBitmapW = 0;
+    tp->waveD2dEmbeddedSpecBitmapH = 0;
+    tp->embeddedPianoSpecGpuDirty = true;
+    SafeReleaseCom(tp->waveD2dBrushBase);
+    SafeReleaseCom(tp->waveD2dBrushLow);
+    SafeReleaseCom(tp->waveD2dBrushMid);
+    SafeReleaseCom(tp->waveD2dBrushHigh);
+    SafeReleaseCom(tp->waveD2dRenderTarget);
+    tp->waveGpuActive = false;
+}
+
+static void ReleaseWaveGpuResources(ThreadParam* tp)
+{
+    if (!tp) return;
+    ReleaseWaveGpuTarget(tp);
+    SafeReleaseCom(tp->waveD2dFactory);
+}
+
+static bool EnsureWaveGpuResources(ThreadParam* tp)
+{
+    if (!tp || !tp->gpuWaveEnabled)
+        return false;
+
+    if (!tp->waveD2dFactory)
+    {
+        const HRESULT hrFactory = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &tp->waveD2dFactory);
+        if (FAILED(hrFactory))
+        {
+            tp->gpuWaveEnabled = false;
+            return false;
+        }
+    }
+
+    if (!tp->waveD2dRenderTarget)
+    {
+        D2D1_RENDER_TARGET_PROPERTIES rtProps{};
+        rtProps.type = D2D1_RENDER_TARGET_TYPE_HARDWARE;
+        rtProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        rtProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        rtProps.dpiX = 0.0f;
+        rtProps.dpiY = 0.0f;
+        rtProps.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+        rtProps.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+        HRESULT hr = tp->waveD2dFactory->CreateDCRenderTarget(&rtProps, &tp->waveD2dRenderTarget);
+        if (FAILED(hr))
+        {
+            rtProps.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+            hr = tp->waveD2dFactory->CreateDCRenderTarget(&rtProps, &tp->waveD2dRenderTarget);
+            if (FAILED(hr))
+                return false;
+        }
+
+        HRESULT hrBrush = S_OK;
+        hrBrush = tp->waveD2dRenderTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(120, 120, 120), 0.20f), &tp->waveD2dBrushBase);
+        if (SUCCEEDED(hrBrush))
+            hrBrush = tp->waveD2dRenderTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(0, 140, 255), 0.70f), &tp->waveD2dBrushLow);
+        if (SUCCEEDED(hrBrush))
+            hrBrush = tp->waveD2dRenderTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(255, 170, 0), 0.70f), &tp->waveD2dBrushMid);
+        if (SUCCEEDED(hrBrush))
+            hrBrush = tp->waveD2dRenderTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(255, 60, 140), 0.72f), &tp->waveD2dBrushHigh);
+        if (FAILED(hrBrush))
+        {
+            ReleaseWaveGpuTarget(tp);
+            return false;
+        }
+    }
+
+    tp->waveGpuActive = true;
+    return tp->waveD2dRenderTarget && tp->waveD2dBrushBase && tp->waveD2dBrushLow && tp->waveD2dBrushMid && tp->waveD2dBrushHigh;
 }
 
 static RECT ComputeWaveRect(const RECT& clientRc, const ThreadParam* tp)
@@ -3270,6 +3381,183 @@ static void DrawEnvelopeLayer(
     SelectObject(hdc, oldBrushObj);
 }
 
+static void DrawEnvelopeLayerGpu(
+    ID2D1RenderTarget* target,
+    ID2D1SolidColorBrush* brush,
+    const RECT& waveRc,
+    int midY,
+    double ampScale,
+    const std::vector<float>& vmin,
+    const std::vector<float>& vmax,
+    size_t b0,
+    size_t b1,
+    int envBlock,
+    size_t totalFrames,
+    double startFrame,
+    double visibleFrames,
+    float plotYRange)
+{
+    if (!target || !brush || b1 <= b0 || vmin.empty() || vmax.empty() || envBlock <= 0 || totalFrames == 0 || visibleFrames <= 0.0)
+        return;
+
+    const int w = waveRc.right - waveRc.left;
+    if (w <= 0) return;
+
+    auto toY = [&](float v) -> float
+    {
+        const float clamped = ClampFloat(v, -plotYRange, plotYRange);
+        return static_cast<float>(midY) - static_cast<float>(static_cast<double>(clamped) * ampScale);
+    };
+
+    for (size_t b = b0; b < b1 && b < vmin.size() && b < vmax.size(); ++b)
+    {
+        const double frameStart = static_cast<double>(b * static_cast<size_t>(envBlock));
+        const double frameEnd = static_cast<double>((std::min)((b + 1) * static_cast<size_t>(envBlock), totalFrames));
+
+        int x0 = waveRc.left + static_cast<int>(std::floor(((frameStart - startFrame) / visibleFrames) * w));
+        int x1 = waveRc.left + static_cast<int>(std::ceil(((frameEnd - startFrame) / visibleFrames) * w));
+
+        if (x1 < waveRc.left || x0 >= waveRc.right)
+            continue;
+
+        x0 = (std::max)(x0, static_cast<int>(waveRc.left));
+        x1 = (std::min)(x1, static_cast<int>(waveRc.right - 1));
+        if (x1 < x0) x1 = x0;
+
+        const float yPos = toY((std::max)(vmax[b], 0.0f));
+        const float yNeg = toY((std::min)(vmin[b], 0.0f));
+        const float midYf = static_cast<float>(midY);
+        const float x0f = static_cast<float>(x0);
+        const float x1f = static_cast<float>(x1 + 1);
+
+        if (std::fabs(yPos - midYf) > 0.0001f)
+        {
+            D2D1_RECT_F rPos{};
+            rPos.left = x0f;
+            rPos.right = x1f;
+            rPos.top = (std::min)(midYf, yPos);
+            rPos.bottom = (std::max)(midYf, yPos);
+            target->FillRectangle(rPos, brush);
+        }
+        if (std::fabs(yNeg - midYf) > 0.0001f)
+        {
+            D2D1_RECT_F rNeg{};
+            rNeg.left = x0f;
+            rNeg.right = x1f;
+            rNeg.top = (std::min)(midYf, yNeg);
+            rNeg.bottom = (std::max)(midYf, yNeg);
+            target->FillRectangle(rNeg, brush);
+        }
+    }
+}
+
+static bool DrawWaveEnvelopesGpu(HDC targetDc, const RECT& targetDcRect, ThreadParam* tp, const RECT& waveRc, const RECT& paintRc)
+{
+    if (!targetDc || !tp || !tp->gpuWaveEnabled)
+        return false;
+    if (!tp->samples || tp->samples->empty() || waveRc.right <= waveRc.left || waveRc.bottom <= waveRc.top)
+        return false;
+
+    if (!EnsureWaveGpuResources(tp))
+        return false;
+
+    const size_t totalFrames = GetTotalFrames(tp);
+    if (totalFrames == 0 || tp->envBlocks == 0 || tp->envBlock <= 0)
+        return false;
+
+    WaveViewportFrameState view{};
+    if (!ComputeWaveViewportFrameState(tp, totalFrames, view))
+        return false;
+
+    const double visibleFrames = view.visibleFrames;
+    const double startFrame = view.startFrame;
+    if (!(visibleFrames > 0.0))
+        return false;
+
+    const int w = waveRc.right - waveRc.left;
+    const int h = waveRc.bottom - waveRc.top;
+    if (w <= 0 || h <= 0)
+        return false;
+
+    const int midY = waveRc.top + (h / 2);
+    const double ampScale = (static_cast<double>(h) * 0.5) / static_cast<double>(tp->plotYRange);
+
+    const double endFrame = std::min<double>(static_cast<double>(totalFrames), startFrame + visibleFrames);
+    const double framesPerPixel = visibleFrames / static_cast<double>((std::max)(1, w));
+    const EnvelopeLevelView envView = SelectEnvelopeLevelForFramesPerPixel(tp, framesPerPixel);
+    const int drawEnvBlock = (envView.block > 0) ? envView.block : tp->envBlock;
+    const size_t drawEnvBlocks = (envView.blocks > 0) ? envView.blocks : tp->envBlocks;
+
+    size_t b0 = static_cast<size_t>(std::floor(startFrame / static_cast<double>(drawEnvBlock)));
+    size_t b1 = static_cast<size_t>(std::ceil(endFrame / static_cast<double>(drawEnvBlock)));
+    if (b0 > drawEnvBlocks) b0 = drawEnvBlocks;
+    if (b1 > drawEnvBlocks) b1 = drawEnvBlocks;
+    if (b1 <= b0)
+        return false;
+
+    const std::vector<float>& baseMin = (envView.baseMinF ? *envView.baseMinF : tp->baseMinF);
+    const std::vector<float>& baseMax = (envView.baseMaxF ? *envView.baseMaxF : tp->baseMaxF);
+    const std::vector<float>& lowMin = (envView.lowMinF ? *envView.lowMinF : tp->lowMinF);
+    const std::vector<float>& lowMax = (envView.lowMaxF ? *envView.lowMaxF : tp->lowMaxF);
+    const std::vector<float>& midMin = (envView.midMinF ? *envView.midMinF : tp->midMinF);
+    const std::vector<float>& midMax = (envView.midMaxF ? *envView.midMaxF : tp->midMaxF);
+    const std::vector<float>& highMin = (envView.highMinF ? *envView.highMinF : tp->highMinF);
+    const std::vector<float>& highMax = (envView.highMaxF ? *envView.highMaxF : tp->highMaxF);
+
+    RECT clipRc{};
+    if (!IntersectRect(&clipRc, &waveRc, &paintRc))
+        return false;
+
+    ID2D1DCRenderTarget* target = tp->waveD2dRenderTarget;
+    if (!target)
+        return false;
+
+    const int bindW = (std::max)(0, static_cast<int>(targetDcRect.right - targetDcRect.left));
+    const int bindH = (std::max)(0, static_cast<int>(targetDcRect.bottom - targetDcRect.top));
+    if (bindW <= 0 || bindH <= 0)
+        return false;
+    RECT bindRect{};
+    bindRect.left = 0;
+    bindRect.top = 0;
+    bindRect.right = bindW;
+    bindRect.bottom = bindH;
+    const HRESULT hrBind = target->BindDC(targetDc, &bindRect);
+    if (FAILED(hrBind))
+    {
+        ReleaseWaveGpuTarget(tp);
+        return false;
+    }
+
+    D2D1_MATRIX_3X2_F identity{};
+    identity._11 = 1.0f;
+    identity._22 = 1.0f;
+    target->BeginDraw();
+    target->SetTransform(identity);
+    target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+
+    D2D1_RECT_F clipRectF{};
+    clipRectF.left = static_cast<float>(clipRc.left);
+    clipRectF.top = static_cast<float>(clipRc.top);
+    clipRectF.right = static_cast<float>(clipRc.right);
+    clipRectF.bottom = static_cast<float>(clipRc.bottom);
+    target->PushAxisAlignedClip(clipRectF, D2D1_ANTIALIAS_MODE_ALIASED);
+
+    DrawEnvelopeLayerGpu(target, tp->waveD2dBrushBase, waveRc, midY, ampScale,
+        baseMin, baseMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+    DrawEnvelopeLayerGpu(target, tp->waveD2dBrushLow, waveRc, midY, ampScale,
+        lowMin, lowMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+    DrawEnvelopeLayerGpu(target, tp->waveD2dBrushMid, waveRc, midY, ampScale,
+        midMin, midMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+    DrawEnvelopeLayerGpu(target, tp->waveD2dBrushHigh, waveRc, midY, ampScale,
+        highMin, highMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+
+    target->PopAxisAlignedClip();
+    const HRESULT hr = target->EndDraw();
+    if (hr == D2DERR_RECREATE_TARGET)
+        ReleaseWaveGpuTarget(tp);
+    return SUCCEEDED(hr);
+}
+
 static void BuildCacheIfNeeded(ThreadParam* tp, int widthPx)
 {
     if (!tp || !tp->samples || tp->samples->empty() || widthPx <= 0)
@@ -3647,6 +3935,7 @@ static void InvalidateEmbeddedPianoSpec(ThreadParam* tp)
 {
     if (!tp) return;
     tp->embeddedPianoSpecDirty = true;
+    tp->embeddedPianoSpecGpuDirty = true;
     tp->embeddedPianoSpecLastHeavyUpdateValid = false;
 }
 
@@ -4567,6 +4856,7 @@ static void EmbeddedPianoSpecEnsureImage(ThreadParam* tp, int w, int h)
     tp->embeddedPianoSpecImageH = h;
     tp->embeddedPianoSpecImageBgra.assign((std::size_t)w * (std::size_t)h,
         EmbeddedPianoSpecHeatColor(-tp->embeddedPianoSpecDbRange, tp->embeddedPianoSpecDbRange));
+    tp->embeddedPianoSpecGpuDirty = true;
     tp->embeddedPianoSpecCacheTLeft = std::numeric_limits<double>::quiet_NaN();
     tp->embeddedPianoSpecCacheTRight = std::numeric_limits<double>::quiet_NaN();
     tp->embeddedPianoSpecDirty = true;
@@ -4577,6 +4867,7 @@ static void EmbeddedPianoSpecClearImage(ThreadParam* tp)
     if (!tp || tp->embeddedPianoSpecImageW <= 0 || tp->embeddedPianoSpecImageH <= 0) return;
     std::fill(tp->embeddedPianoSpecImageBgra.begin(), tp->embeddedPianoSpecImageBgra.end(),
         EmbeddedPianoSpecHeatColor(-tp->embeddedPianoSpecDbRange, tp->embeddedPianoSpecDbRange));
+    tp->embeddedPianoSpecGpuDirty = true;
 }
 
 static void EmbeddedPianoSpecShiftImageLeft(ThreadParam* tp, int cols)
@@ -4597,6 +4888,7 @@ static void EmbeddedPianoSpecShiftImageLeft(ThreadParam* tp, int cols)
         std::memmove(row, row + cols, (std::size_t)(w - cols) * sizeof(uint32_t));
         std::fill(row + (w - cols), row + w, bg);
     }
+    tp->embeddedPianoSpecGpuDirty = true;
 }
 
 static void EmbeddedPianoSpecWriteColumn(ThreadParam* tp, int x, const std::vector<uint32_t>& col)
@@ -4609,6 +4901,7 @@ static void EmbeddedPianoSpecWriteColumn(ThreadParam* tp, int x, const std::vect
         tp->embeddedPianoSpecImageBgra[(std::size_t)y * (std::size_t)tp->embeddedPianoSpecImageW + (std::size_t)x] =
             col[(std::size_t)y];
     }
+    tp->embeddedPianoSpecGpuDirty = true;
 }
 
 static void RebuildEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, double tRight, int plotW, int plotH)
@@ -4713,7 +5006,70 @@ static void UpdateEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doubl
     tp->embeddedPianoSpecCacheTRight = quantizedTLeft + span;
 }
 
-static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, const ThreadParam* tp,
+static bool EnsureEmbeddedPianoSpecGpuBitmap(ThreadParam* tp)
+{
+    if (!tp || !tp->waveD2dRenderTarget)
+        return false;
+    if (tp->embeddedPianoSpecImageW <= 0 || tp->embeddedPianoSpecImageH <= 0 || tp->embeddedPianoSpecImageBgra.empty())
+        return false;
+
+    const int w = tp->embeddedPianoSpecImageW;
+    const int h = tp->embeddedPianoSpecImageH;
+    const UINT32 pitch = static_cast<UINT32>(w * static_cast<int>(sizeof(uint32_t)));
+
+    if (!tp->waveD2dEmbeddedSpecBitmap ||
+        tp->waveD2dEmbeddedSpecBitmapW != w ||
+        tp->waveD2dEmbeddedSpecBitmapH != h)
+    {
+        SafeReleaseCom(tp->waveD2dEmbeddedSpecBitmap);
+        tp->waveD2dEmbeddedSpecBitmapW = 0;
+        tp->waveD2dEmbeddedSpecBitmapH = 0;
+
+        D2D1_SIZE_U size{};
+        size.width = static_cast<UINT32>(w);
+        size.height = static_cast<UINT32>(h);
+
+        D2D1_BITMAP_PROPERTIES props{};
+        props.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        props.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        props.dpiX = 96.0f;
+        props.dpiY = 96.0f;
+
+        const HRESULT hrCreate = tp->waveD2dRenderTarget->CreateBitmap(
+            size,
+            tp->embeddedPianoSpecImageBgra.data(),
+            pitch,
+            &props,
+            &tp->waveD2dEmbeddedSpecBitmap);
+        if (FAILED(hrCreate) || !tp->waveD2dEmbeddedSpecBitmap)
+            return false;
+
+        tp->waveD2dEmbeddedSpecBitmapW = w;
+        tp->waveD2dEmbeddedSpecBitmapH = h;
+        tp->embeddedPianoSpecGpuDirty = false;
+        return true;
+    }
+
+    if (tp->embeddedPianoSpecGpuDirty)
+    {
+        const HRESULT hrCopy = tp->waveD2dEmbeddedSpecBitmap->CopyFromMemory(
+            nullptr,
+            tp->embeddedPianoSpecImageBgra.data(),
+            pitch);
+        if (FAILED(hrCopy))
+        {
+            SafeReleaseCom(tp->waveD2dEmbeddedSpecBitmap);
+            tp->waveD2dEmbeddedSpecBitmapW = 0;
+            tp->waveD2dEmbeddedSpecBitmapH = 0;
+            return false;
+        }
+        tp->embeddedPianoSpecGpuDirty = false;
+    }
+
+    return true;
+}
+
+static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, ThreadParam* tp,
     double reqTLeft, double reqTRight)
 {
     if (!hdc || !tp) return;
@@ -4761,6 +5117,96 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, const Thread
         FillRect(hdc, &r, br);
         DeleteObject(br);
     };
+
+    if (tp->gpuWaveEnabled && EnsureWaveGpuResources(tp) && EnsureEmbeddedPianoSpecGpuBitmap(tp))
+    {
+        ID2D1DCRenderTarget* target = tp->waveD2dRenderTarget;
+        ID2D1Bitmap* bmp = tp->waveD2dEmbeddedSpecBitmap;
+        if (target && bmp)
+        {
+            RECT bindRc = plotRc;
+            if (SUCCEEDED(target->BindDC(hdc, &bindRc)))
+            {
+                D2D1_MATRIX_3X2_F identity{};
+                identity._11 = 1.0f;
+                identity._22 = 1.0f;
+
+                target->BeginDraw();
+                target->SetTransform(identity);
+                target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+
+                D2D1_RECT_F dstFull{};
+                dstFull.left = 0.0f;
+                dstFull.top = 0.0f;
+                dstFull.right = static_cast<float>(dstW);
+                dstFull.bottom = static_cast<float>(dstH);
+
+                ID2D1SolidColorBrush* bgBrush = nullptr;
+                if (SUCCEEDED(target->CreateSolidColorBrush(D2dColorFromRgb(bgColor, 1.0f), &bgBrush)) && bgBrush)
+                {
+                    target->FillRectangle(dstFull, bgBrush);
+                    SafeReleaseCom(bgBrush);
+                }
+
+                auto drawBitmapSlice = [&](float dLeft, float dTop, float dRight, float dBottom,
+                    float sLeft, float sTop, float sRight, float sBottom)
+                {
+                    if (!(dRight > dLeft) || !(dBottom > dTop) || !(sRight > sLeft) || !(sBottom > sTop))
+                        return;
+                    D2D1_RECT_F d{};
+                    d.left = dLeft;
+                    d.top = dTop;
+                    d.right = dRight;
+                    d.bottom = dBottom;
+                    D2D1_RECT_F s{};
+                    s.left = sLeft;
+                    s.top = sTop;
+                    s.right = sRight;
+                    s.bottom = sBottom;
+                    target->DrawBitmap(bmp, &d, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &s);
+                };
+
+                if (shiftSrcPx == 0)
+                {
+                    drawBitmapSlice(
+                        0.0f, 0.0f,
+                        static_cast<float>(dstW), static_cast<float>(dstH),
+                        0.0f, 0.0f, static_cast<float>(srcW), static_cast<float>(srcH));
+                }
+                else if (std::abs(shiftSrcPx) < srcW)
+                {
+                    const double xScale = (srcW > 0) ? (static_cast<double>(dstW) / static_cast<double>(srcW)) : 1.0;
+                    if (shiftSrcPx > 0)
+                    {
+                        const int srcX = shiftSrcPx;
+                        const int srcDrawW = srcW - shiftSrcPx;
+                        const int dstDrawW = (std::max)(0, (std::min)(dstW, static_cast<int>(std::lround(srcDrawW * xScale))));
+                        drawBitmapSlice(
+                            0.0f, 0.0f,
+                            static_cast<float>(dstDrawW), static_cast<float>(dstH),
+                            static_cast<float>(srcX), 0.0f, static_cast<float>(srcX + srcDrawW), static_cast<float>(srcH));
+                    }
+                    else
+                    {
+                        const int srcShift = -shiftSrcPx;
+                        const int srcDrawW = srcW - srcShift;
+                        const int dstShift = (std::max)(0, (std::min)(dstW, static_cast<int>(std::lround(srcShift * xScale))));
+                        const int dstDrawW = dstW - dstShift;
+                        drawBitmapSlice(
+                            static_cast<float>(dstShift), 0.0f,
+                            static_cast<float>(dstShift + dstDrawW), static_cast<float>(dstH),
+                            0.0f, 0.0f, static_cast<float>(srcDrawW), static_cast<float>(srcH));
+                    }
+                }
+
+                const HRESULT hr = target->EndDraw();
+                if (hr == D2DERR_RECREATE_TARGET)
+                    ReleaseWaveGpuTarget(tp);
+                if (SUCCEEDED(hr))
+                    return;
+            }
+        }
+    }
 
     if (shiftSrcPx == 0)
     {
@@ -6023,6 +6469,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HBITMAP memBmp = NULL;
         HBITMAP oldBmp = NULL;
         bool usingPersistentBackbuffer = false;
+        bool useGpuWaveEnvelopes = false;
         if (fullW > 0 && fullH > 0)
         {
             if (tp && EnsureFrameBackbuffer(tp, wndDC, fullW, fullH))
@@ -6127,6 +6574,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         {
             int w = (std::max)(1, static_cast<int>(waveRc.right - waveRc.left));
             int h = (std::max)(1, static_cast<int>(waveRc.bottom - waveRc.top));
+            useGpuWaveEnvelopes = EnsureWaveGpuResources(tp);
 
             size_t totalFrames = tp->isStereo ? (tp->samples->size() / 2) : tp->samples->size();
             if (tp->envBlocks == 0)
@@ -6176,14 +6624,17 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 const std::vector<float>& highMax = (envView.highMaxF ? *envView.highMaxF : tp->highMaxF);
 
                 // Draw in the same stacking order as aubioTest.py: base -> low -> mid -> high.
-                DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(120, 120, 120),
-                    baseMin, baseMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
-                DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(0, 140, 255),
-                    lowMin, lowMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
-                DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(255, 170, 0),
-                    midMin, midMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
-                DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(255, 60, 140),
-                    highMin, highMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                if (!useGpuWaveEnvelopes)
+                {
+                    DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(120, 120, 120),
+                        baseMin, baseMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                    DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(0, 140, 255),
+                        lowMin, lowMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                    DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(255, 170, 0),
+                        midMin, midMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                    DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(255, 60, 140),
+                        highMin, highMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                }
             }
 
             const double tLeft = startFrame / static_cast<double>(tp->sampleRate);
@@ -6221,6 +6672,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             std::wstring totalTime = FormatTimeLabel(durationSeconds, true);
             const wchar_t* mixModeLabel = ShouldUseSourcePlaybackDirect(tp) ? L"SRC" : L"STEMS";
             const wchar_t* audioBackendLabel = UsingAudioEngine(tp) ? L"miniaudio" : L"MCI";
+            const wchar_t* waveRendererLabel = useGpuWaveEnvelopes ? L"D2D-GPU" : L"GDI-CPU";
             const double frameMsHud = tp->renderLastPaintMs;
             const double frameAvgMsHud = tp->renderAvgPaintMs;
             const double frameFpsHud = tp->renderFps;
@@ -6230,7 +6682,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
             wchar_t buf1[768];
             swprintf_s(buf1,
-                L"t=%s / %s  frame=%zu  zoom=%.2fx  play=%s  src=%s  audio=%s  mix=%s  grid=%s  paint=%.2fms avg=%.2fms fps=%.1f  loop=%.2fms avg=%.2fms fps=%.1f",
+                L"t=%s / %s  frame=%zu  zoom=%.2fx  play=%s  src=%s  audio=%s  mix=%s  wave=%s  grid=%s  paint=%.2fms avg=%.2fms fps=%.1f  loop=%.2fms avg=%.2fms fps=%.1f",
                 curTime.c_str(),
                 totalTime.c_str(),
                 static_cast<size_t>((curFrameD < 0.0) ? 0 : static_cast<size_t>(curFrameD)),
@@ -6239,6 +6691,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 tp->isStereo ? L"Stereo" : L"Mono",
                 audioBackendLabel,
                 mixModeLabel,
+                waveRendererLabel,
                 tp->gridEnabled ? L"ON" : L"off",
                 frameMsHud,
                 frameAvgMsHud,
@@ -6317,6 +6770,15 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 }
             }
             DrawSharedPianoGridMenu(hdc, tp);
+        }
+
+        if (tp && useGpuWaveEnvelopes)
+        {
+            if (!DrawWaveEnvelopesGpu(hdc, rc, tp, waveRc, paintRc))
+            {
+                useGpuWaveEnvelopes = false;
+                tp->gpuWaveEnabled = false; // hard fallback if GPU path becomes unstable
+            }
         }
 
         if (memDC && memBmp)
@@ -6444,6 +6906,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 DeleteFileW(tp->tempPath.c_str());
             }
             ReleaseFrameBackbuffer(tp);
+            ReleaseWaveGpuResources(tp);
         }
         PostQuitMessage(0);
         return 0;
@@ -6587,6 +7050,7 @@ static DWORD WINAPI ThreadProc(LPVOID lpParameter)
     if (tp->mciOpened) MciClose(tp.get());
     if (!tp->tempPath.empty()) DeleteFileW(tp->tempPath.c_str());
     ReleaseFrameBackbuffer(tp.get());
+    ReleaseWaveGpuResources(tp.get());
 
     timeEndPeriod(1);
     return static_cast<DWORD>(msg.wParam);

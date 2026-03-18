@@ -1,0 +1,9 @@
+{
+  "name": "waveout-xplat",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "sdl3",
+    "bgfx"
+  ]
+}
+

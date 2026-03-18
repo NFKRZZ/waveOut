@@ -9,8 +9,10 @@
 #endif
 #include <windows.h>
 #include <windowsx.h>
+#include <d2d1.h>
 #include <timeapi.h>
 #pragma comment(lib, "Winmm.lib")
+#pragma comment(lib, "D2d1.lib")
 
 #include <algorithm>
 #include <atomic>
@@ -72,6 +74,16 @@ namespace
         kPianoSpecGrid_Bar,
         kPianoSpecGrid_Count
     };
+
+    template <typename T>
+    void SafeReleaseCom(T*& p)
+    {
+        if (p)
+        {
+            p->Release();
+            p = nullptr;
+        }
+    }
 }
 
 struct SpectrogramThreadParam
@@ -83,7 +95,7 @@ struct SpectrogramThreadParam
     WaveformWindow::GridOverlayConfig grid;
 
     HWND hwnd = nullptr;
-    DWORD renderIntervalMs = 16;
+    DWORD renderIntervalMs = 8;
     HANDLE renderTimerQueue = nullptr;
     HANDLE renderTimer = nullptr;
     std::atomic<bool> renderTickQueued{ false };
@@ -102,6 +114,12 @@ struct SpectrogramThreadParam
 
     std::size_t totalFrames = 0;
     bool useProcessedPlaybackMix = false;
+    bool gpuSpectrumEnabled = true;
+    ID2D1Factory* d2dFactory = nullptr;
+    ID2D1DCRenderTarget* d2dTarget = nullptr;
+    ID2D1SolidColorBrush* d2dFillBrush = nullptr;
+    ID2D1SolidColorBrush* d2dGlowBrush = nullptr;
+    ID2D1SolidColorBrush* d2dLineBrush = nullptr;
 };
 
 struct SpectrumSyncView
@@ -365,6 +383,182 @@ static int DbToY(double db, const RECT& plotRc)
     return (int)std::lround(y);
 }
 
+static D2D1_COLOR_F D2dColorFromRgb(COLORREF rgb, float alpha = 1.0f)
+{
+    return D2D1_COLOR_F
+    {
+        static_cast<float>(GetRValue(rgb)) / 255.0f,
+        static_cast<float>(GetGValue(rgb)) / 255.0f,
+        static_cast<float>(GetBValue(rgb)) / 255.0f,
+        alpha
+    };
+}
+
+static void ReleaseSpectrumGpuTarget(SpectrogramThreadParam* tp)
+{
+    if (!tp) return;
+    SafeReleaseCom(tp->d2dFillBrush);
+    SafeReleaseCom(tp->d2dGlowBrush);
+    SafeReleaseCom(tp->d2dLineBrush);
+    SafeReleaseCom(tp->d2dTarget);
+}
+
+static void ReleaseSpectrumGpuResources(SpectrogramThreadParam* tp)
+{
+    if (!tp) return;
+    ReleaseSpectrumGpuTarget(tp);
+    SafeReleaseCom(tp->d2dFactory);
+}
+
+static bool EnsureSpectrumGpuResources(SpectrogramThreadParam* tp)
+{
+    if (!tp || !tp->gpuSpectrumEnabled)
+        return false;
+
+    if (!tp->d2dFactory)
+    {
+        const HRESULT hrFactory = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &tp->d2dFactory);
+        if (FAILED(hrFactory))
+        {
+            tp->gpuSpectrumEnabled = false;
+            return false;
+        }
+    }
+
+    if (!tp->d2dTarget)
+    {
+        D2D1_RENDER_TARGET_PROPERTIES props{};
+        props.type = D2D1_RENDER_TARGET_TYPE_HARDWARE;
+        props.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        props.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        props.dpiX = 0.0f;
+        props.dpiY = 0.0f;
+        props.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+        props.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+        HRESULT hr = tp->d2dFactory->CreateDCRenderTarget(&props, &tp->d2dTarget);
+        if (FAILED(hr))
+        {
+            props.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+            hr = tp->d2dFactory->CreateDCRenderTarget(&props, &tp->d2dTarget);
+            if (FAILED(hr))
+                return false;
+        }
+
+        HRESULT hrBrush = S_OK;
+        hrBrush = tp->d2dTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(150, 150, 150), 1.0f), &tp->d2dFillBrush);
+        if (SUCCEEDED(hrBrush))
+            hrBrush = tp->d2dTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(120, 120, 120), 1.0f), &tp->d2dGlowBrush);
+        if (SUCCEEDED(hrBrush))
+            hrBrush = tp->d2dTarget->CreateSolidColorBrush(D2dColorFromRgb(RGB(235, 235, 235), 1.0f), &tp->d2dLineBrush);
+        if (FAILED(hrBrush))
+        {
+            ReleaseSpectrumGpuTarget(tp);
+            return false;
+        }
+    }
+
+    return tp->d2dTarget && tp->d2dFillBrush && tp->d2dGlowBrush && tp->d2dLineBrush;
+}
+
+static bool BuildSpectrumLinePoints(const SpectrogramThreadParam* tp, const RECT& plotRc, std::vector<POINT>& linePts)
+{
+    linePts.clear();
+    if (!tp || tp->sampleRate <= 0 || tp->fft.nfft() <= 0 || tp->smoothedDb.empty())
+        return false;
+
+    const int w = (std::max)(1, static_cast<int>(plotRc.right - plotRc.left));
+    const int h = (std::max)(1, static_cast<int>(plotRc.bottom - plotRc.top));
+    if (w < 2 || h < 2)
+        return false;
+
+    const int bins = tp->fft.nfft() / 2 + 1;
+    if (bins <= 2)
+        return false;
+
+    const double nyquist = 0.5 * tp->sampleRate;
+    const double hzPerBin = (double)tp->sampleRate / (double)tp->fft.nfft();
+    const double fMin = 20.0;
+    const double fMax = std::clamp(tp->maxFreqHz, fMin + 1.0, nyquist);
+
+    linePts.reserve((size_t)w + 8);
+
+    int lastX = INT_MIN;
+    int bestYForX = plotRc.bottom - 1;
+    for (int b = 1; b < bins; ++b)
+    {
+        const double f = (double)b * hzPerBin;
+        if (f < fMin) continue;
+        if (f > fMax) break;
+
+        const double xn = FreqToXNormLog(f, fMin, fMax);
+        int x = plotRc.left + (int)std::lround(xn * (double)(w - 1));
+        x = (std::max)(static_cast<int>(plotRc.left), (std::min)(static_cast<int>(plotRc.right - 1), x));
+
+        const int y = DbToY(tp->smoothedDb[(size_t)b], plotRc);
+        if (x != lastX)
+        {
+            if (lastX != INT_MIN)
+                linePts.push_back(POINT{ lastX, bestYForX });
+            lastX = x;
+            bestYForX = y;
+        }
+        else
+        {
+            // lower y = louder; keep the peak bin that maps to this pixel
+            bestYForX = (std::min)(bestYForX, y);
+        }
+    }
+
+    if (lastX != INT_MIN)
+        linePts.push_back(POINT{ lastX, bestYForX });
+
+    return linePts.size() >= 2;
+}
+
+static ID2D1PathGeometry* CreateSpectrumFillGeometry(SpectrogramThreadParam* tp,
+    const std::vector<POINT>& linePts, const RECT& plotRc)
+{
+    if (!tp || !tp->d2dFactory || linePts.size() < 2)
+        return nullptr;
+
+    ID2D1PathGeometry* geometry = nullptr;
+    HRESULT hr = tp->d2dFactory->CreatePathGeometry(&geometry);
+    if (FAILED(hr) || !geometry)
+        return nullptr;
+
+    ID2D1GeometrySink* sink = nullptr;
+    hr = geometry->Open(&sink);
+    if (FAILED(hr) || !sink)
+    {
+        SafeReleaseCom(geometry);
+        return nullptr;
+    }
+
+    const float baselineY = static_cast<float>(plotRc.bottom - 1);
+    sink->SetFillMode(D2D1_FILL_MODE_WINDING);
+    sink->BeginFigure(
+        D2D1_POINT_2F{ static_cast<float>(linePts.front().x), baselineY },
+        D2D1_FIGURE_BEGIN_FILLED);
+    sink->AddLine(D2D1_POINT_2F{ static_cast<float>(linePts.front().x), static_cast<float>(linePts.front().y) });
+    for (size_t i = 1; i < linePts.size(); ++i)
+    {
+        sink->AddLine(D2D1_POINT_2F{ static_cast<float>(linePts[i].x), static_cast<float>(linePts[i].y) });
+    }
+    sink->AddLine(D2D1_POINT_2F{ static_cast<float>(linePts.back().x), baselineY });
+    sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+
+    hr = sink->Close();
+    SafeReleaseCom(sink);
+    if (FAILED(hr))
+    {
+        SafeReleaseCom(geometry);
+        return nullptr;
+    }
+
+    return geometry;
+}
+
 static void DrawGridAndAxes(HDC hdc, const RECT& clientRc, const RECT& plotRc, int sampleRate, int nfft)
 {
     RECT controlRc = ComputeControlRect(clientRc);
@@ -447,62 +641,60 @@ static void DrawGridAndAxes(HDC hdc, const RECT& clientRc, const RECT& plotRc, i
     DeleteObject(sepPen);
 }
 
+static bool DrawSpectrumCurveGpu(HDC hdc, SpectrogramThreadParam* tp, const RECT& plotRc)
+{
+    if (!hdc || !tp || !EnsureSpectrumGpuResources(tp) || !tp->d2dTarget)
+        return false;
+
+    std::vector<POINT> linePts;
+    if (!BuildSpectrumLinePoints(tp, plotRc, linePts))
+        return false;
+
+    ID2D1PathGeometry* fillGeometry = CreateSpectrumFillGeometry(tp, linePts, plotRc);
+    if (!fillGeometry)
+        return false;
+
+    RECT bindRc = plotRc;
+    const HRESULT hrBind = tp->d2dTarget->BindDC(hdc, &bindRc);
+    if (FAILED(hrBind))
+    {
+        SafeReleaseCom(fillGeometry);
+        ReleaseSpectrumGpuTarget(tp);
+        return false;
+    }
+
+    D2D1_MATRIX_3X2_F identity{};
+    identity._11 = 1.0f;
+    identity._22 = 1.0f;
+    tp->d2dTarget->BeginDraw();
+    tp->d2dTarget->SetTransform(identity);
+    tp->d2dTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+    tp->d2dTarget->FillGeometry(fillGeometry, tp->d2dFillBrush);
+
+    for (size_t i = 1; i < linePts.size(); ++i)
+    {
+        const auto& a = linePts[i - 1];
+        const auto& b = linePts[i];
+        D2D1_POINT_2F p0{ static_cast<float>(a.x), static_cast<float>(a.y) };
+        D2D1_POINT_2F p1{ static_cast<float>(b.x), static_cast<float>(b.y) };
+        tp->d2dTarget->DrawLine(p0, p1, tp->d2dGlowBrush, 1.0f);
+        tp->d2dTarget->DrawLine(p0, p1, tp->d2dLineBrush, 1.0f);
+    }
+
+    const HRESULT hr = tp->d2dTarget->EndDraw();
+    SafeReleaseCom(fillGeometry);
+    if (hr == D2DERR_RECREATE_TARGET)
+        ReleaseSpectrumGpuTarget(tp);
+
+    return SUCCEEDED(hr);
+}
+
 static void DrawSpectrumCurve(HDC hdc, SpectrogramThreadParam* tp, const RECT& plotRc)
 {
-    if (!tp || tp->sampleRate <= 0 || tp->fft.nfft() <= 0 || tp->smoothedDb.empty())
-        return;
-
-    const int w = (std::max)(1, static_cast<int>(plotRc.right - plotRc.left));
-    const int h = (std::max)(1, static_cast<int>(plotRc.bottom - plotRc.top));
-    if (w < 2 || h < 2) return;
-
-    const int bins = tp->fft.nfft() / 2 + 1;
-    if (bins <= 2) return;
-
-    const double nyquist = 0.5 * tp->sampleRate;
-    const double hzPerBin = (double)tp->sampleRate / (double)tp->fft.nfft();
-    const double fMin = 20.0;
-    const double fMax = std::clamp(tp->maxFreqHz, fMin + 1.0, nyquist);
-
-    // Build a fine line from actual FFT bins (log-frequency mapped), compressing bins that land on
-    // the same pixel by keeping the highest magnitude (lowest y).
     std::vector<POINT> linePts;
-    linePts.reserve((size_t)w + 8);
-
-    int lastX = INT_MIN;
-    int bestYForX = plotRc.bottom - 1;
-    for (int b = 1; b < bins; ++b)
-    {
-        const double f = (double)b * hzPerBin;
-        if (f < fMin) continue;
-        if (f > fMax) break;
-
-        const double xn = FreqToXNormLog(f, fMin, fMax);
-        int x = plotRc.left + (int)std::lround(xn * (double)(w - 1));
-        x = (std::max)(static_cast<int>(plotRc.left), (std::min)(static_cast<int>(plotRc.right - 1), x));
-
-        const int y = DbToY(tp->smoothedDb[(size_t)b], plotRc);
-
-        if (x != lastX)
-        {
-            if (lastX != INT_MIN)
-                linePts.push_back(POINT{ lastX, bestYForX });
-            lastX = x;
-            bestYForX = y;
-        }
-        else
-        {
-            // lower y = louder; keep the peak bin that maps to this pixel
-            bestYForX = (std::min)(bestYForX, y);
-        }
-    }
-    if (lastX != INT_MIN)
-        linePts.push_back(POINT{ lastX, bestYForX });
-
-    if (linePts.size() < 2)
+    if (!BuildSpectrumLinePoints(tp, plotRc, linePts))
         return;
 
-    // Smooth-looking fill under the curve using a polygon instead of per-pixel rectangles.
     std::vector<POINT> polyPts;
     polyPts.reserve(linePts.size() + 2);
     polyPts.insert(polyPts.end(), linePts.begin(), linePts.end());
@@ -548,8 +740,13 @@ static void DrawWindow(HDC hdc, const RECT& clientRc, SpectrogramThreadParam* tp
         ComputeSpectrumDbAtFrame(tp, view.currentFrame);
 
     DrawGridAndAxes(hdc, clientRc, plotRc, tp ? tp->sampleRate : 44100, tp ? tp->nfft : 2048);
+    bool usedGpuCurve = false;
     if (tp)
-        DrawSpectrumCurve(hdc, tp, plotRc);
+    {
+        usedGpuCurve = DrawSpectrumCurveGpu(hdc, tp, plotRc);
+        if (!usedGpuCurve)
+            DrawSpectrumCurve(hdc, tp, plotRc);
+    }
 
     RECT controlRc = ComputeControlRect(clientRc);
     SetBkMode(hdc, TRANSPARENT);
@@ -560,10 +757,11 @@ static void DrawWindow(HDC hdc, const RECT& clientRc, SpectrogramThreadParam* tp
 
     wchar_t hud[512];
     swprintf_s(hud,
-        L"sync=%s  play=%s  mode=%s  rate=%.2fx  t=%s / %s  sr=%d  nfft=%d  freq=20Hz..%.0fHz  bpm=%.2f",
+        L"sync=%s  play=%s  mode=%s  curve=%s  rate=%.2fx  t=%s / %s  sr=%d  nfft=%d  freq=20Hz..%.0fHz  bpm=%.2f",
         view.hasSync ? L"ON" : L"off",
         view.playing ? L"ON" : L"off",
         (tp && tp->useProcessedPlaybackMix) ? L"PROC" : L"RAW",
+        usedGpuCurve ? L"D2D-GPU" : L"GDI-CPU",
         view.playbackRate,
         FormatTimeLabel(view.currentSeconds, true).c_str(),
         FormatTimeLabel(view.totalSeconds, true).c_str(),
@@ -754,6 +952,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 DeleteTimerQueueEx(tp->renderTimerQueue, INVALID_HANDLE_VALUE);
                 tp->renderTimerQueue = nullptr;
             }
+            ReleaseSpectrumGpuResources(tp);
         }
         PostQuitMessage(0);
         return 0;
@@ -876,7 +1075,7 @@ namespace
         WaveformWindow::GridOverlayConfig grid;
 
         HWND hwnd = nullptr;
-        DWORD renderIntervalMs = 16;
+        DWORD renderIntervalMs = 8;
         HANDLE renderTimerQueue = nullptr;
         HANDLE renderTimer = nullptr;
         std::atomic<bool> renderTickQueued{ false };
