@@ -1,0 +1,3 @@
+C:/Users/winga/source/repos/waveOut/waveOut/build/xplat-vs/CMakeFiles/waveout_xplat.dir
+C:/Users/winga/source/repos/waveOut/waveOut/build/xplat-vs/CMakeFiles/ALL_BUILD.dir
+C:/Users/winga/source/repos/waveOut/waveOut/build/xplat-vs/CMakeFiles/ZERO_CHECK.dir

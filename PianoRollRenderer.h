@@ -2,9 +2,19 @@
 
 #include <windows.h>
 #include <vector>
+#include "Keys.h"
 
 namespace PianoRollRenderer
 {
+    enum NoteStem
+    {
+        NoteStem_Vocals = 0,
+        NoteStem_Drums,
+        NoteStem_Bass,
+        NoteStem_Chords,
+        NoteStem_Count
+    };
+
     enum GridMode
     {
         Grid_None = 0,
@@ -28,6 +38,7 @@ namespace PianoRollRenderer
         double endSeconds = 0.0;
         int midiNote = 60;
         int velocity = 100;
+        int stemIndex = NoteStem_Vocals;
         bool selected = false;
     };
 
@@ -49,6 +60,7 @@ namespace PianoRollRenderer
         int pianoKeyWidthPx = 58;
         int midiMin = 36; // C2
         int midiMax = 84; // C6
+        Key highlightKey = Key::NO_KEY;
     };
 
     void Draw(HDC hdc, const RECT& rc, const ViewState& view, const Config& cfg = {}, const std::vector<NoteEvent>* notes = nullptr);

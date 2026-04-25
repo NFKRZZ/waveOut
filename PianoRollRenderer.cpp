@@ -54,6 +54,76 @@ namespace PianoRollRenderer
             return 600.0;
         }
 
+        static COLORREF BlendColor(COLORREF a, COLORREF b, double t)
+        {
+            t = std::clamp(t, 0.0, 1.0);
+            auto mix = [t](BYTE av, BYTE bv) -> BYTE
+            {
+                return static_cast<BYTE>(std::clamp(
+                    static_cast<int>(std::lround((1.0 - t) * static_cast<double>(av) + t * static_cast<double>(bv))),
+                    0, 255));
+            };
+            return RGB(
+                mix(GetRValue(a), GetRValue(b)),
+                mix(GetGValue(a), GetGValue(b)),
+                mix(GetBValue(a), GetBValue(b)));
+        }
+
+        static COLORREF StemColor(int stemIndex)
+        {
+            switch (stemIndex)
+            {
+            case NoteStem_Vocals: return RGB(220, 70, 70);
+            case NoteStem_Drums: return RGB(70, 190, 90);
+            case NoteStem_Bass: return RGB(70, 120, 230);
+            case NoteStem_Chords: return RGB(230, 165, 55);
+            default: return RGB(170, 170, 170);
+            }
+        }
+
+        static COLORREF StemFillColor(int stemIndex, bool selected)
+        {
+            const COLORREF base = StemColor(stemIndex);
+            return selected ? BlendColor(base, RGB(255, 245, 225), 0.28) : BlendColor(base, RGB(20, 20, 20), 0.12);
+        }
+
+        static COLORREF StemBorderColor(int stemIndex, bool selected)
+        {
+            const COLORREF base = StemColor(stemIndex);
+            return selected ? BlendColor(base, RGB(255, 255, 255), 0.42) : BlendColor(base, RGB(24, 24, 24), 0.22);
+        }
+
+        static COLORREF StemGlossColor(int stemIndex, bool selected)
+        {
+            const COLORREF base = StemColor(stemIndex);
+            return selected ? BlendColor(base, RGB(255, 255, 255), 0.60) : BlendColor(base, RGB(255, 255, 255), 0.42);
+        }
+
+        static COLORREF LaneFillColor(bool blackKey, bool inKey, bool hasKeyHighlight)
+        {
+            if (!hasKeyHighlight)
+                return blackKey ? RGB(18, 18, 18) : RGB(24, 24, 24);
+            return inKey ? RGB(38, 43, 50) : RGB(16, 18, 22);
+        }
+
+        static COLORREF KeyStripFillColor(bool blackKey, bool inKey, bool hasKeyHighlight)
+        {
+            if (!hasKeyHighlight)
+                return blackKey ? RGB(28, 28, 28) : RGB(36, 36, 36);
+            if (blackKey)
+                return inKey ? RGB(40, 45, 54) : RGB(20, 22, 26);
+            return inKey ? RGB(56, 61, 70) : RGB(30, 32, 38);
+        }
+
+        static COLORREF RowLabelColor(bool cNote, bool inKey, bool hasKeyHighlight)
+        {
+            if (!hasKeyHighlight)
+                return cNote ? RGB(230, 230, 230) : RGB(175, 175, 175);
+            if (cNote)
+                return inKey ? RGB(242, 245, 250) : RGB(198, 204, 212);
+            return inKey ? RGB(202, 208, 216) : RGB(118, 124, 132);
+        }
+
         static double GridModeBeats(int mode, int beatsPerBar)
         {
             switch (mode)
@@ -183,6 +253,8 @@ namespace PianoRollRenderer
 
         const double visibleSeconds = view.tRightSeconds - view.tLeftSeconds;
         const double rowH = (double)h / (double)noteCount;
+        const std::uint16_t keyMask = KeyTheory::BuildPitchClassMaskForKey(cfg.highlightKey);
+        const bool hasKeyHighlight = keyMask != 0;
 
         // Backgrounds
         {
@@ -210,23 +282,16 @@ namespace PianoRollRenderer
             const int y0 = rc.top + (int)std::floor(idx * rowH);
             const int y1 = rc.top + (int)std::floor((idx + 1) * rowH);
             RECT rowRect{ rc.left, (LONG)y0, rc.right, (LONG)(std::max)(y0 + 1, y1) };
+            const bool blackKey = IsBlackKey(midi);
+            const bool inKey = KeyTheory::MidiNoteIsInMask(midi, keyMask);
 
-            if (IsBlackKey(midi))
-            {
-                HBRUSH br = CreateSolidBrush(RGB(18, 18, 18));
-                FillRect(hdc, &rowRect, br);
-                DeleteObject(br);
-            }
-            else
-            {
-                HBRUSH br = CreateSolidBrush(RGB(24, 24, 24));
-                FillRect(hdc, &rowRect, br);
-                DeleteObject(br);
-            }
+            HBRUSH br = CreateSolidBrush(LaneFillColor(blackKey, inKey, hasKeyHighlight));
+            FillRect(hdc, &rowRect, br);
+            DeleteObject(br);
 
             // key strip row fill
             RECT keyRow{ keyRc.left, (LONG)y0, keyRc.right, (LONG)(std::max)(y0 + 1, y1) };
-            HBRUSH keyRowBr = CreateSolidBrush(IsBlackKey(midi) ? RGB(28, 28, 28) : RGB(36, 36, 36));
+            HBRUSH keyRowBr = CreateSolidBrush(KeyStripFillColor(blackKey, inKey, hasKeyHighlight));
             FillRect(hdc, &keyRow, keyRowBr);
             DeleteObject(keyRowBr);
 
@@ -238,7 +303,7 @@ namespace PianoRollRenderer
             if (cNote || rowH >= 14.0)
             {
                 std::wstring nm = NoteName(midi);
-                SetTextColor(hdc, cNote ? RGB(230, 230, 230) : RGB(175, 175, 175));
+                SetTextColor(hdc, RowLabelColor(cNote, inKey, hasKeyHighlight));
                 TextOutW(hdc, static_cast<int>(keyRc.left) + 6, y0 + 2, nm.c_str(), (int)nm.size());
             }
         }
@@ -295,12 +360,6 @@ namespace PianoRollRenderer
         }
         else
         {
-            HBRUSH noteBrush = CreateSolidBrush(RGB(223, 136, 46));
-            HBRUSH noteSelBrush = CreateSolidBrush(RGB(255, 181, 84));
-            HBRUSH noteGloss = CreateSolidBrush(RGB(250, 208, 146));
-            HBRUSH noteSelGloss = CreateSolidBrush(RGB(255, 224, 170));
-            HPEN notePen = CreatePen(PS_SOLID, 1, RGB(176, 96, 30));
-            HPEN noteSelPen = CreatePen(PS_SOLID, 1, RGB(255, 214, 154));
             HFONT noteFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
             HFONT oldNoteFont = (HFONT)SelectObject(hdc, noteFont);
             SetBkMode(hdc, TRANSPARENT);
@@ -324,8 +383,11 @@ namespace PianoRollRenderer
                 y1 = (std::max)(y0 + 2, y1);
                 RECT nr{ (LONG)x0, (LONG)y0, (LONG)x1, (LONG)y1 };
 
-                HGDIOBJ oldPenNote = SelectObject(hdc, n.selected ? noteSelPen : notePen);
-                HGDIOBJ oldBrushNote = SelectObject(hdc, n.selected ? noteSelBrush : noteBrush);
+                HBRUSH noteBrush = CreateSolidBrush(StemFillColor(n.stemIndex, n.selected));
+                HBRUSH noteGloss = CreateSolidBrush(StemGlossColor(n.stemIndex, n.selected));
+                HPEN notePen = CreatePen(PS_SOLID, 1, StemBorderColor(n.stemIndex, n.selected));
+                HGDIOBJ oldPenNote = SelectObject(hdc, notePen);
+                HGDIOBJ oldBrushNote = SelectObject(hdc, noteBrush);
                 const int rx = (std::min)(8, (std::max)(4, (x1 - x0) / 3));
                 const int ry = (std::min)(8, (std::max)(4, (y1 - y0)));
                 RoundRect(hdc, nr.left, nr.top, nr.right, nr.bottom, rx, ry);
@@ -335,7 +397,7 @@ namespace PianoRollRenderer
                 if ((nr.right - nr.left) > 10 && (nr.bottom - nr.top) > 6)
                 {
                     RECT gloss{ nr.left + 2, nr.top + 1, nr.right - 2, nr.top + 3 };
-                    FillRect(hdc, &gloss, n.selected ? noteSelGloss : noteGloss);
+                    FillRect(hdc, &gloss, noteGloss);
                 }
 
                 if ((nr.right - nr.left) >= 22 && (nr.bottom - nr.top) >= 10)
@@ -343,21 +405,19 @@ namespace PianoRollRenderer
                     RECT tr = nr;
                     tr.left += 4;
                     tr.right -= 3;
-                    SetTextColor(hdc, n.selected ? RGB(34, 24, 10) : RGB(30, 20, 10));
+                    SetTextColor(hdc, n.selected ? RGB(28, 24, 20) : RGB(24, 20, 16));
                     const std::wstring label = NoteName(n.midiNote);
                     int savedText = SaveDC(hdc);
                     IntersectClipRect(hdc, nr.left + 1, nr.top + 1, nr.right - 1, nr.bottom - 1);
                     DrawTextW(hdc, label.c_str(), -1, &tr, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
                     RestoreDC(hdc, savedText);
                 }
+
+                DeleteObject(noteBrush);
+                DeleteObject(noteGloss);
+                DeleteObject(notePen);
             }
             SelectObject(hdc, oldNoteFont);
-            DeleteObject(noteBrush);
-            DeleteObject(noteSelBrush);
-            DeleteObject(noteGloss);
-            DeleteObject(noteSelGloss);
-            DeleteObject(notePen);
-            DeleteObject(noteSelPen);
         }
 
         // Playhead

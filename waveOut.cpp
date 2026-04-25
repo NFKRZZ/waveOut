@@ -340,8 +340,9 @@ int main(int argc, char* argv[])
 
 	std::chrono::system_clock::time_point now1 = std::chrono::system_clock::now();
     //C:/Users/winga/Music
-	string file = "Test/Nick_Curly_-_Underground_Caleb_Laurenson_Danny_P_Remix.mp3";
-	//string file = R"(J:\SERATO GOOD QUALITY SONGS\01 - Yuri Kane - Once Upon a Night - Right Back.flac)";
+	//string file = "Test/Nick_Curly_-_Underground_Caleb_Laurenson_Danny_P_Remix.mp3";
+	//string file = R"(J:\SERATO GOOD QUALITY SONGS\8. Tommy Phillips - Million Things (Extended).mp3)";
+	string file = R"(C:\Users\winga\Documents\Soulseek Downloads\complete\nightrmx\OLDER TUNES !!!\Starkillers, Alex Kenji, Nadia Ali & Alesso ft. Coldplay - Fix You(r) Pressure (East & Young Mashup)(By Djohnny) electrotrack.pl.mp3)";
 	std::filesystem::path p(file);
 	string filename = p.stem().string();
 
@@ -456,8 +457,10 @@ int main(int argc, char* argv[])
 	KeyFinder::KeyFinder kf;
 
 	Key k = KeyDetection::getKey(monoD, wav.SampleRate, kf);
+	SONG_KEY = k;
+	GLOBAL::MUSICAL_KEY = SONG_KEY;
 
-	string key = Util::getEnumString(k);
+	string key = Util::getEnumString(SONG_KEY);
 
 	// get BPM + initial grid anchor (t0) using aubio + simple onset/kick logic
 	BPMDetection::BeatGridEstimate gridEstimate = BPMDetection::estimateBeatGridMonoAubio(monoD, wav.SampleRate);
@@ -468,7 +471,7 @@ int main(int argc, char* argv[])
 	cout << "BPM (int legacy): " << BPM << endl;
 	cout << "Grid t0: " << gridEstimate.t0 << "s (audioStart=" << gridEstimate.audioStart
 		<< ", onset=" << gridEstimate.approxOnset << ", kick=" << gridEstimate.kickAttack << ")\n";
-	cout << "Song Key: " << Util::getEnumString(k) << endl;
+	cout << "Song Key: " << Util::getEnumString(SONG_KEY) << endl;
 	
 	
 

@@ -1,0 +1,97 @@
+Package: vcpkg-cmake-config
+Version: 2024-05-23
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 519726fb1ffaa1cac287620b55bc1b84e8bc976b646211e6c41808c0b88c2e8e
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2024-04-23
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 8a19d77aba540ebd279bb0ccafd3f59b2d6956f61abcb273ec8cd37da3874433
+Status: install ok installed
+
+Package: miniz
+Version: 3.1.0
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 2ec1fda4481bcdf5c20a769a9b776516352a00c43259ea38f318d20aab734fe2
+Description: Single C source file zlib-replacement library
+Status: install ok installed
+
+Package: tinyexr
+Version: 1.0.12
+Depends: miniz, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 31972d1948b12ce260f3e7991b77b32099923cf576abf0f03b981b4b51bc1f77
+Description: Library to load and save OpenEXR(.exr) images
+Status: install ok installed
+
+Package: stb
+Version: 2024-07-29
+Port-Version: 1
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 5f65965656d29ae33f56b30cbf902661f460b5dfa9f73ea442260bb33245e538
+Description: public domain header-only libraries
+Status: install ok installed
+
+Package: mgnlibs
+Version: 2019-09-29
+Port-Version: 2
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 205165112a2f1217d094c4295015d86f9fbee703d8874a6df6b6d0029ca2010b
+Description: Single-file public domain libraries for C/C++
+Status: install ok installed
+
+Package: lodepng
+Version: 2021-12-04
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: f989bd695d58629dc4f01ffe50c783209392e02093583d19ebc4cc551e69708c
+Description: PNG encoder and decoder in C++
+Status: install ok installed
+
+Package: libsquish
+Version: 1.15
+Port-Version: 14
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 0ea6c1bbb466e7c663f7b5572861c64a201693a4508470bd125071bab447ce5b
+Description: Open source DXT compression library.
+Status: install ok installed
+
+Package: bgfx
+Version: 1.129.8940-496
+Depends: libsquish, lodepng, mgnlibs, miniz, stb, tinyexr, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Maintainer: Sandy Carter <bwrsandman@users.noreply.github.com>
+Abi: eec007fddc87cd8bbbe31aa570fe90c27632b81502b9ea8b31573e4d8e3b0c2c
+Description: Cross-platform, graphics API agnostic, Bring Your Own Engine/Framework style rendering library.
+Default-Features: multithreaded
+Status: install ok installed
+
+Package: bgfx
+Feature: multithreaded
+Architecture: x64-windows
+Multi-Arch: same
+Description: Encode and render on different threads
+Status: install ok installed
+
+Package: sdl3
+Version: 3.2.28
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 229311ad76098563cf6d0f9692df844f207e16230f49c74fa91d56e430fddb52
+Description: Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
+Status: install ok installed
+

@@ -1,0 +1,10 @@
+^C:\USERS\WINGA\SOURCE\REPOS\WAVEOUT\WAVEOUT\BUILD\XPLAT-VS\CMAKEFILES\FD1D96C6CDCE6618DA6CA9C7A81DF855\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/winga/source/repos/waveOut/waveOut/xplat -BC:/Users/winga/source/repos/waveOut/waveOut/build/xplat-vs --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/winga/source/repos/waveOut/waveOut/build/xplat-vs/waveout_xplat.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

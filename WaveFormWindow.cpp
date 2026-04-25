@@ -6,14 +6,18 @@
 #endif
 #include <windows.h>
 #include <windowsx.h>   // for GET_X_LPARAM / GET_Y_LPARAM
+#include <commdlg.h>
 #include <d2d1.h>
 #include <mmsystem.h>
 #include <mciapi.h>
 #include <timeapi.h>
+#include <shellapi.h>
 #pragma comment(lib,"Winmm.lib")
 #pragma comment(lib,"Winmm.lib") // mci lives here too
 #pragma comment(lib,"Msimg32.lib") // AlphaBlend for translucent spectrogram notes
+#pragma comment(lib,"Comdlg32.lib")
 #pragma comment(lib,"D2d1.lib")
+#pragma comment(lib,"Shell32.lib")
 
 #include <memory>
 #include <algorithm>
@@ -27,11 +31,14 @@
 #include <limits>
 #include <cstdint>
 #include <cstring>
+#include <cwctype>
 
 #include "DSP.h"   // dsp helpers (FFTW STFT + cache builder)
 #include "PianoRollRenderer.h"
 #include "PianoSpectrogramUI.h"
 #include "AudioEngine.h"
+#include "MidiMaker.h"
+#include "GLOBAL.h"
 #include "SpectrogramWindow.h"
 
 using namespace WaveformWindow;
@@ -51,6 +58,8 @@ namespace
     constexpr int kToolbarKnobCount = 4;    // low, mid, high, master volume
     static const int kEmbeddedPianoSpecNfftChoices[] = { 1024, 2048, 4096, 8192 };
     static const double kEmbeddedPianoSpecDbRanges[] = { 48.0, 60.0, 72.0, 84.0, 96.0, 108.0 };
+    constexpr int kEmbeddedPianoSpecRenderScaleX = 2;
+    constexpr int kEmbeddedPianoSpecRenderScaleY = 2;
     enum EmbeddedPianoGridMode
     {
         kEmbeddedPianoGrid_None = 0,
@@ -286,8 +295,18 @@ struct ThreadParam
     POINT tabDetachDragStartPt{};
     RECT tabDetachDragTabsRc{};
     RECT pianoRollRcGridButton{};
+    RECT pianoRollRcBpmButton{};
+    RECT pianoRollRcModeButton{};
     bool liveResizeActive = false;
-    std::vector<PianoRollRenderer::NoteEvent> pianoRollNotes[kPianoTabCount];
+    std::vector<PianoRollRenderer::NoteEvent> pianoRollNotes;
+    size_t pianoRollTimelineFrames = 0;
+    int pianoNotePlacementStem = PianoRollRenderer::NoteStem_Vocals;
+    enum PianoNoteEditMode
+    {
+        PianoNoteEdit_Place = 0,
+        PianoNoteEdit_Select
+    };
+    int pianoNoteEditMode = PianoNoteEdit_Place;
     enum PianoNoteDragMode
     {
         PianoNoteDrag_None = 0,
@@ -304,6 +323,18 @@ struct ThreadParam
     double pianoNoteDragAnchorStartSeconds = 0.0;
     double pianoNoteDragAnchorEndSeconds = 0.0;
     int pianoNoteDragAnchorMidi = 60;
+    std::vector<size_t> pianoNoteDragSelectionIndices;
+    std::vector<PianoRollRenderer::NoteEvent> pianoNoteDragSelectionAnchors;
+    bool pianoNoteMarqueeActive = false;
+    int pianoNoteMarqueeTab = -1;
+    POINT pianoNoteMarqueeStartPt{};
+    POINT pianoNoteMarqueeCurrentPt{};
+    double pianoNoteMarqueeStartSeconds = 0.0;
+    double pianoNoteMarqueeCurrentSeconds = 0.0;
+    int pianoNoteMarqueeStartMidi = 60;
+    int pianoNoteMarqueeCurrentMidi = 60;
+    std::chrono::steady_clock::time_point pianoNoteMarqueeLastAutoPanStamp{};
+    bool pianoNoteMarqueeLastAutoPanStampValid = false;
 
     // ---- embedded piano spectrogram tab cache (viewport-synced) ----
     bool embeddedPianoSpecUseProcessedMix = true;
@@ -333,6 +364,11 @@ struct ThreadParam
     RECT embeddedPianoSpecRcDbButton{};
     RECT embeddedPianoSpecRcResButton{};
     RECT embeddedPianoSpecRcGridButton{};
+    RECT embeddedPianoSpecRcBpmButton{};
+    RECT embeddedPianoSpecRcModeButton{};
+    RECT embeddedPianoSpecRcExportAllButton{};
+    RECT embeddedPianoSpecRcExportStemButton{};
+    RECT embeddedPianoSpecRcStemButtons[PianoRollRenderer::NoteStem_Count]{};
 
     // ---- optional stem playback mixing ----
     bool stemPlaybackEnabled = false;
@@ -384,6 +420,7 @@ static void MciOpenIfNeeded(ThreadParam* tp);
 static void MciClose(ThreadParam* tp);
 static void SyncPausedFromMciPosition(ThreadParam* tp);
 static void SeekToFrame(ThreadParam* tp, size_t frame, bool resumePlayback);
+static size_t GetAudioTotalFrames(const ThreadParam* tp);
 static size_t GetTotalFrames(const ThreadParam* tp);
 static double GetCurrentFrameForView(const ThreadParam* tp);
 static bool ComputeWaveViewportFrameState(const ThreadParam* tp, size_t totalFrames, WaveViewportFrameState& out);
@@ -413,16 +450,21 @@ static void LayoutEmbeddedPianoSpecControls(ThreadParam* tp, const RECT& pianoRc
 static bool HandleEmbeddedPianoSpecClick(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
 static void LayoutPianoRollGridControl(ThreadParam* tp, const RECT& pianoRc);
 static bool HandlePianoRollGridClick(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
+struct PianoRollViewportState;
 static void OpenSharedPianoGridMenu(ThreadParam* tp, const RECT& anchorRc, const RECT& clientRc);
 static void CloseSharedPianoGridMenu(ThreadParam* tp);
 static bool HandleSharedPianoGridMenuMouseDown(HWND hwnd, ThreadParam* tp, POINT pt);
 static bool UpdateSharedPianoGridMenuHover(HWND hwnd, ThreadParam* tp, POINT pt);
 static void DrawSharedPianoGridMenu(HDC hdc, const ThreadParam* tp);
 static const wchar_t* PianoRollGridModeLabel(int mode);
+static bool PromptForManualGridBpm(HWND owner, double currentBpm, double& outBpm);
 static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
 static bool HandlePianoRollNoteMouseMove(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
 static bool HandlePianoRollNoteDeleteAtPoint(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
 static bool HandlePianoRollNoteLButtonUp(HWND hwnd, ThreadParam* tp);
+static bool HandlePianoRollSelectionMouseMove(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
+static bool HandlePianoRollSelectionLButtonUp(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt);
+static void ApplyPianoRollMarqueeSelection(ThreadParam* tp, int tab);
 static bool UpdatePianoRollHoverCursor(HWND hwnd, ThreadParam* tp, POINT pt);
 static const wchar_t* EmbeddedPianoGridModeLabel(int mode);
 static void DrawEmbeddedPianoSpectrogramMusicalGrid(HDC hdc, const RECT& plotRc, const RECT& timeRc,
@@ -431,9 +473,12 @@ static RECT ComputeEmbeddedPianoSpecPlotRect(const RECT& rc);
 static RECT ComputeEmbeddedPianoSpecLeftScaleRect(const RECT& rc);
 static RECT ComputeEmbeddedPianoSpecMidiSliderTrackRect(const RECT& leftRc);
 static bool SetEmbeddedPianoSpecMidiSliderFromY(ThreadParam* tp, const RECT& trackRc, int y);
+static void AlphaFillRectColor(HDC hdc, const RECT& rc, COLORREF color, BYTE alpha);
 static void DrawEmbeddedPianoSpecNotesOverlay(HDC hdc, const RECT& plotRc, ThreadParam* tp, double tLeft, double tRight);
 static void DrawEmbeddedPianoSpectrogramTab(HDC hdc, const RECT& pianoRc, ThreadParam* tp,
     double tLeft, double tRight, double curSeconds, int playheadX);
+static bool HandleDroppedMidiFile(HWND hwnd, ThreadParam* tp, const std::filesystem::path& filePath);
+static void DrawPianoRollHoverCellLabel(HDC hdc, HWND hwnd, ThreadParam* tp, const RECT& clientRc, const RECT& pianoRc);
 
 static void PublishPlaybackAudioState(const ThreadParam* tp)
 {
@@ -669,6 +714,123 @@ static COLORREF GetStemButtonColorByIndex(int idx)
     case 2: return RGB(70, 120, 230);  // blue
     case 3: return RGB(230, 165, 55);  // amber/orange
     default: return RGB(140, 140, 140);
+    }
+}
+
+static const wchar_t* GetStemShortLabelByIndex(int idx)
+{
+    switch (idx)
+    {
+    case 0: return L"VOC";
+    case 1: return L"DRM";
+    case 2: return L"BASS";
+    case 3: return L"CHRD";
+    default: return L"STEM";
+    }
+}
+
+static const wchar_t* PianoNoteEditModeLabel(int mode)
+{
+    switch (mode)
+    {
+    case ThreadParam::PianoNoteEdit_Select: return L"Mode Select";
+    default: return L"Mode Place";
+    }
+}
+
+static std::wstring PianoRollHoverNoteName(int midi)
+{
+    static const wchar_t* names[12] = {
+        L"C", L"C#", L"D", L"D#", L"E", L"F", L"F#", L"G", L"G#", L"A", L"A#", L"B"
+    };
+    const int note = ((midi % 12) + 12) % 12;
+    const int octave = (midi / 12) - 1;
+    wchar_t buf[16];
+    swprintf_s(buf, L"%s%d", names[note], octave);
+    return std::wstring(buf);
+}
+
+static std::wstring GridBpmButtonLabel(const ThreadParam* tp)
+{
+    if (!tp || !std::isfinite(tp->gridBpm) || tp->gridBpm <= 0.0)
+        return L"BPM --";
+
+    wchar_t buf[32];
+    const double rounded = std::round(tp->gridBpm);
+    if (std::fabs(tp->gridBpm - rounded) < 0.005)
+        swprintf_s(buf, L"BPM %.0f", rounded);
+    else
+        swprintf_s(buf, L"BPM %.2f", tp->gridBpm);
+    return std::wstring(buf);
+}
+
+static const wchar_t* MusicalKeyLabel(Key key)
+{
+    switch (key)
+    {
+    case Key::C_MAJOR: return L"C Major";
+    case Key::C_SHARP_MAJOR: return L"C# Major";
+    case Key::D_MAJOR: return L"D Major";
+    case Key::D_SHARP_MAJOR: return L"D# Major";
+    case Key::E_MAJOR: return L"E Major";
+    case Key::F_MAJOR: return L"F Major";
+    case Key::F_SHARP_MAJOR: return L"F# Major";
+    case Key::G_MAJOR: return L"G Major";
+    case Key::G_SHARP_MAJOR: return L"G# Major";
+    case Key::A_MAJOR: return L"A Major";
+    case Key::A_SHARP_MAJOR: return L"A# Major";
+    case Key::B_MAJOR: return L"B Major";
+    default: return L"Unknown";
+    }
+}
+
+static int StemIndexFromPianoTab(int tab)
+{
+    return (tab >= 1 && tab <= 4) ? (tab - 1) : -1;
+}
+
+static int EffectivePlacementStemForTab(const ThreadParam* tp, int tab)
+{
+    const int tabStem = StemIndexFromPianoTab(tab);
+    if (tabStem >= 0)
+        return tabStem;
+    if (!tp)
+        return PianoRollRenderer::NoteStem_Vocals;
+    return std::clamp(tp->pianoNotePlacementStem, 0, PianoRollRenderer::NoteStem_Count - 1);
+}
+
+static bool NoteIsVisibleInPianoTab(const PianoRollRenderer::NoteEvent& note, int tab)
+{
+    const int stemIndex = std::clamp(note.stemIndex, 0, PianoRollRenderer::NoteStem_Count - 1);
+    if (tab == 0 || tab == kPianoSpectrogramTabIndex)
+        return true;
+    const int tabStem = StemIndexFromPianoTab(tab);
+    return tabStem >= 0 && stemIndex == tabStem;
+}
+
+static void CollectVisiblePianoRollNoteIndices(const ThreadParam* tp, int tab, std::vector<size_t>& outIndices)
+{
+    outIndices.clear();
+    if (!tp)
+        return;
+    outIndices.reserve(tp->pianoRollNotes.size());
+    for (size_t i = 0; i < tp->pianoRollNotes.size(); ++i)
+    {
+        if (NoteIsVisibleInPianoTab(tp->pianoRollNotes[i], tab))
+            outIndices.push_back(i);
+    }
+}
+
+static void BuildVisiblePianoRollNotes(const ThreadParam* tp, int tab, std::vector<PianoRollRenderer::NoteEvent>& outNotes)
+{
+    outNotes.clear();
+    if (!tp)
+        return;
+    outNotes.reserve(tp->pianoRollNotes.size());
+    for (const auto& note : tp->pianoRollNotes)
+    {
+        if (NoteIsVisibleInPianoTab(note, tab))
+            outNotes.push_back(note);
     }
 }
 
@@ -1453,7 +1615,7 @@ static void RebuildPlaybackAndRetuneMci(ThreadParam* tp)
     size_t resumeFrame = tp->pausedSampleIndex;
     if (resume)
     {
-        const size_t totalFrames = GetTotalFrames(tp);
+        const size_t totalFrames = GetAudioTotalFrames(tp);
         const double curFrame = std::clamp(GetCurrentFrameForView(tp), 0.0, totalFrames > 0 ? static_cast<double>(totalFrames - 1) : 0.0);
         resumeFrame = static_cast<size_t>(std::llround(curFrame));
         tp->pausedSampleIndex = resumeFrame;
@@ -1821,10 +1983,18 @@ static double ChooseTimeTickStep(double visibleSeconds)
     return 600.0;
 }
 
-static size_t GetTotalFrames(const ThreadParam* tp)
+static size_t GetAudioTotalFrames(const ThreadParam* tp)
 {
     if (!tp || !tp->samples) return 0;
     return tp->isStereo ? (tp->samples->size() / 2) : tp->samples->size();
+}
+
+static size_t GetTotalFrames(const ThreadParam* tp)
+{
+    const size_t audioFrames = GetAudioTotalFrames(tp);
+    if (!tp)
+        return audioFrames;
+    return (std::max)(audioFrames, tp->pianoRollTimelineFrames);
 }
 
 static double GetMinZoomFactorForMaxWindow(const ThreadParam* tp, size_t totalFrames)
@@ -2061,12 +2231,63 @@ static double PianoRollSnapTimeSeconds(const ThreadParam* tp, const PianoRollVie
     return std::isfinite(snapped) ? snapped : seconds;
 }
 
+static double PianoRollSnapTimeSecondsToCellStart(const ThreadParam* tp, const PianoRollViewportState& viewport, double seconds)
+{
+    if (!std::isfinite(seconds))
+        seconds = 0.0;
+
+    const double step = PianoRollGridStepSeconds(tp, viewport);
+    if (!(step > 0.0) || !std::isfinite(step))
+        return seconds;
+
+    const int mode = WaveformWindow::GetSharedPianoGridMode();
+    double anchor = 0.0;
+    if (tp && mode != PianoRollRenderer::Grid_None && tp->gridBpm > 0.0 && std::isfinite(tp->gridT0Seconds))
+        anchor = tp->gridT0Seconds;
+
+    const double cellIndex = std::floor((seconds - anchor) / step);
+    const double snapped = anchor + cellIndex * step;
+    return std::isfinite(snapped) ? snapped : seconds;
+}
+
 static double PianoRollTimelineDurationSeconds(const ThreadParam* tp)
 {
     if (!tp || tp->sampleRate <= 0)
         return 0.0;
     const size_t totalFrames = GetTotalFrames(tp);
     return static_cast<double>(totalFrames) / static_cast<double>(tp->sampleRate);
+}
+
+static void RefreshPianoRollTimelineFrames(ThreadParam* tp)
+{
+    if (!tp)
+        return;
+
+    size_t timelineFrames = GetAudioTotalFrames(tp);
+    if (tp->sampleRate > 0)
+    {
+        double maxNoteEndSeconds = 0.0;
+        for (const auto& note : tp->pianoRollNotes)
+        {
+            if (!std::isfinite(note.endSeconds) || !(note.endSeconds > 0.0))
+                continue;
+            maxNoteEndSeconds = (std::max)(maxNoteEndSeconds, note.endSeconds);
+        }
+
+        if (maxNoteEndSeconds > 0.0)
+        {
+            const double framesD = std::ceil(maxNoteEndSeconds * static_cast<double>(tp->sampleRate));
+            if (std::isfinite(framesD) && framesD > 0.0)
+            {
+                if (framesD >= static_cast<double>((std::numeric_limits<size_t>::max)()))
+                    timelineFrames = (std::numeric_limits<size_t>::max)();
+                else
+                    timelineFrames = (std::max)(timelineFrames, static_cast<size_t>(framesD));
+            }
+        }
+    }
+
+    tp->pianoRollTimelineFrames = timelineFrames;
 }
 
 static double PianoRollPointToSeconds(const RECT& pianoRc, const PianoRollViewportState& viewport, int x)
@@ -2118,20 +2339,6 @@ static bool ComputePianoRollNoteRectPx(const RECT& pianoRc, const PianoRollViewp
     return true;
 }
 
-static std::vector<PianoRollRenderer::NoteEvent>* GetPianoRollNotesForTab(ThreadParam* tp, int tab)
-{
-    if (!tp || !HasNoteLayerTab(tab))
-        return nullptr;
-    return &tp->pianoRollNotes[tab];
-}
-
-static const std::vector<PianoRollRenderer::NoteEvent>* GetPianoRollNotesForTab(const ThreadParam* tp, int tab)
-{
-    if (!tp || !HasNoteLayerTab(tab))
-        return nullptr;
-    return &tp->pianoRollNotes[tab];
-}
-
 static void ClearPianoRollNoteSelection(std::vector<PianoRollRenderer::NoteEvent>& notes)
 {
     for (auto& n : notes)
@@ -2144,13 +2351,225 @@ static void SetPianoRollSingleSelection(std::vector<PianoRollRenderer::NoteEvent
         notes[i].selected = (i == idx);
 }
 
+static POINT ClampPointToRect(const RECT& rc, POINT pt)
+{
+    POINT out = pt;
+    const int maxX = (rc.right > rc.left) ? static_cast<int>(rc.right - 1) : static_cast<int>(rc.left);
+    const int maxY = (rc.bottom > rc.top) ? static_cast<int>(rc.bottom - 1) : static_cast<int>(rc.top);
+    out.x = static_cast<LONG>(std::clamp(static_cast<int>(out.x), static_cast<int>(rc.left), maxX));
+    out.y = static_cast<LONG>(std::clamp(static_cast<int>(out.y), static_cast<int>(rc.top), maxY));
+    return out;
+}
+
+static RECT MakeNormalizedRectFromPointsClamped(const RECT& bounds, POINT a, POINT b)
+{
+    a = ClampPointToRect(bounds, a);
+    b = ClampPointToRect(bounds, b);
+
+    RECT out{};
+    out.left = static_cast<LONG>((std::min)(a.x, b.x));
+    out.top = static_cast<LONG>((std::min)(a.y, b.y));
+    out.right = static_cast<LONG>((std::max)(a.x, b.x) + 1);
+    out.bottom = static_cast<LONG>((std::max)(a.y, b.y) + 1);
+    out.left = (std::max)(out.left, bounds.left);
+    out.top = (std::max)(out.top, bounds.top);
+    out.right = (std::min)(out.right, bounds.right);
+    out.bottom = (std::min)(out.bottom, bounds.bottom);
+    return out;
+}
+
+static bool ComputePianoRollMarqueeRectPx(const RECT& pianoRc, const PianoRollViewportState& viewport,
+    const PianoRollRenderer::Config& cfg, const ThreadParam* tp, RECT& outRect)
+{
+    SetRectEmpty(&outRect);
+    if (!tp)
+        return false;
+    if (pianoRc.right <= pianoRc.left || pianoRc.bottom <= pianoRc.top)
+        return false;
+    if (!(viewport.visibleSeconds > 0.0) || !std::isfinite(viewport.visibleSeconds))
+        return false;
+
+    const double minSeconds = (std::min)(tp->pianoNoteMarqueeStartSeconds, tp->pianoNoteMarqueeCurrentSeconds);
+    const double maxSeconds = (std::max)(tp->pianoNoteMarqueeStartSeconds, tp->pianoNoteMarqueeCurrentSeconds);
+    const int midiMin = (std::min)(cfg.midiMin, cfg.midiMax);
+    const int midiMax = (std::max)(cfg.midiMin, cfg.midiMax);
+    const int selMidiMin = std::clamp((std::min)(tp->pianoNoteMarqueeStartMidi, tp->pianoNoteMarqueeCurrentMidi), midiMin, midiMax);
+    const int selMidiMax = std::clamp((std::max)(tp->pianoNoteMarqueeStartMidi, tp->pianoNoteMarqueeCurrentMidi), midiMin, midiMax);
+    const int w = static_cast<int>(pianoRc.right - pianoRc.left);
+    const int h = static_cast<int>(pianoRc.bottom - pianoRc.top);
+    if (w <= 0 || h <= 0)
+        return false;
+
+    const double x0n = (minSeconds - viewport.tLeftSeconds) / viewport.visibleSeconds;
+    const double x1n = (maxSeconds - viewport.tLeftSeconds) / viewport.visibleSeconds;
+    int x0 = pianoRc.left + static_cast<int>(std::floor(x0n * static_cast<double>(w)));
+    int x1 = pianoRc.left + static_cast<int>(std::ceil(x1n * static_cast<double>(w)));
+    x0 = (std::max)(static_cast<int>(pianoRc.left), (std::min)(x0, static_cast<int>(pianoRc.right - 1)));
+    x1 = (std::max)(x0 + 1, (std::min)(x1, static_cast<int>(pianoRc.right)));
+
+    const int noteCount = (std::max)(1, midiMax - midiMin + 1);
+    const double rowH = static_cast<double>(h) / static_cast<double>(noteCount);
+    const int topIdx = midiMax - selMidiMax;
+    const int bottomIdx = midiMax - selMidiMin;
+    int y0 = pianoRc.top + static_cast<int>(std::floor(topIdx * rowH)) + 1;
+    int y1 = pianoRc.top + static_cast<int>(std::floor((bottomIdx + 1) * rowH)) - 1;
+    y0 = (std::max)(static_cast<int>(pianoRc.top), (std::min)(y0, static_cast<int>(pianoRc.bottom - 1)));
+    y1 = (std::max)(y0 + 1, (std::min)(y1, static_cast<int>(pianoRc.bottom)));
+
+    outRect = RECT{ static_cast<LONG>(x0), static_cast<LONG>(y0), static_cast<LONG>(x1), static_cast<LONG>(y1) };
+    return true;
+}
+
+static bool MaybeAutoPanPianoRollMarquee(ThreadParam* tp, const RECT& noteRc, const PianoRollViewportState& viewport, POINT pt)
+{
+    if (!tp)
+        return false;
+    if (noteRc.right <= noteRc.left || noteRc.bottom <= noteRc.top)
+        return false;
+    if (tp->sampleRate <= 0)
+        return false;
+
+    const size_t totalFrames = GetTotalFrames(tp);
+    if (totalFrames == 0)
+        return false;
+
+    constexpr int kEdgePanBandPx = 28;
+    double edgeFactor = 0.0;
+    if (pt.x < noteRc.left + kEdgePanBandPx)
+        edgeFactor = static_cast<double>(pt.x - (noteRc.left + kEdgePanBandPx)) / static_cast<double>(kEdgePanBandPx);
+    else if (pt.x > noteRc.right - kEdgePanBandPx)
+        edgeFactor = static_cast<double>(pt.x - (noteRc.right - kEdgePanBandPx)) / static_cast<double>(kEdgePanBandPx);
+
+    if (std::fabs(edgeFactor) < 1e-6)
+    {
+        tp->pianoNoteMarqueeLastAutoPanStampValid = false;
+        return false;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    double dtSeconds = 1.0 / 120.0;
+    if (tp->pianoNoteMarqueeLastAutoPanStampValid)
+    {
+        dtSeconds = std::chrono::duration<double>(now - tp->pianoNoteMarqueeLastAutoPanStamp).count();
+        dtSeconds = std::clamp(dtSeconds, 1.0 / 240.0, 1.0 / 20.0);
+    }
+    tp->pianoNoteMarqueeLastAutoPanStamp = now;
+    tp->pianoNoteMarqueeLastAutoPanStampValid = true;
+
+    const int noteW = (std::max)(1, static_cast<int>(noteRc.right - noteRc.left));
+    const double visibleFrames = viewport.visibleSeconds * static_cast<double>(tp->sampleRate);
+    if (!(visibleFrames > 0.0) || !std::isfinite(visibleFrames))
+        return false;
+    const double framesPerPx = visibleFrames / static_cast<double>(noteW);
+    if (!(framesPerPx > 0.0) || !std::isfinite(framesPerPx))
+        return false;
+
+    const double rawIntensity = std::fabs(edgeFactor);
+    const double bandIntensity = std::clamp(rawIntensity, 0.0, 1.0);
+    const double eased = bandIntensity * bandIntensity * (3.0 - (2.0 * bandIntensity));
+    const double overshoot = (std::max)(0.0, rawIntensity - 1.0);
+    const double pixelsPerSecond = 42.0 + (780.0 * eased) + (540.0 * overshoot);
+    constexpr double kPanSensitivity = 1.5;
+    const double deltaFrames = std::copysign(pixelsPerSecond * dtSeconds * framesPerPx * kPanSensitivity, edgeFactor);
+    if (!std::isfinite(deltaFrames) || std::fabs(deltaFrames) < 0.01)
+        return false;
+
+    const double maxFrame = (totalFrames > 0) ? static_cast<double>(totalFrames - 1) : 0.0;
+    double curFrameD = GetCurrentFrameForView(tp);
+    if (!std::isfinite(curFrameD))
+        curFrameD = 0.0;
+    curFrameD = std::clamp(curFrameD, 0.0, maxFrame);
+    double centerFrame = tp->followPlayhead
+        ? (curFrameD + static_cast<double>(tp->panOffsetSamples))
+        : tp->manualCenterFrame;
+    if (!std::isfinite(centerFrame))
+        centerFrame = curFrameD;
+
+    const double nextCenter = std::clamp(centerFrame + deltaFrames, 0.0, maxFrame);
+    if (std::fabs(nextCenter - centerFrame) < 0.01)
+        return false;
+
+    tp->manualCenterFrame = nextCenter;
+    tp->followPlayhead = false;
+    tp->panOffsetSamples = 0;
+    tp->cacheDirty = true;
+    return true;
+}
+
+static bool UpdatePianoRollMarqueeDrag(ThreadParam* tp, const RECT& pianoRc, POINT pt, bool allowAutoPan)
+{
+    if (!tp || !tp->pianoNoteMarqueeActive)
+        return false;
+    if (!HasNoteLayerTab(tp->pianoNoteMarqueeTab))
+        return false;
+    if (tp->activePianoRollTab != tp->pianoNoteMarqueeTab)
+        return false;
+
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->pianoNoteMarqueeTab, noteRc, viewport, cfg))
+        return false;
+
+    if (allowAutoPan && MaybeAutoPanPianoRollMarquee(tp, noteRc, viewport, pt))
+    {
+        if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->pianoNoteMarqueeTab, noteRc, viewport, cfg))
+            return false;
+    }
+
+    tp->pianoNoteMarqueeCurrentPt = ClampPointToRect(noteRc, pt);
+    tp->pianoNoteMarqueeCurrentSeconds = PianoRollPointToSeconds(noteRc, viewport, static_cast<int>(tp->pianoNoteMarqueeCurrentPt.x));
+    tp->pianoNoteMarqueeCurrentMidi = PianoRollPointToMidi(noteRc, static_cast<int>(tp->pianoNoteMarqueeCurrentPt.y),
+        (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+    ApplyPianoRollMarqueeSelection(tp, tp->pianoNoteMarqueeTab);
+    return true;
+}
+
+static void CollectSelectedVisiblePianoRollNoteIndices(const ThreadParam* tp, int tab, std::vector<size_t>& outIndices)
+{
+    outIndices.clear();
+    if (!tp)
+        return;
+
+    outIndices.reserve(tp->pianoRollNotes.size());
+    for (size_t i = 0; i < tp->pianoRollNotes.size(); ++i)
+    {
+        const auto& note = tp->pianoRollNotes[i];
+        if (note.selected && NoteIsVisibleInPianoTab(note, tab))
+            outIndices.push_back(i);
+    }
+}
+
+static void BuildPianoRollDragSelection(ThreadParam* tp, int tab, size_t anchorIndex, bool includeSelectedGroup)
+{
+    if (!tp)
+        return;
+
+    tp->pianoNoteDragSelectionIndices.clear();
+    tp->pianoNoteDragSelectionAnchors.clear();
+
+    if (includeSelectedGroup)
+        CollectSelectedVisiblePianoRollNoteIndices(tp, tab, tp->pianoNoteDragSelectionIndices);
+
+    if (tp->pianoNoteDragSelectionIndices.empty())
+        tp->pianoNoteDragSelectionIndices.push_back(anchorIndex);
+
+    tp->pianoNoteDragSelectionAnchors.reserve(tp->pianoNoteDragSelectionIndices.size());
+    for (size_t idx : tp->pianoNoteDragSelectionIndices)
+    {
+        if (idx < tp->pianoRollNotes.size())
+            tp->pianoNoteDragSelectionAnchors.push_back(tp->pianoRollNotes[idx]);
+    }
+}
+
 static PianoRollHitTestResult HitTestPianoRollNotes(const RECT& pianoRc, const PianoRollViewportState& viewport,
-    const PianoRollRenderer::Config& cfg, const std::vector<PianoRollRenderer::NoteEvent>& notes, POINT pt)
+    const PianoRollRenderer::Config& cfg, const std::vector<PianoRollRenderer::NoteEvent>& notes,
+    const std::vector<size_t>& visibleIndices, POINT pt)
 {
     PianoRollHitTestResult out{};
-    for (size_t rev = notes.size(); rev > 0; --rev)
+    for (size_t rev = visibleIndices.size(); rev > 0; --rev)
     {
-        const size_t i = rev - 1;
+        const size_t i = visibleIndices[rev - 1];
         RECT nr{};
         if (!ComputePianoRollNoteRectPx(pianoRc, viewport, cfg, notes[i], nr))
             continue;
@@ -2163,6 +2582,46 @@ static PianoRollHitTestResult HitTestPianoRollNotes(const RECT& pianoRc, const P
         return out;
     }
     return out;
+}
+
+static bool PointHitsEmbeddedPianoSpecUiControl(ThreadParam* tp, const RECT& pianoRc, POINT pt)
+{
+    if (!tp || tp->activePianoRollTab != kPianoSpectrogramTabIndex)
+        return false;
+
+    LayoutEmbeddedPianoSpecControls(tp, pianoRc);
+    const RECT leftRc = ComputeEmbeddedPianoSpecLeftScaleRect(pianoRc);
+    const RECT sliderTrackRc = ComputeEmbeddedPianoSpecMidiSliderTrackRect(leftRc);
+    if (sliderTrackRc.right > sliderTrackRc.left && sliderTrackRc.bottom > sliderTrackRc.top &&
+        PtInRect(&sliderTrackRc, pt))
+    {
+        return true;
+    }
+
+    const RECT* controls[] = {
+        &tp->embeddedPianoSpecRcProcessedToggle,
+        &tp->embeddedPianoSpecRcDbButton,
+        &tp->embeddedPianoSpecRcResButton,
+        &tp->embeddedPianoSpecRcGridButton,
+        &tp->embeddedPianoSpecRcBpmButton,
+        &tp->embeddedPianoSpecRcModeButton,
+        &tp->embeddedPianoSpecRcExportAllButton,
+        &tp->embeddedPianoSpecRcExportStemButton
+    };
+    for (const RECT* rc : controls)
+    {
+        if (rc && rc->right > rc->left && rc->bottom > rc->top && PtInRect(rc, pt))
+            return true;
+    }
+
+    for (int stemIdx = 0; stemIdx < PianoRollRenderer::NoteStem_Count; ++stemIdx)
+    {
+        const RECT& rc = tp->embeddedPianoSpecRcStemButtons[stemIdx];
+        if (rc.right > rc.left && rc.bottom > rc.top && PtInRect(&rc, pt))
+            return true;
+    }
+
+    return false;
 }
 
 static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
@@ -2178,29 +2637,55 @@ static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const REC
     if (!PtInRect(&noteRc, pt))
         return false;
 
-    if (!IsSpectrogramPianoTab(tp->activePianoRollTab))
+    if (IsSpectrogramPianoTab(tp->activePianoRollTab))
+    {
+        if (PointHitsEmbeddedPianoSpecUiControl(tp, pianoRc, pt))
+            return false;
+    }
+    else
     {
         LayoutPianoRollGridControl(tp, pianoRc);
-        if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
-            PtInRect(&tp->pianoRollRcGridButton, pt))
+        if ((tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
+             PtInRect(&tp->pianoRollRcGridButton, pt)) ||
+            (tp->pianoRollRcBpmButton.right > tp->pianoRollRcBpmButton.left &&
+             PtInRect(&tp->pianoRollRcBpmButton, pt)) ||
+            (tp->pianoRollRcModeButton.right > tp->pianoRollRcModeButton.left &&
+             PtInRect(&tp->pianoRollRcModeButton, pt)))
         {
             return false;
         }
     }
 
-    auto* notes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
-    if (!notes)
-        return false;
-
-    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, *notes, pt);
+    std::vector<size_t> visibleIndices;
+    CollectVisiblePianoRollNoteIndices(tp, tp->activePianoRollTab, visibleIndices);
+    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, tp->pianoRollNotes, visibleIndices, pt);
 
     const double mouseSec = PianoRollPointToSeconds(noteRc, viewport, pt.x);
     const int mouseMidi = PianoRollPointToMidi(noteRc, pt.y, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
 
+    if (tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select)
+    {
+        tp->pianoNoteMarqueeActive = true;
+        tp->pianoNoteMarqueeTab = tp->activePianoRollTab;
+        tp->pianoNoteMarqueeStartPt = ClampPointToRect(noteRc, pt);
+        tp->pianoNoteMarqueeCurrentPt = tp->pianoNoteMarqueeStartPt;
+        tp->pianoNoteMarqueeStartSeconds = PianoRollPointToSeconds(noteRc, viewport, static_cast<int>(tp->pianoNoteMarqueeStartPt.x));
+        tp->pianoNoteMarqueeCurrentSeconds = tp->pianoNoteMarqueeStartSeconds;
+        tp->pianoNoteMarqueeStartMidi = PianoRollPointToMidi(noteRc, static_cast<int>(tp->pianoNoteMarqueeStartPt.y),
+            (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+        tp->pianoNoteMarqueeCurrentMidi = tp->pianoNoteMarqueeStartMidi;
+        tp->pianoNoteMarqueeLastAutoPanStampValid = false;
+        SetCapture(hwnd);
+        InvalidateWaveRegion(hwnd, tp);
+        return true;
+    }
+
     if (hit.hit)
     {
-        SetPianoRollSingleSelection(*notes, hit.index);
-        const auto& note = (*notes)[hit.index];
+        const bool keepSelectedGroup = !hit.rightEdge && tp->pianoRollNotes[hit.index].selected;
+        if (!keepSelectedGroup)
+            SetPianoRollSingleSelection(tp->pianoRollNotes, hit.index);
+        const auto& note = tp->pianoRollNotes[hit.index];
         tp->pianoNoteDragActive = true;
         tp->pianoNoteDragTab = tp->activePianoRollTab;
         tp->pianoNoteDragIndex = hit.index;
@@ -2211,28 +2696,31 @@ static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const REC
         tp->pianoNoteDragAnchorStartSeconds = note.startSeconds;
         tp->pianoNoteDragAnchorEndSeconds = note.endSeconds;
         tp->pianoNoteDragAnchorMidi = note.midiNote;
+        BuildPianoRollDragSelection(tp, tp->activePianoRollTab, hit.index, keepSelectedGroup);
         SetCapture(hwnd);
         InvalidateWaveRegion(hwnd, tp);
         return true;
     }
 
-    ClearPianoRollNoteSelection(*notes);
+    ClearPianoRollNoteSelection(tp->pianoRollNotes);
     const double stepSec = PianoRollGridStepSeconds(tp, viewport);
     const double minDur = (std::max)(0.03, stepSec);
     const double timelineEnd = PianoRollTimelineDurationSeconds(tp);
     const double maxStart = (std::max)(0.0, timelineEnd - minDur);
 
     PianoRollRenderer::NoteEvent n{};
-    n.startSeconds = std::clamp(PianoRollSnapTimeSeconds(tp, viewport, mouseSec), 0.0, maxStart);
+    n.startSeconds = std::clamp(PianoRollSnapTimeSecondsToCellStart(tp, viewport, mouseSec), 0.0, maxStart);
     n.endSeconds = (std::min)(timelineEnd, n.startSeconds + minDur);
     if (n.endSeconds <= n.startSeconds)
         n.endSeconds = n.startSeconds + minDur;
     n.midiNote = std::clamp(mouseMidi, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
     n.velocity = 100;
+    n.stemIndex = EffectivePlacementStemForTab(tp, tp->activePianoRollTab);
     n.selected = true;
-    notes->push_back(n);
+    tp->pianoRollNotes.push_back(n);
+    RefreshPianoRollTimelineFrames(tp);
 
-    const size_t idx = notes->size() - 1;
+    const size_t idx = tp->pianoRollNotes.size() - 1;
     tp->pianoNoteDragActive = true;
     tp->pianoNoteDragTab = tp->activePianoRollTab;
     tp->pianoNoteDragIndex = idx;
@@ -2243,6 +2731,7 @@ static bool HandlePianoRollNoteLButtonDown(HWND hwnd, ThreadParam* tp, const REC
     tp->pianoNoteDragAnchorStartSeconds = n.startSeconds;
     tp->pianoNoteDragAnchorEndSeconds = n.endSeconds;
     tp->pianoNoteDragAnchorMidi = n.midiNote;
+    BuildPianoRollDragSelection(tp, tp->activePianoRollTab, idx, false);
     SetCapture(hwnd);
     InvalidateWaveRegion(hwnd, tp);
     return true;
@@ -2255,15 +2744,18 @@ static bool HandlePianoRollNoteMouseMove(HWND hwnd, ThreadParam* tp, const RECT&
     if (!HasNoteLayerTab(tp->pianoNoteDragTab))
     {
         tp->pianoNoteDragActive = false;
+        tp->pianoNoteDragSelectionIndices.clear();
+        tp->pianoNoteDragSelectionAnchors.clear();
         return false;
     }
     if (tp->activePianoRollTab != tp->pianoNoteDragTab)
         return false;
 
-    auto* notes = GetPianoRollNotesForTab(tp, tp->pianoNoteDragTab);
-    if (!notes || tp->pianoNoteDragIndex >= notes->size())
+    if (tp->pianoNoteDragIndex >= tp->pianoRollNotes.size())
     {
         tp->pianoNoteDragActive = false;
+        tp->pianoNoteDragSelectionIndices.clear();
+        tp->pianoNoteDragSelectionAnchors.clear();
         return false;
     }
 
@@ -2273,7 +2765,7 @@ static bool HandlePianoRollNoteMouseMove(HWND hwnd, ThreadParam* tp, const RECT&
     if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->pianoNoteDragTab, noteRc, viewport, cfg))
         return false;
 
-    auto& note = (*notes)[tp->pianoNoteDragIndex];
+    auto& note = tp->pianoRollNotes[tp->pianoNoteDragIndex];
     const double mouseSec = PianoRollPointToSeconds(noteRc, viewport, pt.x);
     const int mouseMidi = PianoRollPointToMidi(noteRc, pt.y, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
 
@@ -2291,24 +2783,54 @@ static bool HandlePianoRollNoteMouseMove(HWND hwnd, ThreadParam* tp, const RECT&
     }
     else
     {
-        const double len = (std::max)(0.01, tp->pianoNoteDragAnchorEndSeconds - tp->pianoNoteDragAnchorStartSeconds);
         const double rawStart = tp->pianoNoteDragAnchorStartSeconds + (mouseSec - tp->pianoNoteDragMouseStartSeconds);
-        const double maxStart = (std::max)(0.0, timelineEnd - len);
-        double newStart = std::clamp(PianoRollSnapTimeSeconds(tp, viewport, rawStart), 0.0, maxStart);
-        double newEnd = newStart + len;
-        if (newEnd > timelineEnd)
+        const double snappedAnchorStart = PianoRollSnapTimeSeconds(tp, viewport, rawStart);
+        double deltaSeconds = snappedAnchorStart - tp->pianoNoteDragAnchorStartSeconds;
+
+        double minSelectedStart = tp->pianoNoteDragAnchorStartSeconds;
+        double maxSelectedEnd = tp->pianoNoteDragAnchorEndSeconds;
+        int minSelectedMidi = tp->pianoNoteDragAnchorMidi;
+        int maxSelectedMidi = tp->pianoNoteDragAnchorMidi;
+        for (const auto& anchor : tp->pianoNoteDragSelectionAnchors)
         {
-            newEnd = timelineEnd;
-            newStart = (std::max)(0.0, newEnd - len);
+            minSelectedStart = (std::min)(minSelectedStart, anchor.startSeconds);
+            maxSelectedEnd = (std::max)(maxSelectedEnd, anchor.endSeconds);
+            minSelectedMidi = (std::min)(minSelectedMidi, anchor.midiNote);
+            maxSelectedMidi = (std::max)(maxSelectedMidi, anchor.midiNote);
         }
 
-        const int midiDelta = mouseMidi - tp->pianoNoteDragMouseStartMidi;
-        const int newMidi = std::clamp(tp->pianoNoteDragAnchorMidi + midiDelta,
-            (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+        const double minDeltaSeconds = -minSelectedStart;
+        const double maxDeltaSeconds = timelineEnd - maxSelectedEnd;
+        deltaSeconds = std::clamp(deltaSeconds, minDeltaSeconds, maxDeltaSeconds);
 
-        note.startSeconds = newStart;
-        note.endSeconds = (std::max)(newStart + minDur, newEnd);
-        note.midiNote = newMidi;
+        int midiDelta = mouseMidi - tp->pianoNoteDragMouseStartMidi;
+        const int minMidiDelta = (std::min)(cfg.midiMin, cfg.midiMax) - minSelectedMidi;
+        const int maxMidiDelta = (std::max)(cfg.midiMin, cfg.midiMax) - maxSelectedMidi;
+        midiDelta = std::clamp(midiDelta, minMidiDelta, maxMidiDelta);
+
+        if (!tp->pianoNoteDragSelectionIndices.empty() &&
+            tp->pianoNoteDragSelectionIndices.size() == tp->pianoNoteDragSelectionAnchors.size())
+        {
+            for (size_t i = 0; i < tp->pianoNoteDragSelectionIndices.size(); ++i)
+            {
+                const size_t idx = tp->pianoNoteDragSelectionIndices[i];
+                if (idx >= tp->pianoRollNotes.size())
+                    continue;
+                const auto& anchor = tp->pianoNoteDragSelectionAnchors[i];
+                auto& dst = tp->pianoRollNotes[idx];
+                dst.startSeconds = anchor.startSeconds + deltaSeconds;
+                dst.endSeconds = anchor.endSeconds + deltaSeconds;
+                dst.midiNote = anchor.midiNote + midiDelta;
+            }
+        }
+        else
+        {
+            const double len = (std::max)(0.01, tp->pianoNoteDragAnchorEndSeconds - tp->pianoNoteDragAnchorStartSeconds);
+            const double newStart = tp->pianoNoteDragAnchorStartSeconds + deltaSeconds;
+            note.startSeconds = newStart;
+            note.endSeconds = (std::max)(newStart + minDur, newStart + len);
+            note.midiNote = tp->pianoNoteDragAnchorMidi + midiDelta;
+        }
         SetCursor(LoadCursorW(nullptr, IDC_SIZEALL));
     }
 
@@ -2320,18 +2842,26 @@ static bool HandlePianoRollNoteDeleteAtPoint(HWND hwnd, ThreadParam* tp, const R
 {
     if (!hwnd || !tp || !HasNoteLayerTab(tp->activePianoRollTab))
         return false;
-    if (!IsSpectrogramPianoTab(tp->activePianoRollTab))
+    if (IsSpectrogramPianoTab(tp->activePianoRollTab))
+    {
+        if (PointHitsEmbeddedPianoSpecUiControl(tp, pianoRc, pt))
+            return false;
+    }
+    else
     {
         LayoutPianoRollGridControl(tp, pianoRc);
-        if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
-            PtInRect(&tp->pianoRollRcGridButton, pt))
+        if ((tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
+             PtInRect(&tp->pianoRollRcGridButton, pt)) ||
+            (tp->pianoRollRcBpmButton.right > tp->pianoRollRcBpmButton.left &&
+             PtInRect(&tp->pianoRollRcBpmButton, pt)) ||
+            (tp->pianoRollRcModeButton.right > tp->pianoRollRcModeButton.left &&
+             PtInRect(&tp->pianoRollRcModeButton, pt)))
         {
             return false;
         }
     }
 
-    auto* notes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
-    if (!notes || notes->empty())
+    if (tp->pianoRollNotes.empty())
         return false;
 
     RECT noteRc{};
@@ -2342,11 +2872,14 @@ static bool HandlePianoRollNoteDeleteAtPoint(HWND hwnd, ThreadParam* tp, const R
     if (!PtInRect(&noteRc, pt))
         return false;
 
-    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, *notes, pt);
+    std::vector<size_t> visibleIndices;
+    CollectVisiblePianoRollNoteIndices(tp, tp->activePianoRollTab, visibleIndices);
+    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, tp->pianoRollNotes, visibleIndices, pt);
     if (!hit.hit)
         return false;
 
-    notes->erase(notes->begin() + static_cast<ptrdiff_t>(hit.index));
+    tp->pianoRollNotes.erase(tp->pianoRollNotes.begin() + static_cast<ptrdiff_t>(hit.index));
+    RefreshPianoRollTimelineFrames(tp);
     tp->pianoNoteDragActive = false;
     tp->pianoNoteDragMode = ThreadParam::PianoNoteDrag_None;
     tp->pianoNoteDragTab = -1;
@@ -2359,10 +2892,75 @@ static bool HandlePianoRollNoteLButtonUp(HWND hwnd, ThreadParam* tp)
 {
     if (!hwnd || !tp || !tp->pianoNoteDragActive)
         return false;
+    RefreshPianoRollTimelineFrames(tp);
     tp->pianoNoteDragActive = false;
     tp->pianoNoteDragMode = ThreadParam::PianoNoteDrag_None;
     tp->pianoNoteDragTab = -1;
     tp->pianoNoteDragIndex = 0;
+    tp->pianoNoteDragSelectionIndices.clear();
+    tp->pianoNoteDragSelectionAnchors.clear();
+    InvalidateWaveRegion(hwnd, tp);
+    if (GetCapture() == hwnd) ReleaseCapture();
+    return true;
+}
+
+static bool HandlePianoRollSelectionMouseMove(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
+{
+    if (!hwnd || !tp || !tp->pianoNoteMarqueeActive)
+        return false;
+    if (!UpdatePianoRollMarqueeDrag(tp, pianoRc, pt, true))
+        return false;
+    InvalidateWaveRegion(hwnd, tp);
+    return true;
+}
+
+static bool HandlePianoRollSelectionLButtonUp(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
+{
+    if (!hwnd || !tp || !tp->pianoNoteMarqueeActive)
+        return false;
+
+    const int marqueeTab = tp->pianoNoteMarqueeTab;
+    tp->pianoNoteMarqueeActive = false;
+    tp->pianoNoteMarqueeTab = -1;
+    tp->pianoNoteMarqueeLastAutoPanStampValid = false;
+
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (HasNoteLayerTab(marqueeTab) &&
+        marqueeTab == tp->activePianoRollTab &&
+        BuildTabNoteInteractionContext(tp, pianoRc, marqueeTab, noteRc, viewport, cfg))
+    {
+        const POINT clampedPt = ClampPointToRect(noteRc, pt);
+        tp->pianoNoteMarqueeCurrentPt = clampedPt;
+        tp->pianoNoteMarqueeCurrentSeconds = PianoRollPointToSeconds(noteRc, viewport, static_cast<int>(clampedPt.x));
+        tp->pianoNoteMarqueeCurrentMidi = PianoRollPointToMidi(noteRc, static_cast<int>(clampedPt.y),
+            (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+        const int dx = static_cast<int>(clampedPt.x) - static_cast<int>(tp->pianoNoteMarqueeStartPt.x);
+        const int dy = static_cast<int>(clampedPt.y) - static_cast<int>(tp->pianoNoteMarqueeStartPt.y);
+        constexpr int kMarqueeDragThresholdPx = 3;
+        const bool moved =
+            (std::abs)(dx) >= kMarqueeDragThresholdPx ||
+            (std::abs)(dy) >= kMarqueeDragThresholdPx ||
+            std::fabs(tp->pianoNoteMarqueeCurrentSeconds - tp->pianoNoteMarqueeStartSeconds) > 1e-6 ||
+            tp->pianoNoteMarqueeCurrentMidi != tp->pianoNoteMarqueeStartMidi;
+
+        if (moved)
+        {
+            ApplyPianoRollMarqueeSelection(tp, marqueeTab);
+        }
+        else
+        {
+            std::vector<size_t> visibleIndices;
+            CollectVisiblePianoRollNoteIndices(tp, marqueeTab, visibleIndices);
+            const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, tp->pianoRollNotes, visibleIndices, clampedPt);
+            if (hit.hit)
+                SetPianoRollSingleSelection(tp->pianoRollNotes, hit.index);
+            else
+                ClearPianoRollNoteSelection(tp->pianoRollNotes);
+        }
+    }
+
     InvalidateWaveRegion(hwnd, tp);
     if (GetCapture() == hwnd) ReleaseCapture();
     return true;
@@ -2395,26 +2993,46 @@ static bool UpdatePianoRollHoverCursor(HWND hwnd, ThreadParam* tp, POINT pt)
             SetCursor(LoadCursorW(nullptr, IDC_SIZEALL));
         return true;
     }
+    if (tp->pianoNoteMarqueeActive)
+    {
+        SetCursor(LoadCursorW(nullptr, IDC_CROSS));
+        return true;
+    }
 
     if (!IsSpectrogramPianoTab(tp->activePianoRollTab))
     {
         LayoutPianoRollGridControl(tp, pianoRc);
-        if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
-            PtInRect(&tp->pianoRollRcGridButton, pt))
+        if ((tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left &&
+             PtInRect(&tp->pianoRollRcGridButton, pt)) ||
+            (tp->pianoRollRcBpmButton.right > tp->pianoRollRcBpmButton.left &&
+             PtInRect(&tp->pianoRollRcBpmButton, pt)) ||
+            (tp->pianoRollRcModeButton.right > tp->pianoRollRcModeButton.left &&
+             PtInRect(&tp->pianoRollRcModeButton, pt)))
         {
             SetCursor(LoadCursorW(nullptr, IDC_ARROW));
             return true;
         }
     }
-
-    const auto* notes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
-    if (!notes || notes->empty())
+    else if (PointHitsEmbeddedPianoSpecUiControl(tp, pianoRc, pt))
     {
         SetCursor(LoadCursorW(nullptr, IDC_ARROW));
         return true;
     }
 
-    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, *notes, pt);
+    std::vector<size_t> visibleIndices;
+    CollectVisiblePianoRollNoteIndices(tp, tp->activePianoRollTab, visibleIndices);
+    if (visibleIndices.empty())
+    {
+        SetCursor(LoadCursorW(nullptr, tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select ? IDC_CROSS : IDC_ARROW));
+        return true;
+    }
+
+    const PianoRollHitTestResult hit = HitTestPianoRollNotes(noteRc, viewport, cfg, tp->pianoRollNotes, visibleIndices, pt);
+    if (tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select)
+    {
+        SetCursor(LoadCursorW(nullptr, IDC_CROSS));
+        return true;
+    }
     if (hit.hit)
     {
         SetCursor(LoadCursorW(nullptr, hit.rightEdge ? IDC_SIZEWE : IDC_SIZEALL));
@@ -2435,7 +3053,7 @@ static void SyncPausedFromMciPosition(ThreadParam* tp)
         return;
     }
 
-    const size_t totalFrames = GetTotalFrames(tp);
+    const size_t totalFrames = GetAudioTotalFrames(tp);
     const double estFrameD = std::clamp(GetCurrentFrameForView(tp), 0.0, totalFrames > 0 ? static_cast<double>(totalFrames - 1) : 0.0);
     const size_t estFrame = static_cast<size_t>(std::llround(estFrameD));
 
@@ -2485,7 +3103,7 @@ static void SyncPausedFromMciPosition(ThreadParam* tp)
 static void SeekToFrame(ThreadParam* tp, size_t frame, bool resumePlayback)
 {
     if (!tp) return;
-    const size_t totalFrames = GetTotalFrames(tp);
+    const size_t totalFrames = GetAudioTotalFrames(tp);
     if (totalFrames == 0 || tp->sampleRate <= 0) return;
 
     frame = (std::min)(frame, totalFrames - 1);
@@ -3191,7 +3809,7 @@ static void PrepareColorWaveEnvelopes(ThreadParam* tp)
     if (!tp->samples || tp->samples->empty() || tp->sampleRate <= 0 || tp->envBlock <= 0)
         return;
 
-    const size_t totalFrames = GetTotalFrames(tp);
+    const size_t totalFrames = GetAudioTotalFrames(tp);
     if (totalFrames == 0)
         return;
 
@@ -3461,12 +4079,13 @@ static bool DrawWaveEnvelopesGpu(HDC targetDc, const RECT& targetDcRect, ThreadP
     if (!EnsureWaveGpuResources(tp))
         return false;
 
-    const size_t totalFrames = GetTotalFrames(tp);
-    if (totalFrames == 0 || tp->envBlocks == 0 || tp->envBlock <= 0)
+    const size_t timelineFrames = GetTotalFrames(tp);
+    const size_t audioFrames = GetAudioTotalFrames(tp);
+    if (timelineFrames == 0 || audioFrames == 0 || tp->envBlocks == 0 || tp->envBlock <= 0)
         return false;
 
     WaveViewportFrameState view{};
-    if (!ComputeWaveViewportFrameState(tp, totalFrames, view))
+    if (!ComputeWaveViewportFrameState(tp, timelineFrames, view))
         return false;
 
     const double visibleFrames = view.visibleFrames;
@@ -3482,7 +4101,7 @@ static bool DrawWaveEnvelopesGpu(HDC targetDc, const RECT& targetDcRect, ThreadP
     const int midY = waveRc.top + (h / 2);
     const double ampScale = (static_cast<double>(h) * 0.5) / static_cast<double>(tp->plotYRange);
 
-    const double endFrame = std::min<double>(static_cast<double>(totalFrames), startFrame + visibleFrames);
+    const double endFrame = std::min<double>(static_cast<double>(audioFrames), startFrame + visibleFrames);
     const double framesPerPixel = visibleFrames / static_cast<double>((std::max)(1, w));
     const EnvelopeLevelView envView = SelectEnvelopeLevelForFramesPerPixel(tp, framesPerPixel);
     const int drawEnvBlock = (envView.block > 0) ? envView.block : tp->envBlock;
@@ -3543,13 +4162,13 @@ static bool DrawWaveEnvelopesGpu(HDC targetDc, const RECT& targetDcRect, ThreadP
     target->PushAxisAlignedClip(clipRectF, D2D1_ANTIALIAS_MODE_ALIASED);
 
     DrawEnvelopeLayerGpu(target, tp->waveD2dBrushBase, waveRc, midY, ampScale,
-        baseMin, baseMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+        baseMin, baseMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
     DrawEnvelopeLayerGpu(target, tp->waveD2dBrushLow, waveRc, midY, ampScale,
-        lowMin, lowMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+        lowMin, lowMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
     DrawEnvelopeLayerGpu(target, tp->waveD2dBrushMid, waveRc, midY, ampScale,
-        midMin, midMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+        midMin, midMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
     DrawEnvelopeLayerGpu(target, tp->waveD2dBrushHigh, waveRc, midY, ampScale,
-        highMin, highMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+        highMin, highMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
 
     target->PopAxisAlignedClip();
     const HRESULT hr = target->EndDraw();
@@ -3805,7 +4424,21 @@ static void HandleRenderTick(HWND hwnd, ThreadParam* tp)
         tp->updateTimingValid = true;
     };
 
-    if (!tp->playing.load())
+    bool marqueeTickActive = false;
+    if (tp->pianoNoteMarqueeActive && GetCapture() == hwnd)
+    {
+        POINT cursorPt{};
+        if (GetCursorPos(&cursorPt))
+        {
+            ScreenToClient(hwnd, &cursorPt);
+            RECT rc{}; GetClientRect(hwnd, &rc);
+            RECT tabsRc{}, pianoRc{};
+            ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
+            marqueeTickActive = HandlePianoRollSelectionMouseMove(hwnd, tp, pianoRc, cursorPt);
+        }
+    }
+
+    if (!tp->playing.load() && !marqueeTickActive)
     {
         tp->updateLastTickMs = 0.0;
         tp->updateAvgTickMs = 0.0;
@@ -3841,7 +4474,7 @@ static void HandleRenderTick(HWND hwnd, ThreadParam* tp)
         }
     }
 
-    if (tp->liveResizeActive)
+    if (tp->liveResizeActive && !marqueeTickActive)
     {
         finalizeUpdateTiming(std::chrono::steady_clock::now());
         return; // keep resize interactions responsive; repaint when the resize step itself invalidates
@@ -3955,6 +4588,20 @@ static void OpenPianoSpectrogramPopoutFromWaveform(ThreadParam* tp)
     if (title.empty()) title = L"Waveform";
     title += L" - Piano Spectrogram";
     SpectrogramWindow::ShowPianoSpectrogramAsyncRefStereoSynced(tp->samples, tp->sampleRate, grid, title);
+}
+
+static void ApplyManualGridBpm(HWND hwnd, ThreadParam* tp, double bpm)
+{
+    if (!tp || !std::isfinite(bpm) || bpm <= 0.0)
+        return;
+
+    tp->gridBpm = bpm;
+    tp->gridEnabled = true;
+    if (!std::isfinite(tp->gridT0Seconds))
+        tp->gridT0Seconds = 0.0;
+    InvalidateEmbeddedPianoSpec(tp);
+    if (hwnd)
+        InvalidateWaveRegion(hwnd, tp);
 }
 
 static const wchar_t* EmbeddedPianoGridModeLabel(int mode)
@@ -4126,6 +4773,8 @@ static void LayoutPianoRollGridControl(ThreadParam* tp, const RECT& pianoRc)
     if (!tp)
         return;
     SetRectEmpty(&tp->pianoRollRcGridButton);
+    SetRectEmpty(&tp->pianoRollRcBpmButton);
+    SetRectEmpty(&tp->pianoRollRcModeButton);
     if (tp->activePianoRollTab == kPianoSpectrogramTabIndex)
         return;
     if (pianoRc.right <= pianoRc.left || pianoRc.bottom <= pianoRc.top)
@@ -4134,12 +4783,18 @@ static void LayoutPianoRollGridControl(ThreadParam* tp, const RECT& pianoRc)
     constexpr int kPad = 6;
     constexpr int kH = 20;
     constexpr int kW = 118;
-    if ((pianoRc.right - pianoRc.left) < 180 || (pianoRc.bottom - pianoRc.top) < (kH + 8))
+    constexpr int kBpmW = 96;
+    constexpr int kModeW = 104;
+    if ((pianoRc.right - pianoRc.left) < 400 || (pianoRc.bottom - pianoRc.top) < (kH + 8))
         return;
 
     const int x = pianoRc.right - kPad;
     const int y = pianoRc.top + 6;
     tp->pianoRollRcGridButton = RECT{ (LONG)(x - kW), (LONG)y, (LONG)x, (LONG)(y + kH) };
+    tp->pianoRollRcBpmButton = RECT{ (LONG)(tp->pianoRollRcGridButton.left - kPad - kBpmW), (LONG)y,
+        (LONG)(tp->pianoRollRcGridButton.left - kPad), (LONG)(y + kH) };
+    tp->pianoRollRcModeButton = RECT{ (LONG)(tp->pianoRollRcBpmButton.left - kPad - kModeW), (LONG)y,
+        (LONG)(tp->pianoRollRcBpmButton.left - kPad), (LONG)(y + kH) };
 }
 
 static int SharedPianoGridMenuItemCount()
@@ -4388,10 +5043,28 @@ static bool HandlePianoRollGridClick(HWND hwnd, ThreadParam* tp, const RECT& pia
         return false;
 
     LayoutPianoRollGridControl(tp, pianoRc);
-    if (tp->pianoRollRcGridButton.right <= tp->pianoRollRcGridButton.left)
+    if (tp->pianoRollRcModeButton.right > tp->pianoRollRcModeButton.left &&
+        PtInRect(&tp->pianoRollRcModeButton, pt))
+    {
+        tp->pianoNoteEditMode = (tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select)
+            ? ThreadParam::PianoNoteEdit_Place
+            : ThreadParam::PianoNoteEdit_Select;
+        InvalidateWaveRegion(hwnd, tp);
+        return true;
+    }
+    if (tp->pianoRollRcBpmButton.right > tp->pianoRollRcBpmButton.left &&
+        PtInRect(&tp->pianoRollRcBpmButton, pt))
+    {
+        double bpm = (std::isfinite(tp->gridBpm) && tp->gridBpm > 0.0) ? tp->gridBpm : 120.0;
+        if (PromptForManualGridBpm(hwnd, bpm, bpm))
+            ApplyManualGridBpm(hwnd, tp, bpm);
+        return true;
+    }
+    if (tp->pianoRollRcGridButton.right <= tp->pianoRollRcGridButton.left ||
+        !PtInRect(&tp->pianoRollRcGridButton, pt))
+    {
         return false;
-    if (!PtInRect(&tp->pianoRollRcGridButton, pt))
-        return false;
+    }
     RECT clientRc{}; GetClientRect(hwnd, &clientRc);
     if (tp->sharedPianoGridMenuOpen)
     {
@@ -4415,6 +5088,12 @@ static void LayoutEmbeddedPianoSpecControls(ThreadParam* tp, const RECT& pianoRc
     SetRectEmpty(&tp->embeddedPianoSpecRcDbButton);
     SetRectEmpty(&tp->embeddedPianoSpecRcResButton);
     SetRectEmpty(&tp->embeddedPianoSpecRcGridButton);
+    SetRectEmpty(&tp->embeddedPianoSpecRcBpmButton);
+    SetRectEmpty(&tp->embeddedPianoSpecRcModeButton);
+    SetRectEmpty(&tp->embeddedPianoSpecRcExportAllButton);
+    SetRectEmpty(&tp->embeddedPianoSpecRcExportStemButton);
+    for (int stemIdx = 0; stemIdx < PianoRollRenderer::NoteStem_Count; ++stemIdx)
+        SetRectEmpty(&tp->embeddedPianoSpecRcStemButtons[stemIdx]);
     if (pianoRc.right <= pianoRc.left || pianoRc.bottom <= pianoRc.top)
         return;
 
@@ -4423,6 +5102,10 @@ static void LayoutEmbeddedPianoSpecControls(ThreadParam* tp, const RECT& pianoRc
     constexpr int kProcW = 118;
     constexpr int kBtnW = 86;
     constexpr int kGridW = 108;
+    constexpr int kBpmW = 96;
+    constexpr int kModeW = 104;
+    constexpr int kExportW = 84;
+    constexpr int kStemW = 56;
     const int y = pianoRc.top + 6;
     int x = pianoRc.right - kPad;
 
@@ -4433,13 +5116,38 @@ static void LayoutEmbeddedPianoSpecControls(ThreadParam* tp, const RECT& pianoRc
     tp->embeddedPianoSpecRcDbButton = RECT{ (LONG)(x - kBtnW), (LONG)y, (LONG)x, (LONG)(y + kH) };
     x -= kBtnW + kPad;
     tp->embeddedPianoSpecRcGridButton = RECT{ (LONG)(x - kGridW), (LONG)y, (LONG)x, (LONG)(y + kH) };
+    x -= kGridW + kPad;
+    tp->embeddedPianoSpecRcBpmButton = RECT{ (LONG)(x - kBpmW), (LONG)y, (LONG)x, (LONG)(y + kH) };
+    x -= kBpmW + kPad;
+    tp->embeddedPianoSpecRcModeButton = RECT{ (LONG)(x - kModeW), (LONG)y, (LONG)x, (LONG)(y + kH) };
 
-    if (tp->embeddedPianoSpecRcGridButton.left < pianoRc.left + 100)
+    if (tp->embeddedPianoSpecRcModeButton.left < pianoRc.left + 100)
     {
         SetRectEmpty(&tp->embeddedPianoSpecRcProcessedToggle);
         SetRectEmpty(&tp->embeddedPianoSpecRcDbButton);
         SetRectEmpty(&tp->embeddedPianoSpecRcResButton);
         SetRectEmpty(&tp->embeddedPianoSpecRcGridButton);
+        SetRectEmpty(&tp->embeddedPianoSpecRcModeButton);
+    }
+
+    const int y2 = y + kH + 6;
+    x = pianoRc.right - kPad;
+    tp->embeddedPianoSpecRcExportStemButton = RECT{ (LONG)(x - kExportW), (LONG)y2, (LONG)x, (LONG)(y2 + kH) };
+    x -= kExportW + kPad;
+    tp->embeddedPianoSpecRcExportAllButton = RECT{ (LONG)(x - kExportW), (LONG)y2, (LONG)x, (LONG)(y2 + kH) };
+    x -= kExportW + kPad;
+    for (int stemIdx = PianoRollRenderer::NoteStem_Count - 1; stemIdx >= 0; --stemIdx)
+    {
+        tp->embeddedPianoSpecRcStemButtons[stemIdx] = RECT{ (LONG)(x - kStemW), (LONG)y2, (LONG)x, (LONG)(y2 + kH) };
+        x -= kStemW + 4;
+    }
+
+    if (tp->embeddedPianoSpecRcStemButtons[0].left < pianoRc.left + 100)
+    {
+        SetRectEmpty(&tp->embeddedPianoSpecRcExportAllButton);
+        SetRectEmpty(&tp->embeddedPianoSpecRcExportStemButton);
+        for (int stemIdx = 0; stemIdx < PianoRollRenderer::NoteStem_Count; ++stemIdx)
+            SetRectEmpty(&tp->embeddedPianoSpecRcStemButtons[stemIdx]);
     }
 }
 
@@ -4464,6 +5172,208 @@ static void DrawEmbeddedPianoSpecButton(HDC hdc, const RECT& rc, const std::wstr
     RECT tr = rc;
     DrawTextW(hdc, text.c_str(), -1, &tr, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
     SelectObject(hdc, oldFont);
+}
+
+static COLORREF BlendUiColor(COLORREF a, COLORREF b, double t)
+{
+    t = std::clamp(t, 0.0, 1.0);
+    auto mix = [t](BYTE av, BYTE bv) -> BYTE
+    {
+        return static_cast<BYTE>(std::clamp(
+            static_cast<int>(std::lround((1.0 - t) * static_cast<double>(av) + t * static_cast<double>(bv))),
+            0, 255));
+    };
+    return RGB(
+        mix(GetRValue(a), GetRValue(b)),
+        mix(GetGValue(a), GetGValue(b)),
+        mix(GetBValue(a), GetBValue(b)));
+}
+
+static void DrawEmbeddedPianoSpecToggleButton(HDC hdc, const RECT& rc, const std::wstring& text, bool selected)
+{
+    if (!hdc || rc.right <= rc.left || rc.bottom <= rc.top)
+        return;
+
+    const COLORREF fill = selected ? RGB(46, 64, 84) : RGB(28, 30, 36);
+    const COLORREF border = selected ? RGB(116, 166, 220) : RGB(88, 92, 102);
+    const COLORREF textColor = selected ? RGB(244, 248, 252) : RGB(218, 222, 228);
+
+    HBRUSH bg = CreateSolidBrush(fill);
+    FillRect(hdc, &rc, bg);
+    DeleteObject(bg);
+
+    HPEN pen = CreatePen(PS_SOLID, 1, border);
+    HGDIOBJ oldPen = SelectObject(hdc, pen);
+    HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    Rectangle(hdc, rc.left, rc.top, rc.right, rc.bottom);
+    SelectObject(hdc, oldBrush);
+    SelectObject(hdc, oldPen);
+    DeleteObject(pen);
+
+    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(SYSTEM_FONT));
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, textColor);
+    RECT tr = rc;
+    DrawTextW(hdc, text.c_str(), -1, &tr, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+    SelectObject(hdc, oldFont);
+}
+
+static void DrawPianoRollMarqueeOverlay(HDC hdc, const RECT& rc)
+{
+    if (!hdc || rc.right <= rc.left || rc.bottom <= rc.top)
+        return;
+
+    AlphaFillRectColor(hdc, rc, RGB(90, 168, 255), 42);
+    HPEN pen = CreatePen(PS_DOT, 1, RGB(176, 220, 255));
+    HGDIOBJ oldPen = SelectObject(hdc, pen);
+    HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    Rectangle(hdc, rc.left, rc.top, rc.right, rc.bottom);
+    SelectObject(hdc, oldBrush);
+    SelectObject(hdc, oldPen);
+    DeleteObject(pen);
+}
+
+static void DrawPianoRollHoverCellLabel(HDC hdc, HWND hwnd, ThreadParam* tp, const RECT& clientRc, const RECT& pianoRc)
+{
+    if (!hdc || !hwnd || !tp)
+        return;
+    if (!HasNoteLayerTab(tp->activePianoRollTab))
+        return;
+    if (tp->sharedPianoGridMenuOpen)
+        return;
+
+    POINT pt{};
+    if (!GetCursorPos(&pt))
+        return;
+    ScreenToClient(hwnd, &pt);
+    if (!PtInRect(&clientRc, pt))
+        return;
+
+    RECT noteRc{};
+    PianoRollViewportState viewport{};
+    PianoRollRenderer::Config cfg{};
+    if (!BuildTabNoteInteractionContext(tp, pianoRc, tp->activePianoRollTab, noteRc, viewport, cfg))
+        return;
+    if (!PtInRect(&noteRc, pt))
+        return;
+
+    if (IsSpectrogramPianoTab(tp->activePianoRollTab))
+    {
+        if (PointHitsEmbeddedPianoSpecUiControl(tp, pianoRc, pt))
+            return;
+    }
+    else
+    {
+        LayoutPianoRollGridControl(tp, pianoRc);
+        if ((tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left && PtInRect(&tp->pianoRollRcGridButton, pt)) ||
+            (tp->pianoRollRcBpmButton.right > tp->pianoRollRcBpmButton.left && PtInRect(&tp->pianoRollRcBpmButton, pt)) ||
+            (tp->pianoRollRcModeButton.right > tp->pianoRollRcModeButton.left && PtInRect(&tp->pianoRollRcModeButton, pt)))
+        {
+            return;
+        }
+    }
+
+    const int midi = PianoRollPointToMidi(noteRc, pt.y, (std::min)(cfg.midiMin, cfg.midiMax), (std::max)(cfg.midiMin, cfg.midiMax));
+    const std::wstring label = PianoRollHoverNoteName(midi);
+    if (label.empty())
+        return;
+
+    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    SIZE textSize{};
+    GetTextExtentPoint32W(hdc, label.c_str(), static_cast<int>(label.size()), &textSize);
+
+    constexpr int kPadX = 8;
+    constexpr int kPadY = 4;
+    constexpr int kOffsetX = 18;
+    constexpr int kOffsetY = 18;
+    RECT bubble{
+        static_cast<LONG>(pt.x + kOffsetX),
+        static_cast<LONG>(pt.y + kOffsetY),
+        static_cast<LONG>(pt.x + kOffsetX + textSize.cx + (kPadX * 2)),
+        static_cast<LONG>(pt.y + kOffsetY + textSize.cy + (kPadY * 2))
+    };
+
+    const int clientW = (std::max)(1, static_cast<int>(clientRc.right - clientRc.left));
+    const int clientH = (std::max)(1, static_cast<int>(clientRc.bottom - clientRc.top));
+    const int bubbleW = static_cast<int>(bubble.right - bubble.left);
+    const int bubbleH = static_cast<int>(bubble.bottom - bubble.top);
+    if (bubble.right > clientRc.right - 4)
+    {
+        bubble.left = static_cast<LONG>((std::max)(clientRc.left + 4, pt.x - 12 - bubbleW));
+        bubble.right = static_cast<LONG>(bubble.left + bubbleW);
+    }
+    if (bubble.bottom > clientRc.bottom - 4)
+    {
+        bubble.top = static_cast<LONG>((std::max)(clientRc.top + 4, pt.y - 10 - bubbleH));
+        bubble.bottom = static_cast<LONG>(bubble.top + bubbleH);
+    }
+    bubble.left = static_cast<LONG>(std::clamp(static_cast<int>(bubble.left), static_cast<int>(clientRc.left + 2), static_cast<int>(clientRc.left + clientW - bubbleW - 2)));
+    bubble.top = static_cast<LONG>(std::clamp(static_cast<int>(bubble.top), static_cast<int>(clientRc.top + 2), static_cast<int>(clientRc.top + clientH - bubbleH - 2)));
+    bubble.right = static_cast<LONG>(bubble.left + bubbleW);
+    bubble.bottom = static_cast<LONG>(bubble.top + bubbleH);
+
+    AlphaFillRectColor(hdc, bubble, RGB(20, 24, 30), 228);
+    HPEN borderPen = CreatePen(PS_SOLID, 1, RGB(118, 156, 214));
+    HGDIOBJ oldPen = SelectObject(hdc, borderPen);
+    HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    Rectangle(hdc, bubble.left, bubble.top, bubble.right, bubble.bottom);
+    SelectObject(hdc, oldBrush);
+    SelectObject(hdc, oldPen);
+    DeleteObject(borderPen);
+
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, RGB(242, 246, 252));
+    RECT tr{ bubble.left + kPadX, bubble.top + kPadY, bubble.right - kPadX, bubble.bottom - kPadY };
+    DrawTextW(hdc, label.c_str(), -1, &tr, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+    SelectObject(hdc, oldFont);
+}
+
+static void DrawEmbeddedPianoSpecStemButton(HDC hdc, const RECT& rc, int stemIdx, bool selected)
+{
+    if (!hdc || rc.right <= rc.left || rc.bottom <= rc.top)
+        return;
+
+    const COLORREF accent = GetStemButtonColorByIndex(stemIdx);
+    const COLORREF fill = selected ? BlendUiColor(accent, RGB(24, 26, 32), 0.48) : RGB(26, 28, 34);
+    const COLORREF border = selected ? BlendUiColor(accent, RGB(255, 255, 255), 0.28) : RGB(82, 86, 96);
+    const COLORREF text = selected ? RGB(248, 248, 248) : RGB(210, 214, 220);
+
+    HBRUSH bg = CreateSolidBrush(fill);
+    FillRect(hdc, &rc, bg);
+    DeleteObject(bg);
+
+    HPEN pen = CreatePen(PS_SOLID, 1, border);
+    HGDIOBJ oldPen = SelectObject(hdc, pen);
+    HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    Rectangle(hdc, rc.left, rc.top, rc.right, rc.bottom);
+
+    RECT chip{ rc.left + 4, rc.top + 4, rc.left + 12, rc.bottom - 4 };
+    HBRUSH chipBrush = CreateSolidBrush(accent);
+    FillRect(hdc, &chip, chipBrush);
+    DeleteObject(chipBrush);
+
+    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(SYSTEM_FONT));
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, text);
+    RECT tr = rc;
+    tr.left = chip.right + 4;
+    DrawTextW(hdc, GetStemShortLabelByIndex(stemIdx), -1, &tr,
+        DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+
+    if (selected)
+    {
+        HPEN hiPen = CreatePen(PS_SOLID, 1, RGB(245, 245, 245));
+        HGDIOBJ prevPen = SelectObject(hdc, hiPen);
+        MoveToEx(hdc, rc.left + 1, rc.top + 1, NULL);
+        LineTo(hdc, rc.right - 1, rc.top + 1);
+        SelectObject(hdc, prevPen);
+        DeleteObject(hiPen);
+    }
+
+    SelectObject(hdc, oldFont);
+    SelectObject(hdc, oldBrush);
+    SelectObject(hdc, oldPen);
+    DeleteObject(pen);
 }
 
 static void DrawEmbeddedPianoSpecCheckbox(HDC hdc, const RECT& rc, bool checked, const wchar_t* label)
@@ -4508,6 +5418,1001 @@ static void DrawEmbeddedPianoSpecCheckbox(HDC hdc, const RECT& rc, bool checked,
     DeleteObject(pen);
 }
 
+namespace
+{
+    constexpr wchar_t kGridBpmDialogClassName[] = L"WaveOutGridBpmDialog";
+    constexpr int kGridBpmCtrlPrompt = 9301;
+    constexpr int kGridBpmCtrlHint = 9302;
+    constexpr int kGridBpmCtrlEdit = 9303;
+    constexpr int kGridBpmCtrlApply = 9304;
+    constexpr int kGridBpmCtrlCancel = 9305;
+
+    struct GridBpmDialogState
+    {
+        HWND owner = nullptr;
+        HWND hPrompt = nullptr;
+        HWND hHint = nullptr;
+        HWND hEdit = nullptr;
+        HWND hApply = nullptr;
+        HWND hCancel = nullptr;
+        double initialBpm = 120.0;
+        double resultBpm = 120.0;
+        bool accepted = false;
+    };
+
+    constexpr wchar_t kMidiTrackImportDialogClassName[] = L"WaveOutMidiTrackImportDialog";
+    constexpr int kMidiTrackImportCtrlFileLabel = 9201;
+    constexpr int kMidiTrackImportCtrlHintLabel = 9202;
+    constexpr int kMidiTrackImportCtrlTrackList = 9203;
+    constexpr int kMidiTrackImportCtrlSelectAll = 9204;
+    constexpr int kMidiTrackImportCtrlClear = 9205;
+    constexpr int kMidiTrackImportCtrlImport = 9206;
+    constexpr int kMidiTrackImportCtrlCancel = 9207;
+
+    struct MidiTrackImportDialogState
+    {
+        HWND owner = nullptr;
+        HWND hFileLabel = nullptr;
+        HWND hHintLabel = nullptr;
+        HWND hTrackList = nullptr;
+        HWND hSelectAll = nullptr;
+        HWND hClear = nullptr;
+        HWND hImport = nullptr;
+        HWND hCancel = nullptr;
+        std::filesystem::path midiPath;
+        std::vector<MidiImportTrackInfo> tracks;
+        std::vector<int> selectedTrackIndices;
+        bool accepted = false;
+    };
+}
+
+static bool IsMidiFilePath(const std::filesystem::path& filePath)
+{
+    std::wstring ext = filePath.extension().wstring();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](wchar_t ch)
+    {
+        return static_cast<wchar_t>(std::towlower(ch));
+    });
+    return ext == L".mid" || ext == L".midi";
+}
+
+static std::wstring DescribeMidiChannelMask(std::uint16_t channelMask)
+{
+    if (channelMask == 0)
+        return L"Ch -";
+
+    std::wstring out = L"Ch ";
+    bool first = true;
+    for (int channel = 0; channel < 16; ++channel)
+    {
+        if ((channelMask & (static_cast<std::uint16_t>(1u) << channel)) == 0)
+            continue;
+        if (!first)
+            out += L",";
+        out += std::to_wstring(channel + 1);
+        first = false;
+    }
+    return out;
+}
+
+static void ApplyPianoRollMarqueeSelection(ThreadParam* tp, int tab)
+{
+    if (!tp)
+        return;
+
+    ClearPianoRollNoteSelection(tp->pianoRollNotes);
+    const double minSeconds = (std::min)(tp->pianoNoteMarqueeStartSeconds, tp->pianoNoteMarqueeCurrentSeconds);
+    const double maxSeconds = (std::max)(tp->pianoNoteMarqueeStartSeconds, tp->pianoNoteMarqueeCurrentSeconds);
+    const int minMidi = (std::min)(tp->pianoNoteMarqueeStartMidi, tp->pianoNoteMarqueeCurrentMidi);
+    const int maxMidi = (std::max)(tp->pianoNoteMarqueeStartMidi, tp->pianoNoteMarqueeCurrentMidi);
+    if (!std::isfinite(minSeconds) || !std::isfinite(maxSeconds))
+        return;
+
+    for (size_t idx = 0; idx < tp->pianoRollNotes.size(); ++idx)
+    {
+        auto& note = tp->pianoRollNotes[idx];
+        if (!NoteIsVisibleInPianoTab(note, tab))
+            continue;
+        if (!(note.endSeconds >= minSeconds && note.startSeconds <= maxSeconds))
+            continue;
+        if (note.midiNote < minMidi || note.midiNote > maxMidi)
+            continue;
+        note.selected = true;
+    }
+}
+
+static std::wstring FormatMidiTrackListLabel(const MidiImportTrackInfo& track)
+{
+    std::wstring label = L"Track " + std::to_wstring(track.trackIndex + 1);
+    if (!track.name.empty())
+        label += L" - " + track.name;
+    label += L"  |  " + std::to_wstring(track.noteCount);
+    label += (track.noteCount == 1) ? L" note" : L" notes";
+    label += L"  |  " + DescribeMidiChannelMask(track.channelMask);
+    return label;
+}
+
+static void CenterWindowToOwner(HWND hwnd, HWND owner)
+{
+    if (!hwnd)
+        return;
+
+    RECT rc{};
+    GetWindowRect(hwnd, &rc);
+    const int width = rc.right - rc.left;
+    const int height = rc.bottom - rc.top;
+
+    RECT targetRc{};
+    if (owner && IsWindow(owner))
+        GetWindowRect(owner, &targetRc);
+    else
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &targetRc, 0);
+
+    const int x = targetRc.left + ((targetRc.right - targetRc.left) - width) / 2;
+    const int y = targetRc.top + ((targetRc.bottom - targetRc.top) - height) / 2;
+    SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+static void SetControlFont(HWND hwnd, HFONT font)
+{
+    if (hwnd && font)
+        SendMessageW(hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+}
+
+static HMENU ControlIdMenuHandle(int controlId)
+{
+    return reinterpret_cast<HMENU>(static_cast<INT_PTR>(controlId));
+}
+
+static bool GridBpmDialogCommit(HWND hwnd, GridBpmDialogState* state)
+{
+    if (!state || !state->hEdit)
+        return false;
+
+    wchar_t valueBuf[128]{};
+    GetWindowTextW(state->hEdit, valueBuf, static_cast<int>(std::size(valueBuf)));
+    std::wstring text(valueBuf);
+    const auto notSpace = [](wchar_t ch)
+    {
+        return std::iswspace(static_cast<unsigned int>(ch)) == 0;
+    };
+    const auto beginIt = std::find_if(text.begin(), text.end(), notSpace);
+    const auto endIt = std::find_if(text.rbegin(), text.rend(), notSpace).base();
+    if (beginIt >= endIt)
+    {
+        MessageBoxW(hwnd, L"Enter a BPM value between 1 and 480.", L"Set BPM", MB_OK | MB_ICONINFORMATION);
+        return false;
+    }
+    text.assign(beginIt, endIt);
+
+    wchar_t* endPtr = nullptr;
+    const double bpm = std::wcstod(text.c_str(), &endPtr);
+    while (endPtr && *endPtr != 0 && std::iswspace(static_cast<unsigned int>(*endPtr)) != 0)
+        ++endPtr;
+    if (!std::isfinite(bpm) || bpm < 1.0 || bpm > 480.0 || (endPtr && *endPtr != 0))
+    {
+        MessageBoxW(hwnd, L"Enter a valid BPM value between 1 and 480.", L"Set BPM", MB_OK | MB_ICONINFORMATION);
+        return false;
+    }
+
+    state->resultBpm = bpm;
+    state->accepted = true;
+    DestroyWindow(hwnd);
+    return true;
+}
+
+static LRESULT CALLBACK GridBpmDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    auto* state = reinterpret_cast<GridBpmDialogState*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+    switch (uMsg)
+    {
+    case WM_NCCREATE:
+    {
+        const CREATESTRUCTW* cs = reinterpret_cast<const CREATESTRUCTW*>(lParam);
+        auto* createState = cs ? reinterpret_cast<GridBpmDialogState*>(cs->lpCreateParams) : nullptr;
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(createState));
+        return TRUE;
+    }
+
+    case WM_CREATE:
+    {
+        if (!state)
+            return -1;
+
+        RECT rc{};
+        GetClientRect(hwnd, &rc);
+        const int margin = 16;
+        const int buttonW = 96;
+        const int buttonH = 28;
+        const HFONT font = GetWaveUiMessageFont();
+
+        wchar_t initialBuf[64]{};
+        const double initialBpm = (std::isfinite(state->initialBpm) && state->initialBpm > 0.0) ? state->initialBpm : 120.0;
+        swprintf_s(initialBuf, L"%.3f", initialBpm);
+
+        state->hPrompt = CreateWindowExW(
+            0, L"STATIC", L"Manual BPM",
+            WS_CHILD | WS_VISIBLE,
+            margin, margin, rc.right - margin * 2, 20,
+            hwnd, ControlIdMenuHandle(kGridBpmCtrlPrompt), GetModuleHandleW(nullptr), nullptr);
+        state->hHint = CreateWindowExW(
+            0, L"STATIC", L"Set the beat grid tempo directly. This only changes BPM for now.",
+            WS_CHILD | WS_VISIBLE,
+            margin, margin + 24, rc.right - margin * 2, 32,
+            hwnd, ControlIdMenuHandle(kGridBpmCtrlHint), GetModuleHandleW(nullptr), nullptr);
+        state->hEdit = CreateWindowExW(
+            WS_EX_CLIENTEDGE, L"EDIT", initialBuf,
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+            margin, margin + 64, rc.right - margin * 2, 28,
+            hwnd, ControlIdMenuHandle(kGridBpmCtrlEdit), GetModuleHandleW(nullptr), nullptr);
+        state->hCancel = CreateWindowExW(
+            0, L"BUTTON", L"Cancel",
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            rc.right - margin - buttonW * 2 - 8, rc.bottom - margin - buttonH, buttonW, buttonH,
+            hwnd, ControlIdMenuHandle(kGridBpmCtrlCancel), GetModuleHandleW(nullptr), nullptr);
+        state->hApply = CreateWindowExW(
+            0, L"BUTTON", L"Apply",
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
+            rc.right - margin - buttonW, rc.bottom - margin - buttonH, buttonW, buttonH,
+            hwnd, ControlIdMenuHandle(kGridBpmCtrlApply), GetModuleHandleW(nullptr), nullptr);
+
+        SetControlFont(state->hPrompt, font);
+        SetControlFont(state->hHint, font);
+        SetControlFont(state->hEdit, font);
+        SetControlFont(state->hCancel, font);
+        SetControlFont(state->hApply, font);
+        SetFocus(state->hEdit);
+        SendMessageW(state->hEdit, EM_SETSEL, 0, -1);
+        return 0;
+    }
+
+    case WM_COMMAND:
+    {
+        if (!state)
+            return 0;
+
+        const int ctrlId = LOWORD(wParam);
+        const int notifyCode = HIWORD(wParam);
+        switch (ctrlId)
+        {
+        case kGridBpmCtrlApply:
+            GridBpmDialogCommit(hwnd, state);
+            return 0;
+        case kGridBpmCtrlCancel:
+            state->accepted = false;
+            DestroyWindow(hwnd);
+            return 0;
+        case kGridBpmCtrlEdit:
+            if (notifyCode == EN_MAXTEXT)
+                return 0;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return 0;
+
+    case WM_DESTROY:
+        return 0;
+
+    default:
+        break;
+    }
+
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+}
+
+static bool EnsureGridBpmDialogClassRegistered()
+{
+    static bool sRegistered = false;
+    if (sRegistered)
+        return true;
+
+    WNDCLASSW wc{};
+    wc.lpfnWndProc = GridBpmDialogProc;
+    wc.hInstance = GetModuleHandleW(nullptr);
+    wc.lpszClassName = kGridBpmDialogClassName;
+    wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+    wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+
+    if (!RegisterClassW(&wc))
+    {
+        const DWORD err = GetLastError();
+        if (err != ERROR_CLASS_ALREADY_EXISTS)
+            return false;
+    }
+
+    sRegistered = true;
+    return true;
+}
+
+static bool PromptForManualGridBpm(HWND owner, double currentBpm, double& outBpm)
+{
+    outBpm = currentBpm;
+
+    if (!EnsureGridBpmDialogClassRegistered())
+    {
+        MessageBoxW(owner, L"Couldn't create the BPM dialog.", L"Set BPM", MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    constexpr int kClientW = 360;
+    constexpr int kClientH = 170;
+    RECT wr{ 0, 0, kClientW, kClientH };
+    const DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    const DWORD exStyle = WS_EX_CONTROLPARENT | WS_EX_DLGMODALFRAME;
+    AdjustWindowRectEx(&wr, style, FALSE, exStyle);
+
+    GridBpmDialogState state{};
+    state.owner = owner;
+    state.initialBpm = currentBpm;
+    state.resultBpm = currentBpm;
+
+    HWND hwndDialog = CreateWindowExW(
+        exStyle,
+        kGridBpmDialogClassName,
+        L"Set Grid BPM",
+        style,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        wr.right - wr.left, wr.bottom - wr.top,
+        owner,
+        nullptr,
+        GetModuleHandleW(nullptr),
+        &state);
+
+    if (!hwndDialog)
+    {
+        MessageBoxW(owner, L"Couldn't create the BPM dialog.", L"Set BPM", MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    CenterWindowToOwner(hwndDialog, owner);
+    if (owner && IsWindow(owner))
+        EnableWindow(owner, FALSE);
+
+    ShowWindow(hwndDialog, SW_SHOW);
+    UpdateWindow(hwndDialog);
+
+    MSG msg{};
+    BOOL gm = TRUE;
+    while (IsWindow(hwndDialog) && (gm = GetMessageW(&msg, nullptr, 0, 0)) != 0)
+    {
+        if (gm == -1)
+            break;
+        if (!IsDialogMessageW(hwndDialog, &msg))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    if (owner && IsWindow(owner))
+    {
+        EnableWindow(owner, TRUE);
+        SetForegroundWindow(owner);
+    }
+
+    if (gm == 0)
+        PostQuitMessage(static_cast<int>(msg.wParam));
+
+    outBpm = state.resultBpm;
+    return state.accepted;
+}
+
+static void MidiTrackImportDialogSelectAll(MidiTrackImportDialogState* state, bool selected)
+{
+    if (!state || !state->hTrackList)
+        return;
+    SendMessageW(state->hTrackList, LB_SETSEL, selected ? TRUE : FALSE, static_cast<LPARAM>(-1));
+}
+
+static bool MidiTrackImportDialogCommitSelection(HWND hwnd, MidiTrackImportDialogState* state)
+{
+    if (!state || !state->hTrackList)
+        return false;
+
+    const int selCount = static_cast<int>(SendMessageW(state->hTrackList, LB_GETSELCOUNT, 0, 0));
+    if (selCount <= 0)
+    {
+        MessageBoxW(hwnd, L"Select at least one MIDI track to import.", L"MIDI Import", MB_OK | MB_ICONINFORMATION);
+        return false;
+    }
+
+    std::vector<int> selItems(static_cast<std::size_t>(selCount), 0);
+    if (SendMessageW(state->hTrackList, LB_GETSELITEMS, selCount, reinterpret_cast<LPARAM>(selItems.data())) == LB_ERR)
+    {
+        MessageBoxW(hwnd, L"Couldn't read the selected MIDI tracks.", L"MIDI Import", MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    state->selectedTrackIndices.clear();
+    state->selectedTrackIndices.reserve(static_cast<std::size_t>(selCount));
+    for (int itemIndex : selItems)
+    {
+        const LRESULT itemData = SendMessageW(state->hTrackList, LB_GETITEMDATA, itemIndex, 0);
+        if (itemData != LB_ERR)
+            state->selectedTrackIndices.push_back(static_cast<int>(itemData));
+    }
+
+    if (state->selectedTrackIndices.empty())
+    {
+        MessageBoxW(hwnd, L"Select at least one MIDI track to import.", L"MIDI Import", MB_OK | MB_ICONINFORMATION);
+        return false;
+    }
+
+    state->accepted = true;
+    DestroyWindow(hwnd);
+    return true;
+}
+
+static LRESULT CALLBACK MidiTrackImportDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    auto* state = reinterpret_cast<MidiTrackImportDialogState*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+    switch (uMsg)
+    {
+    case WM_NCCREATE:
+    {
+        const CREATESTRUCTW* cs = reinterpret_cast<const CREATESTRUCTW*>(lParam);
+        auto* createState = cs ? reinterpret_cast<MidiTrackImportDialogState*>(cs->lpCreateParams) : nullptr;
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(createState));
+        return TRUE;
+    }
+
+    case WM_CREATE:
+    {
+        if (!state)
+            return -1;
+
+        RECT rc{};
+        GetClientRect(hwnd, &rc);
+        const int margin = 16;
+        const int buttonW = 100;
+        const int buttonH = 28;
+        const int gap = 8;
+        const int listTop = 84;
+        const int bottomRowH = buttonH;
+        const int listBottom = rc.bottom - margin - bottomRowH - 12;
+        const int listH = (std::max)(120, listBottom - listTop);
+
+        const HFONT font = GetWaveUiMessageFont();
+        const std::wstring fileLabel = L"Dropped MIDI: " + state->midiPath.filename().wstring();
+        const wchar_t* hintText = L"Track filter only for now. Imported notes blend with existing data and use the current stem color.";
+
+        state->hFileLabel = CreateWindowExW(
+            0, L"STATIC", fileLabel.c_str(),
+            WS_CHILD | WS_VISIBLE | SS_PATHELLIPSIS,
+            margin, margin, rc.right - margin * 2, 20,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlFileLabel), GetModuleHandleW(nullptr), nullptr);
+        state->hHintLabel = CreateWindowExW(
+            0, L"STATIC", hintText,
+            WS_CHILD | WS_VISIBLE,
+            margin, margin + 28, rc.right - margin * 2, 40,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlHintLabel), GetModuleHandleW(nullptr), nullptr);
+        state->hTrackList = CreateWindowExW(
+            WS_EX_CLIENTEDGE, L"LISTBOX", nullptr,
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_EXTENDEDSEL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY,
+            margin, listTop, rc.right - margin * 2, listH,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlTrackList), GetModuleHandleW(nullptr), nullptr);
+        state->hSelectAll = CreateWindowExW(
+            0, L"BUTTON", L"All tracks",
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            margin, rc.bottom - margin - bottomRowH, buttonW, buttonH,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlSelectAll), GetModuleHandleW(nullptr), nullptr);
+        state->hClear = CreateWindowExW(
+            0, L"BUTTON", L"Clear",
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            margin + buttonW + gap, rc.bottom - margin - bottomRowH, 80, buttonH,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlClear), GetModuleHandleW(nullptr), nullptr);
+        state->hCancel = CreateWindowExW(
+            0, L"BUTTON", L"Cancel",
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            rc.right - margin - buttonW * 2 - gap, rc.bottom - margin - bottomRowH, buttonW, buttonH,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlCancel), GetModuleHandleW(nullptr), nullptr);
+        state->hImport = CreateWindowExW(
+            0, L"BUTTON", L"Import",
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
+            rc.right - margin - buttonW, rc.bottom - margin - bottomRowH, buttonW, buttonH,
+            hwnd, ControlIdMenuHandle(kMidiTrackImportCtrlImport), GetModuleHandleW(nullptr), nullptr);
+
+        SetControlFont(state->hFileLabel, font);
+        SetControlFont(state->hHintLabel, font);
+        SetControlFont(state->hTrackList, font);
+        SetControlFont(state->hSelectAll, font);
+        SetControlFont(state->hClear, font);
+        SetControlFont(state->hCancel, font);
+        SetControlFont(state->hImport, font);
+
+        for (const auto& track : state->tracks)
+        {
+            const std::wstring label = FormatMidiTrackListLabel(track);
+            const LRESULT itemIndex = SendMessageW(state->hTrackList, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+            if (itemIndex != LB_ERR && itemIndex != LB_ERRSPACE)
+            {
+                SendMessageW(state->hTrackList, LB_SETITEMDATA, itemIndex, static_cast<LPARAM>(track.trackIndex));
+                SendMessageW(state->hTrackList, LB_SETSEL, TRUE, itemIndex);
+            }
+        }
+
+        return 0;
+    }
+
+    case WM_COMMAND:
+    {
+        if (!state)
+            return 0;
+
+        const int ctrlId = LOWORD(wParam);
+        const int notifyCode = HIWORD(wParam);
+        switch (ctrlId)
+        {
+        case kMidiTrackImportCtrlSelectAll:
+            MidiTrackImportDialogSelectAll(state, true);
+            return 0;
+        case kMidiTrackImportCtrlClear:
+            MidiTrackImportDialogSelectAll(state, false);
+            return 0;
+        case kMidiTrackImportCtrlCancel:
+            state->accepted = false;
+            DestroyWindow(hwnd);
+            return 0;
+        case kMidiTrackImportCtrlImport:
+            MidiTrackImportDialogCommitSelection(hwnd, state);
+            return 0;
+        case kMidiTrackImportCtrlTrackList:
+            if (notifyCode == LBN_DBLCLK)
+                MidiTrackImportDialogCommitSelection(hwnd, state);
+            return 0;
+        default:
+            break;
+        }
+        break;
+    }
+
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return 0;
+
+    case WM_DESTROY:
+        return 0;
+
+    default:
+        break;
+    }
+
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+}
+
+static bool EnsureMidiTrackImportDialogClassRegistered()
+{
+    static bool sRegistered = false;
+    if (sRegistered)
+        return true;
+
+    WNDCLASSW wc{};
+    wc.lpfnWndProc = MidiTrackImportDialogProc;
+    wc.hInstance = GetModuleHandleW(nullptr);
+    wc.lpszClassName = kMidiTrackImportDialogClassName;
+    wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+    wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+
+    if (!RegisterClassW(&wc))
+    {
+        const DWORD err = GetLastError();
+        if (err != ERROR_CLASS_ALREADY_EXISTS)
+            return false;
+    }
+
+    sRegistered = true;
+    return true;
+}
+
+static bool PromptMidiTrackImportSelection(HWND owner,
+    const std::filesystem::path& midiPath,
+    const std::vector<MidiImportTrackInfo>& tracks,
+    std::vector<int>& outTrackIndices)
+{
+    outTrackIndices.clear();
+    if (tracks.empty())
+        return false;
+
+    if (!EnsureMidiTrackImportDialogClassRegistered())
+    {
+        MessageBoxW(owner, L"Couldn't create the MIDI import dialog.", L"MIDI Import", MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    constexpr int kClientW = 640;
+    constexpr int kClientH = 430;
+    RECT wr{ 0, 0, kClientW, kClientH };
+    const DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    const DWORD exStyle = WS_EX_CONTROLPARENT | WS_EX_DLGMODALFRAME;
+    AdjustWindowRectEx(&wr, style, FALSE, exStyle);
+
+    MidiTrackImportDialogState state{};
+    state.owner = owner;
+    state.midiPath = midiPath;
+    state.tracks = tracks;
+
+    HWND hwndDialog = CreateWindowExW(
+        exStyle,
+        kMidiTrackImportDialogClassName,
+        L"Import MIDI Tracks",
+        style,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        wr.right - wr.left, wr.bottom - wr.top,
+        owner,
+        nullptr,
+        GetModuleHandleW(nullptr),
+        &state);
+
+    if (!hwndDialog)
+    {
+        MessageBoxW(owner, L"Couldn't create the MIDI import dialog.", L"MIDI Import", MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    CenterWindowToOwner(hwndDialog, owner);
+    if (owner && IsWindow(owner))
+        EnableWindow(owner, FALSE);
+
+    ShowWindow(hwndDialog, SW_SHOW);
+    UpdateWindow(hwndDialog);
+
+    MSG msg{};
+    BOOL gm = TRUE;
+    while (IsWindow(hwndDialog) && (gm = GetMessageW(&msg, nullptr, 0, 0)) != 0)
+    {
+        if (gm == -1)
+            break;
+        if (!IsDialogMessageW(hwndDialog, &msg))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    if (owner && IsWindow(owner))
+    {
+        EnableWindow(owner, TRUE);
+        SetForegroundWindow(owner);
+    }
+
+    if (gm == 0)
+        PostQuitMessage(static_cast<int>(msg.wParam));
+
+    outTrackIndices = state.selectedTrackIndices;
+    return state.accepted;
+}
+
+static std::size_t AppendImportedMidiNotesToPianoRoll(ThreadParam* tp,
+    const std::vector<MidiImportedNote>& importedNotes,
+    int stemIndex,
+    double* outFirstImportedStartSeconds = nullptr)
+{
+    if (outFirstImportedStartSeconds)
+        *outFirstImportedStartSeconds = 0.0;
+    if (!tp)
+        return 0;
+
+    ClearPianoRollNoteSelection(tp->pianoRollNotes);
+
+    bool firstImported = true;
+    std::size_t addedCount = 0;
+    for (const auto& imported : importedNotes)
+    {
+        if (!std::isfinite(imported.startSeconds) || !std::isfinite(imported.endSeconds))
+            continue;
+        if (!(imported.endSeconds > imported.startSeconds))
+            continue;
+        if (imported.endSeconds <= 0.0)
+            continue;
+
+        PianoRollRenderer::NoteEvent note{};
+        note.startSeconds = (std::max)(0.0, imported.startSeconds);
+        note.endSeconds = (std::max)(note.startSeconds, imported.endSeconds);
+        if (!(note.endSeconds > note.startSeconds))
+            continue;
+        note.midiNote = std::clamp(imported.midiNote, 0, 127);
+        note.velocity = std::clamp(imported.velocity, 1, 127);
+        note.stemIndex = std::clamp(stemIndex, 0, PianoRollRenderer::NoteStem_Count - 1);
+        note.selected = false;
+        tp->pianoRollNotes.push_back(note);
+
+        if (firstImported)
+        {
+            firstImported = false;
+            if (outFirstImportedStartSeconds)
+                *outFirstImportedStartSeconds = note.startSeconds;
+        }
+
+        ++addedCount;
+    }
+
+    if (addedCount > 0)
+    {
+        RefreshPianoRollTimelineFrames(tp);
+        if (tp->pianoRollNotes.size() > 1)
+        {
+            std::stable_sort(tp->pianoRollNotes.begin(), tp->pianoRollNotes.end(), [](const PianoRollRenderer::NoteEvent& a, const PianoRollRenderer::NoteEvent& b)
+            {
+                if (std::fabs(a.startSeconds - b.startSeconds) > 1e-9)
+                    return a.startSeconds < b.startSeconds;
+                if (a.midiNote != b.midiNote)
+                    return a.midiNote < b.midiNote;
+                if (std::fabs(a.endSeconds - b.endSeconds) > 1e-9)
+                    return a.endSeconds < b.endSeconds;
+                return a.stemIndex < b.stemIndex;
+            });
+        }
+    }
+
+    return addedCount;
+}
+
+static bool HandleDroppedMidiFile(HWND hwnd, ThreadParam* tp, const std::filesystem::path& filePath)
+{
+    if (!hwnd || !tp)
+        return false;
+    if (!IsMidiFilePath(filePath))
+        return false;
+
+    std::vector<MidiImportTrackInfo> tracks;
+    std::wstring errorMessage;
+    if (!MidiMaker::inspectMidiFileTracks(filePath, tracks, &errorMessage))
+    {
+        if (errorMessage.empty())
+            errorMessage = L"Couldn't inspect the dropped MIDI file.";
+        MessageBoxW(hwnd, errorMessage.c_str(), L"MIDI Import Failed", MB_OK | MB_ICONERROR);
+        return true;
+    }
+    if (tracks.empty())
+    {
+        if (errorMessage.empty())
+            errorMessage = L"The MIDI file doesn't contain any importable note tracks.";
+        MessageBoxW(hwnd, errorMessage.c_str(), L"MIDI Import", MB_OK | MB_ICONINFORMATION);
+        return true;
+    }
+
+    std::vector<int> selectedTrackIndices;
+    if (!PromptMidiTrackImportSelection(hwnd, filePath, tracks, selectedTrackIndices))
+        return true;
+
+    MidiImportOptions options{};
+    options.trackIndices = selectedTrackIndices;
+
+    std::vector<MidiImportedNote> importedNotes;
+    errorMessage.clear();
+    if (!MidiMaker::importMidiFileNotes(filePath, options, importedNotes, &errorMessage))
+    {
+        if (errorMessage.empty())
+            errorMessage = L"Couldn't import notes from the dropped MIDI file.";
+        MessageBoxW(hwnd, errorMessage.c_str(), L"MIDI Import Failed", MB_OK | MB_ICONERROR);
+        return true;
+    }
+
+    const int targetStem = EffectivePlacementStemForTab(tp, tp->activePianoRollTab);
+    double firstImportedStartSeconds = 0.0;
+    const std::size_t addedCount = AppendImportedMidiNotesToPianoRoll(tp, importedNotes, targetStem, &firstImportedStartSeconds);
+    if (addedCount == 0)
+    {
+        MessageBoxW(hwnd,
+            L"The selected MIDI tracks didn't contain any importable notes.",
+            L"MIDI Import",
+            MB_OK | MB_ICONINFORMATION);
+        return true;
+    }
+
+    tp->activePianoRollTab = kPianoSpectrogramTabIndex;
+    tp->pianoNotePlacementStem = targetStem;
+    if (!tp->playing.load() && std::isfinite(firstImportedStartSeconds))
+    {
+        const size_t totalFrames = GetTotalFrames(tp);
+        const double maxFrame = (totalFrames > 0) ? static_cast<double>(totalFrames - 1) : 0.0;
+        tp->followPlayhead = false;
+        tp->panOffsetSamples = 0;
+        tp->manualCenterFrame = std::clamp(
+            firstImportedStartSeconds * static_cast<double>(tp->sampleRate),
+            0.0,
+            maxFrame);
+    }
+
+    CloseSharedPianoGridMenu(tp);
+    InvalidateEmbeddedPianoSpec(tp);
+    InvalidateWaveRegion(hwnd, tp);
+    return true;
+}
+
+static std::wstring SanitizeMidiFileNameComponent(std::wstring text)
+{
+    for (wchar_t& ch : text)
+    {
+        switch (ch)
+        {
+        case L'\\':
+        case L'/':
+        case L':':
+        case L'*':
+        case L'?':
+        case L'"':
+        case L'<':
+        case L'>':
+        case L'|':
+            ch = L'_';
+            break;
+        default:
+            break;
+        }
+    }
+
+    while (!text.empty() && (text.back() == L'.' || text.back() == L' '))
+        text.pop_back();
+    while (!text.empty() && text.front() == L' ')
+        text.erase(text.begin());
+
+    return text.empty() ? L"waveOut_notes" : text;
+}
+
+static std::wstring SuggestedMidiExportBaseName(const ThreadParam* tp)
+{
+    if (tp && !tp->sourceFilePathHint.empty())
+    {
+        const std::filesystem::path p(tp->sourceFilePathHint);
+        const std::wstring stem = p.stem().wstring();
+        if (!stem.empty())
+            return SanitizeMidiFileNameComponent(stem);
+    }
+    if (tp && !tp->title.empty())
+        return SanitizeMidiFileNameComponent(tp->title);
+    return L"waveOut_notes";
+}
+
+static bool PromptMidiExportPath(HWND hwnd, const ThreadParam* tp, const std::wstring& suggestedFileName, std::filesystem::path& outPath)
+{
+    outPath.clear();
+
+    wchar_t fileBuf[1024]{};
+    std::wstring fileName = suggestedFileName;
+    if (fileName.empty())
+        fileName = L"waveOut_notes.mid";
+    if (fileName.find(L".mid") == std::wstring::npos)
+        fileName += L".mid";
+    wcsncpy_s(fileBuf, fileName.c_str(), _TRUNCATE);
+
+    std::wstring initialDir;
+    if (tp && !tp->sourceFilePathHint.empty())
+    {
+        const std::filesystem::path src(tp->sourceFilePathHint);
+        if (!src.parent_path().empty())
+            initialDir = src.parent_path().wstring();
+    }
+
+    OPENFILENAMEW ofn{};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = L"MIDI Files (*.mid)\0*.mid\0All Files (*.*)\0*.*\0";
+    ofn.lpstrDefExt = L"mid";
+    ofn.lpstrFile = fileBuf;
+    ofn.nMaxFile = static_cast<DWORD>(std::size(fileBuf));
+    ofn.lpstrInitialDir = initialDir.empty() ? nullptr : initialDir.c_str();
+    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+    ofn.lpstrTitle = L"Export MIDI";
+
+    if (!GetSaveFileNameW(&ofn))
+        return false;
+
+    outPath = std::filesystem::path(fileBuf);
+    if (outPath.extension().empty())
+        outPath.replace_extension(L".mid");
+    return true;
+}
+
+static void BuildPlacedNotesForMidiExport(const ThreadParam* tp, std::vector<MidiExportNote>& outNotes)
+{
+    outNotes.clear();
+    if (!tp)
+        return;
+
+    outNotes.reserve(tp->pianoRollNotes.size());
+    for (const auto& note : tp->pianoRollNotes)
+    {
+        if (!(note.endSeconds > note.startSeconds))
+            continue;
+        MidiExportNote exportNote{};
+        exportNote.startSeconds = note.startSeconds;
+        exportNote.endSeconds = note.endSeconds;
+        exportNote.midiNote = note.midiNote;
+        exportNote.velocity = note.velocity;
+        exportNote.stemIndex = std::clamp(note.stemIndex, 0, PianoRollRenderer::NoteStem_Count - 1);
+        outNotes.push_back(exportNote);
+    }
+}
+
+static MidiExportOptions BuildMidiExportOptions(const ThreadParam* tp)
+{
+    MidiExportOptions options{};
+    options.bpm = (tp && std::isfinite(tp->gridBpm) && tp->gridBpm > 0.0) ? tp->gridBpm : 120.0;
+    options.beatsPerBar = tp ? (std::max)(1, tp->gridBeatsPerBar) : 4;
+    options.ticksPerQuarter = 480;
+    return options;
+}
+
+static void ExportPlacedNotesToSingleMidi(HWND hwnd, ThreadParam* tp)
+{
+    if (!tp || tp->pianoRollNotes.empty())
+    {
+        MessageBoxW(hwnd, L"There are no placed notes to export yet.", L"MIDI Export", MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+
+    std::filesystem::path filePath;
+    const std::wstring suggested = SuggestedMidiExportBaseName(tp) + L".mid";
+    if (!PromptMidiExportPath(hwnd, tp, suggested, filePath))
+        return;
+
+    std::vector<MidiExportNote> notes;
+    BuildPlacedNotesForMidiExport(tp, notes);
+    if (notes.empty())
+    {
+        MessageBoxW(hwnd, L"There are no valid note lengths to export yet.", L"MIDI Export", MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+
+    std::wstring errorMessage;
+    if (!MidiMaker::exportPlacedNotesToMidiFile(filePath, notes, BuildMidiExportOptions(tp), &errorMessage))
+    {
+        if (errorMessage.empty())
+            errorMessage = L"Couldn't write the consolidated MIDI file.";
+        MessageBoxW(hwnd, errorMessage.c_str(), L"MIDI Export Failed", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    const std::wstring message = L"Saved consolidated MIDI to:\n" + filePath.wstring();
+    MessageBoxW(hwnd, message.c_str(), L"MIDI Export", MB_OK | MB_ICONINFORMATION);
+}
+
+static void ExportPlacedNotesToStemMidiSet(HWND hwnd, ThreadParam* tp)
+{
+    if (!tp || tp->pianoRollNotes.empty())
+    {
+        MessageBoxW(hwnd, L"There are no placed notes to export yet.", L"MIDI Export", MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+
+    std::filesystem::path filePath;
+    const std::wstring suggested = SuggestedMidiExportBaseName(tp) + L"_stems.mid";
+    if (!PromptMidiExportPath(hwnd, tp, suggested, filePath))
+        return;
+
+    std::vector<MidiExportNote> notes;
+    BuildPlacedNotesForMidiExport(tp, notes);
+    if (notes.empty())
+    {
+        MessageBoxW(hwnd, L"There are no valid note lengths to export yet.", L"MIDI Export", MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+
+    std::vector<std::filesystem::path> writtenPaths;
+    std::wstring errorMessage;
+    if (!MidiMaker::exportPlacedNotesToStemMidiFiles(filePath, notes, BuildMidiExportOptions(tp), &writtenPaths, &errorMessage))
+    {
+        if (errorMessage.empty())
+            errorMessage = L"Couldn't write the stem MIDI files.";
+        MessageBoxW(hwnd, errorMessage.c_str(), L"MIDI Export Failed", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    std::wstring message = L"Saved stem MIDI files:";
+    for (const auto& path : writtenPaths)
+        message += L"\n" + path.wstring();
+    MessageBoxW(hwnd, message.c_str(), L"MIDI Export", MB_OK | MB_ICONINFORMATION);
+}
+
 static bool HandleEmbeddedPianoSpecClick(HWND hwnd, ThreadParam* tp, const RECT& pianoRc, POINT pt)
 {
     if (!tp || !hwnd)
@@ -4530,6 +6435,28 @@ static bool HandleEmbeddedPianoSpecClick(HWND hwnd, ThreadParam* tp, const RECT&
                 InvalidateRect(hwnd, &leftRc, FALSE);
             return true;
         }
+    }
+    for (int stemIdx = 0; stemIdx < PianoRollRenderer::NoteStem_Count; ++stemIdx)
+    {
+        const RECT& rcStem = tp->embeddedPianoSpecRcStemButtons[stemIdx];
+        if (rcStem.right > rcStem.left && rcStem.bottom > rcStem.top && PtInRect(&rcStem, pt))
+        {
+            tp->pianoNotePlacementStem = stemIdx;
+            InvalidateWaveRegion(hwnd, tp);
+            return true;
+        }
+    }
+    if (tp->embeddedPianoSpecRcExportAllButton.right > tp->embeddedPianoSpecRcExportAllButton.left &&
+        PtInRect(&tp->embeddedPianoSpecRcExportAllButton, pt))
+    {
+        ExportPlacedNotesToSingleMidi(hwnd, tp);
+        return true;
+    }
+    if (tp->embeddedPianoSpecRcExportStemButton.right > tp->embeddedPianoSpecRcExportStemButton.left &&
+        PtInRect(&tp->embeddedPianoSpecRcExportStemButton, pt))
+    {
+        ExportPlacedNotesToStemMidiSet(hwnd, tp);
+        return true;
     }
     if (tp->embeddedPianoSpecRcProcessedToggle.right > tp->embeddedPianoSpecRcProcessedToggle.left &&
         PtInRect(&tp->embeddedPianoSpecRcProcessedToggle, pt))
@@ -4581,6 +6508,23 @@ static bool HandleEmbeddedPianoSpecClick(HWND hwnd, ThreadParam* tp, const RECT&
         }
         OpenSharedPianoGridMenu(tp, tp->embeddedPianoSpecRcGridButton, clientRc);
         InvalidateRect(hwnd, &tp->sharedPianoGridMenuRc, FALSE);
+        return true;
+    }
+    if (tp->embeddedPianoSpecRcBpmButton.right > tp->embeddedPianoSpecRcBpmButton.left &&
+        PtInRect(&tp->embeddedPianoSpecRcBpmButton, pt))
+    {
+        double bpm = (std::isfinite(tp->gridBpm) && tp->gridBpm > 0.0) ? tp->gridBpm : 120.0;
+        if (PromptForManualGridBpm(hwnd, bpm, bpm))
+            ApplyManualGridBpm(hwnd, tp, bpm);
+        return true;
+    }
+    if (tp->embeddedPianoSpecRcModeButton.right > tp->embeddedPianoSpecRcModeButton.left &&
+        PtInRect(&tp->embeddedPianoSpecRcModeButton, pt))
+    {
+        tp->pianoNoteEditMode = (tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select)
+            ? ThreadParam::PianoNoteEdit_Place
+            : ThreadParam::PianoNoteEdit_Select;
+        InvalidateWaveRegion(hwnd, tp);
         return true;
     }
     return false;
@@ -4793,11 +6737,31 @@ static void EmbeddedPianoSpecComputeColumn(ThreadParam* tp, double centerFrameD,
     const double hzPerBin = (double)tp->sampleRate / (double)nfft;
     const double midiSpan = (double)(std::max)(1, tp->embeddedPianoSpecMidiMax - tp->embeddedPianoSpecMidiMin);
 
-    auto rowForMidi = [&](double midi) -> int
+    auto rowPosForMidi = [&](double midi) -> double
     {
         const double yNorm = ((double)tp->embeddedPianoSpecMidiMax - midi) / midiSpan;
-        int y = (int)std::lround(yNorm * (double)(plotH - 1));
-        return (std::max)(0, (std::min)(plotH - 1, y));
+        return std::clamp(yNorm * (double)(plotH - 1), 0.0, (double)(plotH - 1));
+    };
+
+    auto splatDbAtRow = [&](double rowPos, double db)
+    {
+        const int base = (int)std::floor(rowPos);
+        for (int y = base - 2; y <= base + 2; ++y)
+        {
+            if (y < 0 || y >= plotH)
+                continue;
+
+            const double dist = std::fabs((double)y - rowPos);
+            if (dist > 2.0)
+                continue;
+
+            double attenuationDb = dist * 5.0;
+            if (dist > 1.0)
+                attenuationDb += (dist - 1.0) * 2.0;
+
+            tp->embeddedPianoSpecRowDbScratch[(std::size_t)y] =
+                (std::max)(tp->embeddedPianoSpecRowDbScratch[(std::size_t)y], db - attenuationDb);
+        }
     };
 
     const int kMax = nfft / 2;
@@ -4820,27 +6784,41 @@ static void EmbeddedPianoSpecComputeColumn(ThreadParam* tp, double centerFrameD,
         double db = 20.0 * std::log10(amp + 1e-12);
         if (!std::isfinite(db)) db = -300.0;
 
-        const int y = rowForMidi(midi);
-        tp->embeddedPianoSpecRowDbScratch[(std::size_t)y] =
-            (std::max)(tp->embeddedPianoSpecRowDbScratch[(std::size_t)y], db);
-        if (y > 0)
-            tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y - 1)] =
-            (std::max)(tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y - 1)], db - 2.0);
-        if (y + 1 < plotH)
-            tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y + 1)] =
-            (std::max)(tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y + 1)], db - 2.0);
+        splatDbAtRow(rowPosForMidi(midi), db);
     }
 
-    for (int y = 1; y + 1 < plotH; ++y)
-    {
-        const double d0 = tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y - 1)] - 3.0;
-        const double d1 = tp->embeddedPianoSpecRowDbScratch[(std::size_t)y];
-        const double d2 = tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y + 1)] - 3.0;
-        tp->embeddedPianoSpecRowDbScratch[(std::size_t)y] = (std::max)(d1, (std::max)(d0, d2));
-    }
+    for (int y = 1; y < plotH; ++y)
+        tp->embeddedPianoSpecRowDbScratch[(std::size_t)y] =
+        (std::max)(tp->embeddedPianoSpecRowDbScratch[(std::size_t)y],
+            tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y - 1)] - 2.8);
+
+    for (int y = plotH - 2; y >= 0; --y)
+        tp->embeddedPianoSpecRowDbScratch[(std::size_t)y] =
+        (std::max)(tp->embeddedPianoSpecRowDbScratch[(std::size_t)y],
+            tp->embeddedPianoSpecRowDbScratch[(std::size_t)(y + 1)] - 2.8);
 
     for (int y = 0; y < plotH; ++y)
         outCol[(std::size_t)y] = EmbeddedPianoSpecHeatColor(tp->embeddedPianoSpecRowDbScratch[(std::size_t)y], tp->embeddedPianoSpecDbRange);
+}
+
+static int EmbeddedPianoSpecRenderWidthForPlotWidth(int plotW)
+{
+    plotW = (std::max)(0, plotW);
+    if (plotW <= 0)
+        return 0;
+    if (plotW > INT_MAX / kEmbeddedPianoSpecRenderScaleX)
+        return INT_MAX;
+    return plotW * kEmbeddedPianoSpecRenderScaleX;
+}
+
+static int EmbeddedPianoSpecRenderHeightForPlotHeight(int plotH)
+{
+    plotH = (std::max)(0, plotH);
+    if (plotH <= 0)
+        return 0;
+    if (plotH > INT_MAX / kEmbeddedPianoSpecRenderScaleY)
+        return INT_MAX;
+    return plotH * kEmbeddedPianoSpecRenderScaleY;
 }
 
 static void EmbeddedPianoSpecEnsureImage(ThreadParam* tp, int w, int h)
@@ -4907,8 +6885,10 @@ static void EmbeddedPianoSpecWriteColumn(ThreadParam* tp, int x, const std::vect
 static void RebuildEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, double tRight, int plotW, int plotH)
 {
     if (!tp) return;
-    EmbeddedPianoSpecEnsureImage(tp, plotW, plotH);
-    if (plotW <= 0 || plotH <= 0) return;
+    const int renderW = EmbeddedPianoSpecRenderWidthForPlotWidth(plotW);
+    const int renderH = EmbeddedPianoSpecRenderHeightForPlotHeight(plotH);
+    EmbeddedPianoSpecEnsureImage(tp, renderW, renderH);
+    if (renderW <= 0 || renderH <= 0) return;
 
     EmbeddedPianoSpecClearImage(tp);
     if (!std::isfinite(tLeft) || !std::isfinite(tRight) || !(tRight > tLeft) || tp->sampleRate <= 0)
@@ -4919,13 +6899,13 @@ static void RebuildEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doub
         return;
     }
 
-    const double secPerCol = (tRight - tLeft) / (double)(std::max)(1, plotW);
+    const double secPerCol = (tRight - tLeft) / (double)(std::max)(1, renderW);
     std::vector<uint32_t> col;
-    col.reserve((std::size_t)plotH);
-    for (int x = 0; x < plotW; ++x)
+    col.reserve((std::size_t)renderH);
+    for (int x = 0; x < renderW; ++x)
     {
         const double t = tLeft + (static_cast<double>(x) + 0.5) * secPerCol;
-        EmbeddedPianoSpecComputeColumn(tp, t * (double)tp->sampleRate, plotH, col);
+        EmbeddedPianoSpecComputeColumn(tp, t * (double)tp->sampleRate, renderH, col);
         EmbeddedPianoSpecWriteColumn(tp, x, col);
     }
 
@@ -4943,9 +6923,11 @@ static void UpdateEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doubl
     if (!allowHeavyWork)
         return;
 
+    const int renderW = EmbeddedPianoSpecRenderWidthForPlotWidth(plotW);
+    const int renderH = EmbeddedPianoSpecRenderHeightForPlotHeight(plotH);
     if (tp->embeddedPianoSpecDirty ||
-        tp->embeddedPianoSpecImageW != plotW ||
-        tp->embeddedPianoSpecImageH != plotH ||
+        tp->embeddedPianoSpecImageW != renderW ||
+        tp->embeddedPianoSpecImageH != renderH ||
         !std::isfinite(tp->embeddedPianoSpecCacheTLeft) ||
         !std::isfinite(tp->embeddedPianoSpecCacheTRight))
     {
@@ -4955,7 +6937,7 @@ static void UpdateEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doubl
 
     const double span = tRight - tLeft;
     const double cacheSpan = tp->embeddedPianoSpecCacheTRight - tp->embeddedPianoSpecCacheTLeft;
-    const double secPerCol = span / (double)(std::max)(1, plotW);
+    const double secPerCol = span / (double)(std::max)(1, renderW);
     if (!(secPerCol > 0.0) || !std::isfinite(secPerCol))
         return;
 
@@ -4983,7 +6965,7 @@ static void UpdateEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doubl
     int colsToAdvance = (int)std::floor(dLeft / secPerCol);
     if (colsToAdvance <= 0)
         return;
-    if (colsToAdvance >= plotW)
+    if (colsToAdvance >= renderW)
     {
         RebuildEmbeddedPianoSpecViewport(tp, tLeft, tRight, plotW, plotH);
         return;
@@ -4993,12 +6975,12 @@ static void UpdateEmbeddedPianoSpecViewport(ThreadParam* tp, double tLeft, doubl
 
     const double quantizedTLeft = tp->embeddedPianoSpecCacheTLeft + (double)colsToAdvance * secPerCol;
     std::vector<uint32_t> col;
-    col.reserve((std::size_t)plotH);
+    col.reserve((std::size_t)renderH);
     for (int i = 0; i < colsToAdvance; ++i)
     {
-        const int x = plotW - colsToAdvance + i;
+        const int x = renderW - colsToAdvance + i;
         const double t = quantizedTLeft + (static_cast<double>(x) + 0.5) * secPerCol;
-        EmbeddedPianoSpecComputeColumn(tp, t * (double)tp->sampleRate, plotH, col);
+        EmbeddedPianoSpecComputeColumn(tp, t * (double)tp->sampleRate, renderH, col);
         EmbeddedPianoSpecWriteColumn(tp, x, col);
     }
 
@@ -5091,6 +7073,19 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, ThreadParam*
     const int srcW = tp->embeddedPianoSpecImageW;
     const int srcH = tp->embeddedPianoSpecImageH;
     int shiftSrcPx = 0;
+    const bool scaledBlit = (srcW != dstW) || (srcH != dstH);
+    const int oldStretchMode = scaledBlit ? SetStretchBltMode(hdc, HALFTONE) : 0;
+    POINT oldBrushOrg{};
+    const bool restoreBrushOrg = scaledBlit && SetBrushOrgEx(hdc, 0, 0, &oldBrushOrg) != FALSE;
+    auto restoreStretchState = [&]()
+    {
+        if (!scaledBlit)
+            return;
+        if (restoreBrushOrg)
+            SetBrushOrgEx(hdc, oldBrushOrg.x, oldBrushOrg.y, nullptr);
+        if (oldStretchMode != 0)
+            SetStretchBltMode(hdc, oldStretchMode);
+    };
 
     if (std::isfinite(reqTLeft) && std::isfinite(reqTRight) && reqTRight > reqTLeft &&
         std::isfinite(tp->embeddedPianoSpecCacheTLeft) && std::isfinite(tp->embeddedPianoSpecCacheTRight))
@@ -5203,7 +7198,10 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, ThreadParam*
                 if (hr == D2DERR_RECREATE_TARGET)
                     ReleaseWaveGpuTarget(tp);
                 if (SUCCEEDED(hr))
+                {
+                    restoreStretchState();
                     return;
+                }
             }
         }
     }
@@ -5218,12 +7216,14 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, ThreadParam*
             &bmi,
             DIB_RGB_COLORS,
             SRCCOPY);
+        restoreStretchState();
         return;
     }
 
     if (std::abs(shiftSrcPx) >= srcW)
     {
         fillBg(plotRc);
+        restoreStretchState();
         return;
     }
 
@@ -5267,6 +7267,7 @@ static void DrawEmbeddedPianoSpecImage(HDC hdc, const RECT& plotRc, ThreadParam*
         RECT gap{ plotRc.left, plotRc.top, plotRc.left + dstShift, plotRc.bottom };
         fillBg(gap);
     }
+    restoreStretchState();
 }
 
 static void AlphaFillRectColor(HDC hdc, const RECT& rc, COLORREF color, BYTE alpha)
@@ -5324,8 +7325,9 @@ static void DrawEmbeddedPianoSpecNotesOverlay(HDC hdc, const RECT& plotRc, Threa
     if (!(tRight > tLeft) || !std::isfinite(tLeft) || !std::isfinite(tRight))
         return;
 
-    const auto* notes = GetPianoRollNotesForTab(tp, kPianoSpectrogramTabIndex);
-    if (!notes || notes->empty())
+    std::vector<PianoRollRenderer::NoteEvent> notes;
+    BuildVisiblePianoRollNotes(tp, kPianoSpectrogramTabIndex, notes);
+    if (notes.empty())
         return;
 
     PianoRollViewportState view{};
@@ -5346,24 +7348,27 @@ static void DrawEmbeddedPianoSpecNotesOverlay(HDC hdc, const RECT& plotRc, Threa
 
     HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     SetBkMode(hdc, TRANSPARENT);
-    HPEN pen = CreatePen(PS_SOLID, 1, RGB(240, 206, 150));
-    HPEN penSel = CreatePen(PS_SOLID, 1, RGB(255, 238, 196));
 
-    for (const auto& n : *notes)
+    for (const auto& n : notes)
     {
         RECT nr{};
         if (!ComputePianoRollNoteRectPx(plotRc, view, cfg, n, nr))
             continue;
 
-        AlphaFillRectColor(hdc, nr, n.selected ? RGB(255, 190, 92) : RGB(232, 142, 54), n.selected ? 120 : 84);
+        const COLORREF accent = GetStemButtonColorByIndex(n.stemIndex);
+        const COLORREF fill = n.selected ? BlendUiColor(accent, RGB(255, 240, 220), 0.24) : accent;
+        const COLORREF border = n.selected ? BlendUiColor(accent, RGB(255, 255, 255), 0.44) : BlendUiColor(accent, RGB(255, 245, 220), 0.14);
+        AlphaFillRectColor(hdc, nr, fill, n.selected ? 132 : 88);
 
         const int rx = (std::min)(8, (std::max)(4, (int)(nr.right - nr.left) / 3));
         const int ry = (std::min)(8, (std::max)(4, (int)(nr.bottom - nr.top)));
-        HGDIOBJ oldPen = SelectObject(hdc, n.selected ? penSel : pen);
+        HPEN borderPen = CreatePen(PS_SOLID, 1, border);
+        HGDIOBJ oldPen = SelectObject(hdc, borderPen);
         HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
         RoundRect(hdc, nr.left, nr.top, nr.right, nr.bottom, rx, ry);
         SelectObject(hdc, oldBrush);
         SelectObject(hdc, oldPen);
+        DeleteObject(borderPen);
 
         if ((nr.right - nr.left) >= 22 && (nr.bottom - nr.top) >= 10)
         {
@@ -5377,8 +7382,6 @@ static void DrawEmbeddedPianoSpecNotesOverlay(HDC hdc, const RECT& plotRc, Threa
         }
     }
 
-    DeleteObject(pen);
-    DeleteObject(penSel);
     SelectObject(hdc, oldFont);
     if (saved > 0)
         RestoreDC(hdc, saved);
@@ -5420,6 +7423,8 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
     const RECT midiSliderTrackRc = ComputeEmbeddedPianoSpecMidiSliderTrackRect(leftRc);
     if (midiSliderTrackRc.left > labelRc.left)
         labelRc.right = (LONG)((std::max)((int)labelRc.left, (int)midiSliderTrackRc.left - 2));
+    const std::uint16_t keyMask = KeyTheory::BuildPitchClassMaskForKey(GLOBAL::MUSICAL_KEY);
+    const bool hasKeyHighlight = keyMask != 0;
 
     SetBkMode(hdc, TRANSPARENT);
     HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(SYSTEM_FONT));
@@ -5436,8 +7441,15 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
         const int midi = midiMax - idx;
         const int y0 = plotRc.top + (int)std::floor((double)idx * rowH);
         const int y1 = plotRc.top + (int)std::floor((double)(idx + 1) * rowH);
+        const bool blackKey = EmbeddedPianoSpecIsBlackKey(midi);
+        const bool inKey = KeyTheory::MidiNoteIsInMask(midi, keyMask);
         const RECT rowKey{ keyStrip.left, (LONG)y0, keyStrip.right, (LONG)(std::max)(y0 + 1, y1) };
-        HBRUSH rowBr = CreateSolidBrush(EmbeddedPianoSpecIsBlackKey(midi) ? RGB(26, 30, 36) : RGB(36, 40, 46));
+        HBRUSH rowBr = CreateSolidBrush(
+            hasKeyHighlight
+            ? (blackKey
+                ? (inKey ? RGB(40, 45, 54) : RGB(20, 22, 26))
+                : (inKey ? RGB(56, 61, 70) : RGB(30, 32, 38)))
+            : (blackKey ? RGB(26, 30, 36) : RGB(36, 40, 46)));
         FillRect(hdc, &rowKey, rowBr);
         DeleteObject(rowBr);
 
@@ -5457,7 +7469,12 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
                 swprintf_s(lbl, L"%s %.0fHz", nm.c_str(), hz);
             else
                 swprintf_s(lbl, L"%s", nm.c_str());
-            SetTextColor(hdc, cNote ? RGB(230, 232, 236) : RGB(170, 174, 180));
+            SetTextColor(hdc,
+                hasKeyHighlight
+                ? (cNote
+                    ? (inKey ? RGB(242, 245, 250) : RGB(196, 202, 210))
+                    : (inKey ? RGB(205, 210, 218) : RGB(126, 132, 140)))
+                : (cNote ? RGB(230, 232, 236) : RGB(170, 174, 180)));
             RECT lr{ labelRc.left + 2, (LONG)y0, leftRc.right - 2, (LONG)(std::max)(y0 + 12, y1) };
             DrawTextW(hdc, lbl, -1, &lr, DT_LEFT | DT_TOP | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
         }
@@ -5519,10 +7536,11 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
     }
 
     wchar_t hud[256];
-    swprintf_s(hud, L"Spec %s  FFT %d  dB %.0f%s",
+    swprintf_s(hud, L"Spec %s  FFT %d  dB %.0f  Place %s%s",
         tp->embeddedPianoSpecUseProcessedMix ? L"PROC" : L"RAW",
         tp->embeddedPianoSpecNfft,
         tp->embeddedPianoSpecDbRange,
+        GetStemButtonLabelByIndex(std::clamp(tp->pianoNotePlacementStem, 0, PianoRollRenderer::NoteStem_Count - 1)),
         tp->liveResizeActive ? L"  (resizing... cache hold)" : L"");
     SetTextColor(hdc, RGB(210, 214, 220));
     RECT hudRc{ leftRc.left + 4, leftRc.top + 2, plotRc.right - 4, leftRc.top + 18 };
@@ -5530,7 +7548,7 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
 
     RECT hintRc{ leftRc.left + 4, leftRc.top + 18, plotRc.right - 4, leftRc.top + 34 };
     SetTextColor(hdc, RGB(150, 156, 166));
-    DrawTextW(hdc, L"Drag the Spec tab out to pop out", -1, &hintRc,
+    DrawTextW(hdc, L"Click a stem color, place notes, then export", -1, &hintRc,
         DT_LEFT | DT_TOP | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
 
     wchar_t dbLabel[64];
@@ -5544,9 +7562,23 @@ static void DrawEmbeddedPianoSpecGridAndLabels(HDC hdc, const RECT& pianoRc, Thr
     wchar_t gridLabel[96];
     swprintf_s(gridLabel, L"Grid %s", EmbeddedPianoGridModeLabel(WaveformWindow::GetSharedPianoGridMode()));
     DrawEmbeddedPianoSpecButton(hdc, tp->embeddedPianoSpecRcGridButton, gridLabel);
+    DrawEmbeddedPianoSpecButton(hdc, tp->embeddedPianoSpecRcBpmButton, GridBpmButtonLabel(tp));
+    DrawEmbeddedPianoSpecToggleButton(hdc, tp->embeddedPianoSpecRcModeButton,
+        PianoNoteEditModeLabel(tp->pianoNoteEditMode),
+        tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select);
 
     DrawEmbeddedPianoSpecCheckbox(hdc, tp->embeddedPianoSpecRcProcessedToggle,
         tp->embeddedPianoSpecUseProcessedMix, L"PROC");
+    DrawEmbeddedPianoSpecButton(hdc, tp->embeddedPianoSpecRcExportAllButton, L"MIDI All");
+    DrawEmbeddedPianoSpecButton(hdc, tp->embeddedPianoSpecRcExportStemButton, L"MIDI x4");
+    for (int stemIdx = 0; stemIdx < PianoRollRenderer::NoteStem_Count; ++stemIdx)
+    {
+        DrawEmbeddedPianoSpecStemButton(
+            hdc,
+            tp->embeddedPianoSpecRcStemButtons[stemIdx],
+            stemIdx,
+            stemIdx == std::clamp(tp->pianoNotePlacementStem, 0, PianoRollRenderer::NoteStem_Count - 1));
+    }
 
     if (midiSliderTrackRc.right > midiSliderTrackRc.left && midiSliderTrackRc.bottom > midiSliderTrackRc.top)
     {
@@ -5616,11 +7648,11 @@ static void DrawEmbeddedPianoSpectrogramTab(HDC hdc, const RECT& pianoRc, Thread
         const double specTLeft = tLeft + fullSpan * plotLeftNorm;
         const double specTRight = tLeft + fullSpan * plotRightNorm;
 
-        bool allowHeavySpecWork = !(tp->liveResizeActive || tp->dragPanActive || tp->dragScrubActive);
+        bool allowHeavySpecWork = !(tp->liveResizeActive || tp->dragPanActive || tp->dragScrubActive || tp->pianoNoteMarqueeActive);
         const bool needsSpecBootstrap =
             tp->embeddedPianoSpecDirty ||
-            tp->embeddedPianoSpecImageW != plotW ||
-            tp->embeddedPianoSpecImageH != plotH ||
+            tp->embeddedPianoSpecImageW != EmbeddedPianoSpecRenderWidthForPlotWidth(plotW) ||
+            tp->embeddedPianoSpecImageH != EmbeddedPianoSpecRenderHeightForPlotHeight(plotH) ||
             !std::isfinite(tp->embeddedPianoSpecCacheTLeft) ||
             !std::isfinite(tp->embeddedPianoSpecCacheTRight);
 
@@ -5659,6 +7691,18 @@ static void DrawEmbeddedPianoSpectrogramTab(HDC hdc, const RECT& pianoRc, Thread
         UpdateEmbeddedPianoSpecViewport(tp, specTLeft, specTRight, plotW, plotH, allowHeavySpecWork);
         DrawEmbeddedPianoSpecImage(hdc, plotRc, tp, specTLeft, specTRight);
         DrawEmbeddedPianoSpecNotesOverlay(hdc, plotRc, tp, specTLeft, specTRight);
+        if (tp->pianoNoteMarqueeActive && tp->pianoNoteMarqueeTab == kPianoSpectrogramTabIndex)
+        {
+            RECT noteRc{};
+            PianoRollViewportState marqueeViewport{};
+            PianoRollRenderer::Config marqueeCfg{};
+            if (BuildTabNoteInteractionContext(tp, pianoRc, kPianoSpectrogramTabIndex, noteRc, marqueeViewport, marqueeCfg))
+            {
+                RECT marqueeRc{};
+                if (ComputePianoRollMarqueeRectPx(noteRc, marqueeViewport, marqueeCfg, tp, marqueeRc))
+                    DrawPianoRollMarqueeOverlay(hdc, marqueeRc);
+            }
+        }
         DrawEmbeddedPianoSpecGridAndLabels(hdc, pianoRc, tp, specTLeft, specTRight, playheadX);
     }
 }
@@ -5671,6 +7715,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
     case WM_CREATE:
     {
+        DragAcceptFiles(hwnd, TRUE);
         if (tp)
         {
             tp->hBtnPlay = nullptr;
@@ -5681,6 +7726,38 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
         LayoutTopButtons(hwnd, tp);
 
+        return 0;
+    }
+
+    case WM_DROPFILES:
+    {
+        HDROP hDrop = reinterpret_cast<HDROP>(wParam);
+        if (!hDrop)
+            return 0;
+
+        wchar_t droppedPath[MAX_PATH * 4]{};
+        const UINT fileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+        bool handled = false;
+        for (UINT fileIndex = 0; fileIndex < fileCount; ++fileIndex)
+        {
+            const UINT copied = DragQueryFileW(hDrop, fileIndex, droppedPath, static_cast<UINT>(std::size(droppedPath)));
+            if (copied == 0)
+                continue;
+
+            handled = HandleDroppedMidiFile(hwnd, tp, std::filesystem::path(droppedPath));
+            if (handled)
+                break;
+        }
+
+        DragFinish(hDrop);
+
+        if (!handled)
+        {
+            MessageBoxW(hwnd,
+                L"Drop a .mid or .midi file onto the waveform window to import it into the spectrogram piano roll.",
+                L"MIDI Import",
+                MB_OK | MB_ICONINFORMATION);
+        }
         return 0;
     }
 
@@ -5994,6 +8071,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             if (tp->activePianoRollTab != tabHit)
             {
                 tp->activePianoRollTab = tabHit;
+                const int tabStem = StemIndexFromPianoTab(tabHit);
+                if (tabStem >= 0)
+                    tp->pianoNotePlacementStem = tabStem;
                 InvalidateWaveRegion(hwnd, tp);
             }
             if (tabHit == kPianoSpectrogramTabIndex)
@@ -6046,7 +8126,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 if (tp->mciOpened) SyncPausedFromMciPosition(tp);
                 else
                 {
-                    const size_t totalFrames = GetTotalFrames(tp);
+                    const size_t totalFrames = GetAudioTotalFrames(tp);
                     const double maxFrame = (totalFrames > 0) ? static_cast<double>(totalFrames - 1) : 0.0;
                     tp->pausedSampleIndex = static_cast<size_t>(std::clamp(GetCurrentFrameForView(tp), 0.0, maxFrame));
                 }
@@ -6119,6 +8199,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             RECT tabsRc{}, pianoRc{};
             ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
             if (HandlePianoRollNoteMouseMove(hwnd, tp, pianoRc, pt))
+                return 0;
+        }
+        if ((wParam & MK_LBUTTON) && tp->pianoNoteMarqueeActive)
+        {
+            RECT rc{}; GetClientRect(hwnd, &rc);
+            RECT tabsRc{}, pianoRc{};
+            ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
+            if (HandlePianoRollSelectionMouseMove(hwnd, tp, pianoRc, pt))
                 return 0;
         }
         if ((wParam & MK_LBUTTON) && tp->embeddedPianoSpecMidiSliderDragActive)
@@ -6252,6 +8340,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
     case WM_LBUTTONUP:
     {
+        if (tp && tp->pianoNoteMarqueeActive)
+        {
+            RECT rc{}; GetClientRect(hwnd, &rc);
+            RECT tabsRc{}, pianoRc{};
+            ComputePianoRollLayout(rc, tp, &tabsRc, &pianoRc);
+            if (HandlePianoRollSelectionLButtonUp(hwnd, tp, pianoRc, POINT{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) }))
+                return 0;
+        }
         if (tp && HandlePianoRollNoteLButtonUp(hwnd, tp))
             return 0;
         if (tp && tp->embeddedPianoSpecMidiSliderDragActive)
@@ -6576,7 +8672,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             int h = (std::max)(1, static_cast<int>(waveRc.bottom - waveRc.top));
             useGpuWaveEnvelopes = EnsureWaveGpuResources(tp);
 
-            size_t totalFrames = tp->isStereo ? (tp->samples->size() / 2) : tp->samples->size();
+            const size_t totalFrames = GetTotalFrames(tp);
+            const size_t audioFrames = GetAudioTotalFrames(tp);
             if (tp->envBlocks == 0)
                 PrepareColorWaveEnvelopes(tp);
 
@@ -6601,9 +8698,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 DeleteObject(midPen);
             }
 
-            if (tp->envBlocks > 0 && tp->envBlock > 0)
+            if (audioFrames > 0 && tp->envBlocks > 0 && tp->envBlock > 0)
             {
-                const double endFrame = std::min<double>(static_cast<double>(totalFrames), startFrame + visibleFrames);
+                const double endFrame = std::min<double>(static_cast<double>(audioFrames), startFrame + visibleFrames);
                 const double framesPerPixel = visibleFrames / static_cast<double>((std::max)(1, w));
                 const EnvelopeLevelView envView = SelectEnvelopeLevelForFramesPerPixel(tp, framesPerPixel);
                 const int drawEnvBlock = (envView.block > 0) ? envView.block : tp->envBlock;
@@ -6627,13 +8724,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 if (!useGpuWaveEnvelopes)
                 {
                     DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(120, 120, 120),
-                        baseMin, baseMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                        baseMin, baseMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
                     DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(0, 140, 255),
-                        lowMin, lowMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                        lowMin, lowMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
                     DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(255, 170, 0),
-                        midMin, midMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                        midMin, midMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
                     DrawEnvelopeLayer(hdc, waveRc, midY, ampScale, RGB(255, 60, 140),
-                        highMin, highMax, b0, b1, drawEnvBlock, totalFrames, startFrame, visibleFrames, tp->plotYRange);
+                        highMin, highMax, b0, b1, drawEnvBlock, audioFrames, startFrame, visibleFrames, tp->plotYRange);
                 }
             }
 
@@ -6702,7 +8799,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
             wchar_t buf2[512];
             swprintf_s(buf2,
-                L"BPM=%.3f  T=%.6fs  t0=%.6fs  beats/bar=%d  start=%.3fs  onset=%.3fs  kick=%.6fs  EQ[L/M/H]=%+.0f/%+.0f/%+.0f dB  VOL=%+.0f dB  view=[%.3f..%.3f]s",
+                L"Key=%s  BPM=%.3f  T=%.6fs  t0=%.6fs  beats/bar=%d  start=%.3fs  onset=%.3fs  kick=%.6fs  EQ[L/M/H]=%+.0f/%+.0f/%+.0f dB  VOL=%+.0f dB  view=[%.3f..%.3f]s",
+                MusicalKeyLabel(GLOBAL::MUSICAL_KEY),
                 tp->gridBpm,
                 beatPeriod,
                 tp->gridT0Seconds,
@@ -6756,10 +8854,34 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         pv.gridMode = WaveformWindow::GetSharedPianoGridMode();
 
                         PianoRollRenderer::Config pc{};
-                        const auto* tabNotes = GetPianoRollNotesForTab(tp, tp->activePianoRollTab);
-                        PianoRollRenderer::Draw(hdc, pianoRc, pv, pc, tabNotes);
+                        pc.highlightKey = GLOBAL::MUSICAL_KEY;
+                        std::vector<PianoRollRenderer::NoteEvent> visibleNotes;
+                        BuildVisiblePianoRollNotes(tp, tp->activePianoRollTab, visibleNotes);
+                        PianoRollRenderer::Draw(hdc, pianoRc, pv, pc, visibleNotes.empty() ? nullptr : &visibleNotes);
 
                         LayoutPianoRollGridControl(tp, pianoRc);
+                        if (tp->pianoNoteMarqueeActive && tp->pianoNoteMarqueeTab == tp->activePianoRollTab)
+                        {
+                            RECT noteRc{};
+                            PianoRollViewportState marqueeViewport{};
+                            PianoRollRenderer::Config marqueeCfg{};
+                            if (BuildTabNoteInteractionContext(tp, pianoRc, tp->activePianoRollTab, noteRc, marqueeViewport, marqueeCfg))
+                            {
+                                RECT marqueeRc{};
+                                if (ComputePianoRollMarqueeRectPx(noteRc, marqueeViewport, marqueeCfg, tp, marqueeRc))
+                                    DrawPianoRollMarqueeOverlay(hdc, marqueeRc);
+                            }
+                        }
+                        if (tp->pianoRollRcModeButton.right > tp->pianoRollRcModeButton.left)
+                        {
+                            DrawEmbeddedPianoSpecToggleButton(hdc, tp->pianoRollRcModeButton,
+                                PianoNoteEditModeLabel(tp->pianoNoteEditMode),
+                                tp->pianoNoteEditMode == ThreadParam::PianoNoteEdit_Select);
+                        }
+                        if (tp->pianoRollRcBpmButton.right > tp->pianoRollRcBpmButton.left)
+                        {
+                            DrawEmbeddedPianoSpecButton(hdc, tp->pianoRollRcBpmButton, GridBpmButtonLabel(tp));
+                        }
                         if (tp->pianoRollRcGridButton.right > tp->pianoRollRcGridButton.left)
                         {
                             wchar_t gridLabel[64];
@@ -6767,6 +8889,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DrawEmbeddedPianoSpecButton(hdc, tp->pianoRollRcGridButton, gridLabel);
                         }
                     }
+                    DrawPianoRollHoverCellLabel(hdc, hwnd, tp, rc, pianoRc);
                 }
             }
             DrawSharedPianoGridMenu(hdc, tp);

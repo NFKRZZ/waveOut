@@ -1,6 +1,8 @@
 #pragma once
 
-static enum class Keys
+#include <cstdint>
+
+enum class Keys
 {
 	C_0 = 16,
 	C_SHARP_0 = 17,
@@ -124,7 +126,7 @@ static enum class Keys
 	B_9 = 15804
 
 };
-static enum class Key
+enum class Key
 {
 	NO_KEY,
 	C_MAJOR,
@@ -140,3 +142,62 @@ static enum class Key
 	A_SHARP_MAJOR,
 	B_MAJOR
 };
+
+namespace KeyTheory
+{
+	constexpr int NormalizePitchClass(int pitchClass)
+	{
+		const int wrapped = pitchClass % 12;
+		return wrapped < 0 ? (wrapped + 12) : wrapped;
+	}
+
+	constexpr int KeyToTonicPitchClass(Key key)
+	{
+		switch (key)
+		{
+		case Key::C_MAJOR: return 0;
+		case Key::C_SHARP_MAJOR: return 1;
+		case Key::D_MAJOR: return 2;
+		case Key::D_SHARP_MAJOR: return 3;
+		case Key::E_MAJOR: return 4;
+		case Key::F_MAJOR: return 5;
+		case Key::F_SHARP_MAJOR: return 6;
+		case Key::G_MAJOR: return 7;
+		case Key::G_SHARP_MAJOR: return 8;
+		case Key::A_MAJOR: return 9;
+		case Key::A_SHARP_MAJOR: return 10;
+		case Key::B_MAJOR: return 11;
+		default: return -1;
+		}
+	}
+
+	constexpr std::uint16_t BuildPitchClassMaskForKey(Key key)
+	{
+		const int tonic = KeyToTonicPitchClass(key);
+		if (tonic < 0)
+			return 0;
+
+		constexpr int kMajorScaleOffsets[7] = { 0, 2, 4, 5, 7, 9, 11 };
+		std::uint16_t mask = 0;
+		for (int offset : kMajorScaleOffsets)
+			mask |= static_cast<std::uint16_t>(1u << NormalizePitchClass(tonic + offset));
+		return mask;
+	}
+
+	constexpr bool PitchClassIsInMask(int pitchClass, std::uint16_t mask)
+	{
+		if (mask == 0)
+			return false;
+		return (mask & static_cast<std::uint16_t>(1u << NormalizePitchClass(pitchClass))) != 0;
+	}
+
+	constexpr bool MidiNoteIsInMask(int midiNote, std::uint16_t mask)
+	{
+		return PitchClassIsInMask(midiNote, mask);
+	}
+
+	constexpr bool MidiNoteIsInKey(int midiNote, Key key)
+	{
+		return MidiNoteIsInMask(midiNote, BuildPitchClassMaskForKey(key));
+	}
+}

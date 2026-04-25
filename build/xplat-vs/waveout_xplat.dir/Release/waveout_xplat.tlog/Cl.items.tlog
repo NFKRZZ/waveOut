@@ -1,0 +1,8 @@
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\main.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\main.obj
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\App.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\App.obj
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\FrameStats.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\FrameStats.obj
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\BgfxRenderer.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\BgfxRenderer.obj
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\scene\WaveScene.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\WaveScene.obj
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\ui\ImGuiLayer.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\ImGuiLayer.obj
+C:\Users\winga\source\repos\waveOut\waveOut\xplat\src\MiniaudioDecodeImpl.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\MiniaudioDecodeImpl.obj
+C:\Users\winga\source\repos\waveOut\waveOut\AudioFileLoader.cpp;C:\Users\winga\source\repos\waveOut\waveOut\build\xplat-vs\waveout_xplat.dir\Release\AudioFileLoader.obj
